@@ -360,7 +360,7 @@
         <input type="file" id="imp-file" accept=".xlsx,.xlsm,.xls">
         <div class="form-row">
           <div class="field"><label>Segmento desta base</label>
-            <select id="imp-grupo"><option>Hospitais</option><option>Postos de Gasolina</option><option>Mercados</option><option>Shoppings</option><option>Hotéis</option><option>Restaurantes</option><option>Outros</option></select></div>
+            <select id="imp-grupo"><option>Hospitais</option><option>Postos de Gasolina</option><option>Mercados</option><option>Shoppings</option><option>Públicos</option><option>Hotéis</option><option>Restaurantes</option><option>Outros</option></select></div>
           <div class="field"><label>Onda (só se a planilha não indicar)</label><input id="imp-onda" placeholder="ex.: 2° Onda"></div>
           <button class="btn btn-primary" id="btn-imp">Ler e enviar para o Supabase</button>
         </div>
@@ -427,8 +427,8 @@ const ORDEM=['implementada','apta','aguardando','comunicar','sem_tee'];
 /* Link do botão "← Página principal" (plataforma Grandes Clientes). Troque pelo endereço da sua plataforma. */
 const PLATAFORMA_URL='../vencidos-gc/';
 /* Cards fixos de segmento: aparecem sempre, mesmo sem planilha importada */
-const SEGMENTOS=['Hospitais','Postos de Gasolina','Mercados','Shoppings','Hotéis','Restaurantes'];
-const SEG_ALIAS={'postos':'Postos de Gasolina','posto':'Postos de Gasolina','postos de gasolina':'Postos de Gasolina','hospitais':'Hospitais','hospitais e clinicas':'Hospitais','hospital':'Hospitais','mercados':'Mercados','mercado':'Mercados','supermercados':'Mercados','shoppings':'Shoppings','shopping':'Shoppings','hoteis':'Hotéis','hotel':'Hotéis','restaurantes':'Restaurantes','restaurante':'Restaurantes'};
+const SEGMENTOS=['Hospitais','Postos de Gasolina','Mercados','Shoppings','Públicos','Hotéis','Restaurantes'];
+const SEG_ALIAS={'postos':'Postos de Gasolina','posto':'Postos de Gasolina','postos de gasolina':'Postos de Gasolina','hospitais':'Hospitais','hospitais e clinicas':'Hospitais','hospital':'Hospitais','mercados':'Mercados','mercado':'Mercados','supermercados':'Mercados','shoppings':'Shoppings','shopping':'Shoppings','hoteis':'Hotéis','hotel':'Hotéis','restaurantes':'Restaurantes','restaurante':'Restaurantes','publico':'Públicos','publicos':'Públicos','gc publico':'Públicos','gc - publico':'Públicos'};
 const segDe=d=>{ const g=String(d.grupo??'').trim(); if(!g) return 'Sem segmento'; const k=g.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); return SEG_ALIAS[k]||g; };
 const brl=v=>v==null?'–':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const pct=v=>v==null?'–':(Number(v)*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
@@ -490,14 +490,16 @@ const ICO={
   'Shoppings':'<path d="M6 7h12l1 14H5L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/>',
   'Hotéis':'<path d="M3 20V7M3 14h18v6M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>',
   'Restaurantes':'<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1-3 3.5-3 7h3"/>',
+  'Públicos':'<path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10"/><path d="M2 10l10-6 10 6z"/>',
   outro:'<path d="M12 2.7s-6 6.3-6 11.3a6 6 0 0 0 12 0c0-5-6-11.3-6-11.3z"/>'
 };
 const COR={'Hospitais':['var(--rose)','var(--rose-soft)'],'Postos de Gasolina':['var(--amber)','var(--amber-soft)'],'Mercados':['var(--leaf)','var(--leaf-soft)'],
-  'Shoppings':['#6A45B8','#EFEAFA'],'Hotéis':['var(--water)','var(--water-soft)'],'Restaurantes':['#B0457A','#F8E8F0']};
+  'Shoppings':['#6A45B8','#EFEAFA'],'Públicos':['var(--navy-3)','#E6ECF2'],'Hotéis':['var(--water)','var(--water-soft)'],'Restaurantes':['#B0457A','#F8E8F0']};
 const DESC={'Hospitais':'Hospitais e clínicas: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
   'Postos de Gasolina':'Postos de combustível: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
   'Mercados':'Mercados e supermercados: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
   'Shoppings':'Shoppings: agenda com o cliente, percentual definido e matrículas liberadas para virar.',
+  'Públicos':'Grandes Clientes públicos (Público, Industrial e Sem Fins Lucrativos): comunicados, matrículas aptas e incremento previsto.',
   'Hotéis':'Hotéis: segmento previsto no projeto — os números aparecem quando a planilha for importada.',
   'Restaurantes':'Restaurantes: segmento previsto no projeto — os números aparecem quando a planilha for importada.'};
 const svg=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -690,7 +692,11 @@ function dt(v){ if(v==null||v==='') return null; if(v instanceof Date) return ne
   if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`; return null; }
 const sim=v=>norm(v)==='sim';
 const logImp=t=>{ const l=$('imp-log'); l.textContent+=(l.textContent?'\n':'')+t; };
-$('imp-file').onchange=()=>$('up-box').classList.toggle('has-file',!!$('imp-file').files[0]);
+$('imp-file').onchange=()=>{
+  const f=$('imp-file').files[0]; $('up-box').classList.toggle('has-file',!!f); if(!f) return;
+  const n=norm(f.name), regra=[['public','Públicos'],['hospit','Hospitais'],['posto','Postos de Gasolina'],['mercado','Mercados'],['shopping','Shoppings'],['hote','Hotéis'],['restaur','Restaurantes']];
+  const r=regra.find(([k])=>n.includes(k)); if(r) $('imp-grupo').value=r[1];
+};
 
 $('btn-imp').onclick=async()=>{
   const f=$('imp-file').files[0]; if(!f) return toast('Selecione o arquivo.',true);
@@ -715,7 +721,7 @@ $('btn-imp').onclick=async()=>{
         const ng=num(pick(r,'negociacao')), ci=pick(r,'ciclo');
         const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:$('imp-grupo').value,onda,
           ciclo:ci==null?null:String(ci).trim(),faturamento:fat,pct_cobranca:pc,negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null,
-          data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao')),
+          data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao','data danotificacao')),
           notificacao_entregue:sim(pick(r,'notificacao entregue')),max_data_evidencias:dt(pick(r,'max data: envio de evidencias')),
           tarifa_implementada:sim(pick(r,'tarifa implementada'))};
         if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
