@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão TEE · Grandes Clientes</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --navy:#0A2A43; --navy-2:#123A5C; --navy-3:#1B4E76;
+    --water:#1C7EBE; --water-soft:#E4F1FA; --water-line:#C9E3F3;
+    --leaf:#2C9A66; --leaf-soft:#E3F5EC; --leaf-line:#BFE6D2;
+    --amber:#B9791A; --amber-soft:#FBF1DE; --amber-line:#EFD9AE;
+    --rose:#C0492E; --rose-soft:#FBE9E5; --rose-line:#F0C7BC;
+    --bg:#EEF3F7; --surface:#FFFFFF; --border:#DEE6EC;
+    --text:#12232F; --text-mut:#5B7285; --text-faint:#8CA0AF;
+    --radius:16px; --radius-sm:10px;
+    --shadow-xs:0 1px 2px rgba(10,42,67,.05);
+    --shadow-sm:0 4px 14px -6px rgba(10,42,67,.14);
+    --shadow-md:0 14px 34px -14px rgba(10,42,67,.28);
+    --shadow-lg:0 24px 60px -20px rgba(10,42,67,.34);
+    --font-display:'Manrope',sans-serif; --font-body:'Inter',sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body); -webkit-font-smoothing:antialiased; }
+  ::selection{ background:var(--water-soft); color:var(--navy); }
+  ::-webkit-scrollbar{ height:8px; width:8px; }
+  ::-webkit-scrollbar-thumb{ background:#C7D6DF; border-radius:100px; }
+  button, input, select, textarea{ font-family:var(--font-body); }
+  :focus-visible{ outline:2px solid var(--water); outline-offset:2px; border-radius:4px; }
+
+  /* ---------- HERO ---------- */
+  .hero-wrap{
+    background:
+      radial-gradient(1100px 420px at 12% -20%, rgba(255,255,255,.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(28,126,190,.35), transparent 55%),
+      linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, var(--navy-3) 100%);
+    padding:34px 20px 64px; position:relative; overflow:hidden;
+  }
+  .hero-wrap::after{
+    content:''; position:absolute; inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size:34px 34px; mask-image:linear-gradient(180deg, rgba(0,0,0,.5), transparent 75%); pointer-events:none;
+  }
+  .hero-inner{ max-width:1180px; margin:0 auto; position:relative; z-index:1; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:12px; letter-spacing:.09em; text-transform:uppercase; color:#BFE0F5; font-weight:700; margin-bottom:14px; }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:#5FC1F0; box-shadow:0 0 0 4px rgba(95,193,240,.22); }
+  .hero-inner h1{ font-family:var(--font-display); font-weight:800; font-size:clamp(24px,3.4vw,33px); color:#fff; margin:0 0 10px; letter-spacing:-.01em; }
+  .hero-inner > p{ margin:0; color:#CBDCE9; font-size:14.5px; max-width:720px; line-height:1.65; }
+  .hero-meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; }
+  .chip{ display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); color:#E4EEF4; font-size:12.5px; padding:7px 12px; border-radius:100px; }
+  .chip b{ color:#fff; }
+  .hero-actions{ position:absolute; right:0; top:0; display:flex; gap:8px; }
+  .btn-hero{ background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:#fff; }
+  .btn-hero:hover{ background:rgba(255,255,255,.18); }
+
+  /* ---------- MAIN ---------- */
+  .app{ max-width:1180px; margin:-36px auto 60px; padding:0 20px; position:relative; z-index:2; }
+  nav.tabs{ display:flex; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:6px; box-shadow:var(--shadow-md); flex-wrap:wrap; }
+  nav.tabs::-webkit-scrollbar{ display:none; }
+  nav.tabs button{ appearance:none; border:none; background:none; cursor:pointer; font-weight:700; font-size:13px; color:var(--text-mut); padding:10px 12px; border-radius:10px; transition:.18s; display:flex; align-items:center; gap:8px; white-space:nowrap; flex:1 1 auto; justify-content:center; }
+  nav.tabs button svg{ width:16px; height:16px; flex:none; }
+  nav.tabs button.active{ color:#fff; background:var(--navy); box-shadow:0 6px 16px -6px rgba(10,42,67,.5); }
+  nav.tabs button:not(.active):hover{ color:var(--navy); background:var(--water-soft); }
+  .view{ display:none; }
+  .view.active{ display:block; animation:viewIn .32s cubic-bezier(.2,.8,.2,1); }
+  @keyframes viewIn{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px 24px 26px; box-shadow:var(--shadow-xs); margin-top:20px; transition:box-shadow .2s; }
+  .card:hover{ box-shadow:var(--shadow-sm); }
+  .card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:4px; flex-wrap:wrap; }
+  .card h2{ font-family:var(--font-display); font-size:16.5px; font-weight:800; color:var(--navy); margin:0 0 4px; letter-spacing:-.01em; }
+  .card h3{ font-family:var(--font-display); font-size:14px; font-weight:800; color:var(--navy); margin:0 0 10px; }
+  .card .sub{ font-size:13px; color:var(--text-mut); margin:0 0 18px; line-height:1.55; max-width:720px; }
+
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size:12px; font-weight:700; color:var(--text-mut); }
+  .field input, .field select{ font-size:14px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#FBFDFE; color:var(--text); outline:none; transition:.15s; }
+  .field input:focus, .field select:focus{ border-color:var(--water); box-shadow:0 0 0 3px var(--water-soft); }
+
+  .btn{ font-weight:700; font-size:13.5px; cursor:pointer; border:none; border-radius:10px; padding:11px 20px; transition:.15s; display:inline-flex; align-items:center; gap:7px; }
+  .btn svg{ width:15px; height:15px; }
+  .btn-primary{ background:var(--navy); color:#fff; box-shadow:0 6px 16px -6px rgba(10,42,67,.45); }
+  .btn-primary:hover{ background:var(--navy-2); transform:translateY(-1px); }
+  .btn-ghost{ background:none; border:1px solid var(--border); color:var(--navy); }
+  .btn-ghost:hover{ border-color:var(--water); color:var(--water); background:var(--water-soft); }
+  .btn-sm{ padding:7px 13px; font-size:12.5px; }
+  .btn:disabled{ opacity:.5; cursor:default; transform:none !important; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-mut); font-weight:700; padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  td{ padding:9px 10px; border-bottom:1px solid #EEF3F6; vertical-align:middle; white-space:nowrap; }
+  tbody tr:hover td{ background:#FAFCFD; }
+  tr:last-child td{ border-bottom:none; }
+  td.num, th.num{ text-align:right; white-space:nowrap; }
+  tr.total td{ font-weight:800; color:var(--navy); background:var(--water-soft) !important; border-top:1px solid var(--water-line); }
+  .empty-row td{ text-align:center; color:var(--text-faint); padding:30px 10px; }
+  .tablewrap{ overflow-x:auto; }
+  .tablewrap.scroll{ max-height:520px; overflow-y:auto; }
+  .tablewrap.scroll thead th{ position:sticky; top:0; background:var(--surface); z-index:1; }
+  .cli{ max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .muted{ color:var(--text-mut); } .faint{ color:var(--text-faint); }
+
+  .badge{ display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:100px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .b-rose{ background:var(--rose-soft); color:var(--rose); }
+  .b-amber{ background:var(--amber-soft); color:var(--amber); }
+  .b-leaf{ background:var(--leaf-soft); color:var(--leaf); }
+  .b-water{ background:var(--water-soft); color:var(--water); }
+  .b-gray{ background:#EEF3F6; color:var(--text-mut); }
+
+  .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .kpi-row.k3{ grid-template-columns:repeat(3,1fr); }
+  .kpi{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 18px 16px; position:relative; overflow:hidden; transition:.2s; }
+  .kpi:hover{ box-shadow:var(--shadow-sm); transform:translateY(-2px); }
+  .kpi::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--water); opacity:.7; }
+  .kpi.leaf::before{ background:var(--leaf); } .kpi.rose::before{ background:var(--rose); } .kpi.amber::before{ background:var(--amber); } .kpi.navy::before{ background:var(--navy); }
+  .kpi .label{ font-size:11.5px; color:var(--text-mut); font-weight:700; margin-bottom:8px; text-transform:uppercase; letter-spacing:.03em; }
+  .kpi .value{ font-family:var(--font-display); font-size:26px; font-weight:800; color:var(--navy); letter-spacing:-.01em; }
+  .kpi .value.leaf{ color:var(--leaf); } .kpi .value.rose{ color:var(--rose); } .kpi .value.amber{ color:var(--amber); } .kpi .value.water{ color:var(--water); }
+  .kpi .hint{ font-size:12px; color:var(--text-mut); margin-top:5px; line-height:1.45; }
+
+  .panel-top{ display:flex; gap:14px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; margin:18px 0 0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; }
+  .filters{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .filters .field select{ padding:8px 12px; font-size:13px; min-width:190px; }
+  .multi{ position:relative; }
+  .multi-btn{ font-size:13px; padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:#FBFDFE; color:var(--text); min-width:220px; text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .multi-btn:hover{ border-color:#C3D2DB; }
+  .multi.open .multi-btn{ border-color:var(--water); box-shadow:0 0 0 3px var(--water-soft); }
+  .multi-btn .car{ font-size:10px; color:var(--text-faint); }
+  .multi-pop{ display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:50; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-md); padding:8px; min-width:240px; }
+  .multi.open .multi-pop{ display:block; }
+  .multi-pop label{ display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text); cursor:pointer; }
+  .multi-pop label:hover{ background:var(--water-soft); }
+  .multi-pop input{ accent-color:var(--water); width:15px; height:15px; }
+  .multi-pop .todos{ border-bottom:1px solid var(--border); margin-bottom:4px; padding-bottom:10px; font-weight:700; }
+  .filter-note{ font-size:12px; color:var(--text-mut); max-width:360px; line-height:1.5; }
+
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .two-col > .card{ margin-top:20px; }
+  .two-col > *{ min-width:0; }
+
+  .dist-bars{ display:flex; flex-direction:column; gap:10px; }
+  .dist-row{ display:grid; grid-template-columns:150px 1fr 150px; align-items:center; gap:12px; font-size:13px; }
+  .dist-track{ background:#EEF3F6; border-radius:100px; height:10px; overflow:hidden; }
+  .dist-fill{ height:100%; background:var(--water); border-radius:100px; transition:width .5s cubic-bezier(.2,.8,.2,1); }
+  .dist-val{ text-align:right; font-weight:700; color:var(--navy); white-space:nowrap; }
+  .dist-val small{ font-weight:500; color:var(--text-mut); }
+
+  /* status cards */
+  .status-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .status-card{ border:1px solid; border-radius:14px; padding:18px; background:#fff; display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:.18s; }
+  .status-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-sm); }
+  .status-card.sel{ box-shadow:0 0 0 3px var(--water-soft), var(--shadow-sm); }
+  .status-card.rose{ border-color:var(--rose-line); background:linear-gradient(180deg,var(--rose-soft),#fff 70%); }
+  .status-card.amber{ border-color:var(--amber-line); background:linear-gradient(180deg,var(--amber-soft),#fff 70%); }
+  .status-card.leaf{ border-color:var(--leaf-line); background:linear-gradient(180deg,var(--leaf-soft),#fff 70%); }
+  .sc-title{ font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase; }
+  .rose .sc-title{ color:var(--rose); } .amber .sc-title{ color:var(--amber); } .leaf .sc-title{ color:var(--leaf); }
+  .sc-value{ font-family:var(--font-display); font-weight:800; font-size:24px; color:var(--navy); }
+  .sc-sub{ font-size:12.5px; color:var(--text-mut); }
+  .sc-rule{ font-size:12.5px; background:rgba(255,255,255,.7); border:1px dashed var(--border); border-radius:10px; padding:8px 10px; line-height:1.5; }
+  .sc-plan{ font-size:12.5px; line-height:1.5; }
+  .sc-plan b{ color:var(--navy); }
+  .sc-foot{ display:flex; justify-content:space-between; font-size:12px; color:var(--text-mut); border-top:1px solid var(--border); padding-top:8px; margin-top:auto; gap:8px; flex-wrap:wrap; }
+  .donut-wrap{ display:grid; grid-template-columns:260px 1fr; gap:24px; align-items:center; }
+  .legend-list{ display:flex; flex-direction:column; gap:10px; }
+  .legend-list div{ display:flex; align-items:center; gap:10px; font-size:13px; }
+  .legend-list .sw{ width:11px; height:11px; border-radius:3px; flex:none; }
+  .legend-list b{ margin-left:auto; color:var(--navy); }
+
+  .callout{ display:flex; gap:10px; align-items:flex-start; background:var(--water-soft); border:1px solid var(--water-line); border-radius:12px; padding:12px 15px; font-size:12.5px; color:var(--navy-2); line-height:1.6; margin-top:14px; }
+  .callout.amber{ background:var(--amber-soft); border-color:var(--amber-line); color:#6E4A0F; }
+  .callout svg{ flex:none; width:16px; height:16px; margin-top:2px; }
+
+  /* editable cells */
+  .cell-input{ font-size:12.5px; padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:#FBFDFE; color:var(--text); width:100%; min-width:150px; }
+  .cell-input[type=date]{ min-width:130px; }
+  .cell-input:focus{ outline:none; border-color:var(--water); box-shadow:0 0 0 3px var(--water-soft); }
+  .cell-input.saved{ border-color:var(--leaf); background:var(--leaf-soft); }
+  .cell-input.err{ border-color:var(--rose); background:var(--rose-soft); }
+  .obs-input{ min-width:240px; resize:vertical; line-height:1.45; font-family:var(--font-body); white-space:pre-wrap; }
+  .btn-del{ background:none; border:1px solid var(--rose-line); color:var(--rose); }
+  .btn-del:hover{ background:var(--rose-soft); }
+  .base-hint{ font-size:10.5px; color:var(--text-faint); margin-top:3px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .plan-table td{ vertical-align:top; line-height:1.5; white-space:normal; }
+  .plan-table th{ white-space:normal; }
+  .channel{ border-radius:14px; padding:18px 20px; color:#fff; background:linear-gradient(160deg,var(--navy),var(--navy-3)); display:flex; flex-direction:column; gap:10px; }
+  .channel h3{ color:#fff; margin:0; font-size:15px; }
+  .channel .big{ font-family:var(--font-display); font-size:24px; font-weight:800; }
+  .channel ul{ margin:0; padding-left:18px; font-size:12.5px; color:#D6E4EE; line-height:1.7; }
+  .channel .btn-ghost{ color:#fff; border-color:rgba(255,255,255,.35); align-self:flex-start; }
+  .channel .btn-ghost:hover{ background:rgba(255,255,255,.12); color:#fff; }
+  .channel.leafy{ background:linear-gradient(160deg,#1E6B48,var(--leaf)); }
+
+  .upload-box{ border:1.5px dashed var(--border); border-radius:12px; padding:18px; background:#FBFDFE; transition:.15s; }
+  .upload-box.has-file{ border-style:solid; border-color:var(--water-line); background:var(--water-soft); }
+  .form-row{ display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; margin-top:14px; }
+  .progress{ height:8px; background:#EEF3F6; border-radius:100px; overflow:hidden; margin-top:14px; display:none; }
+  .progress div{ height:100%; width:0; background:var(--water); transition:width .3s; }
+  .log{ font-size:12.5px; color:var(--text-mut); margin-top:10px; line-height:1.7; white-space:pre-line; }
+  .msg{ font-size:12.5px; margin-top:10px; font-weight:600; }
+
+  .delta-up{ color:var(--rose); font-weight:700; } .delta-down{ color:var(--leaf); font-weight:700; } .delta-zero{ color:var(--text-faint); }
+  .chart-box{ position:relative; height:280px; }
+
+  .login-wrap{ max-width:420px; margin:0 auto; }
+  .login-wrap .field{ margin-bottom:14px; }
+  .loading{ text-align:center; padding:50px 10px; color:var(--text-mut); font-size:14px; }
+  .toast{ max-width:min(520px,90vw); line-height:1.45; position:fixed; bottom:22px; right:22px; background:var(--navy); color:#fff; padding:12px 18px; border-radius:12px; box-shadow:var(--shadow-lg); font-size:13px; font-weight:600; opacity:0; transform:translateY(10px); transition:.25s; z-index:999; pointer-events:none; }
+  .toast.show{ opacity:1; transform:none; }
+  .toast.err{ background:var(--rose); }
+  footer.note{ margin-top:30px; font-size:12px; color:var(--text-mut); line-height:1.7; text-align:center; padding:0 20px; }
+
+  
+  /* ---------- extras TEE ---------- */
+  .modal-bg{ position:fixed; inset:0; background:rgba(10,42,67,.55); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; z-index:900; padding:20px; }
+  .modal-card{ background:var(--surface); border-radius:var(--radius); padding:26px; width:min(560px,100%); max-height:92vh; overflow:auto; box-shadow:var(--shadow-lg); }
+  .modal-card h2{ font-family:var(--font-display); font-size:17px; font-weight:800; color:var(--navy); margin:0 0 4px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid2 .full{ grid-column:1/-1; }
+  .field textarea{ font-size:13px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#FBFDFE; color:var(--text); }
+  .upload-box input[type=file]{ font-size:13px; }
+  .status-card{ cursor:default; }
+  .mini{ font-size:11.5px; color:var(--text-mut); }
+  input[type=checkbox].ck{ accent-color:var(--water); width:16px; height:16px; cursor:pointer; }
+  @media (max-width:820px){ .kpi-row,.kpi-row.k3{ grid-template-columns:1fr 1fr; } .two-col,.status-grid,.grid2{ grid-template-columns:1fr; } .hero-actions{ position:static; margin-bottom:14px; } }
+
+</style>
+</head>
+<body>
+<div class="hero-wrap">
+  <div class="hero-inner">
+    <div class="hero-actions" id="hero-actions">
+      <button class="btn btn-sm btn-hero" id="btn-recarregar">Atualizar dados</button>
+    </div>
+    <div class="eyebrow"><span class="dot"></span>Águas do Rio · Grandes Clientes</div>
+    <h1>Gestão TEE · Tarifa Especial de Esgoto</h1>
+    <p>Elegibilidade, incremento por mês de entrada e controle dos termos de adesão das matrículas com efluente fora do padrão.</p>
+    <div class="hero-meta" id="hero-meta"></div>
+  </div>
+</div>
+
+<div class="app">
+<!-- APP -->
+  <div id="main-area">
+    <nav class="tabs" id="tabs">
+      <button class="active" data-view="geral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="lbl">Visão geral</span></button>
+      <button data-view="mat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="lbl">Matrículas</span></button>
+      <button data-view="imp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></svg><span class="lbl">Importar</span></button>
+    </nav>
+
+    <div class="panel-top" id="filtros-globais">
+      <div class="filters">
+        <div class="field"><label>Grupo</label><select id="f-grupo"><option value="">Todos os grupos</option></select></div>
+        <div class="field"><label>Data de referência (hoje)</label><input type="date" id="f-ref" style="padding:8px 12px;font-size:13px;"></div>
+      </div>
+      <div class="filter-note">O filtro de grupo vale para a Visão geral e para a aba Matrículas. A data de referência define em qual mês cada incremento entra na fatura.</div>
+    </div>
+
+    <div id="loading" class="loading">Carregando dados…</div>
+    <div id="sem-base" class="card" style="display:none;"><h2>Nenhuma matrícula importada ainda</h2><p class="sub">Vá na aba <b>Importar</b> e suba a planilha "A Cobrar" (.xlsx) para começar.</p></div>
+
+    <!-- VISÃO GERAL -->
+    <section class="view active" id="view-geral">
+      <div class="card">
+        <h2>Visão geral do incremento TEE</h2>
+        <p class="sub" id="geral-sub"></p>
+        <div class="kpi-row" id="geral-kpis"></div>
+      </div>
+      <div class="two-col">
+        <div class="card"><h2>Incremento por mês de entrada</h2><p class="sub">Leitura já realizada no mês de referência empurra a cobrança para o mês seguinte.</p><div class="dist-bars" id="dist-mes"></div></div>
+        <div class="card"><h2>Incremento por grupo</h2><p class="sub">Soma do incremento de todas as matrículas do grupo.</p><div class="dist-bars" id="dist-grupo"></div></div>
+      </div>
+      <div class="card">
+        <h2>Situação para implementação</h2>
+        <p class="sub">Critérios: percentual acima de 0%, leitura posterior à data máxima de evidências, cliente notificado e tarifa ainda não implementada.</p>
+        <div class="status-grid" id="status-cards"></div>
+      </div>
+    </section>
+
+    <!-- MATRÍCULAS -->
+    <section class="view" id="view-mat">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Matrículas</h2><p class="sub" id="mat-sub"></p></div>
+          <button class="btn btn-ghost btn-sm" id="btn-export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg>Exportar Excel</button>
+        </div>
+        <div class="form-row" style="margin:0 0 14px;">
+          <div class="field"><label>Buscar matrícula / cliente</label><input id="m-busca" placeholder="ex.: 100001364 ou ZONA SUL" style="padding:8px 12px;font-size:13px;min-width:240px;"></div>
+          <div class="field"><label>Situação</label><select id="m-sit" style="padding:8px 12px;font-size:13px;"><option value="">Todas</option><option value="apta">Aptas</option><option value="inapta">Inaptas</option></select></div>
+          <div class="field"><label>Mês de entrada</label><select id="m-mes" style="padding:8px 12px;font-size:13px;"><option value="">Todos</option></select></div>
+          <div class="field"><label>Termo</label><select id="m-termo" style="padding:8px 12px;font-size:13px;"><option value="">Todos</option><option value="sim">Gerado</option><option value="nao">Pendente</option></select></div>
+        </div>
+        <div class="tablewrap scroll">
+          <table>
+            <thead><tr>
+              <th>Matrícula</th><th>Cliente</th><th>Grupo</th><th>Bloco</th>
+              <th class="num">% Cobrança</th><th class="num">% Aplicado</th><th class="num">Incremento</th>
+              <th>Leitura</th><th>Mês entrada</th><th>1ª Notif.</th><th>Situação</th><th>Termo</th><th></th>
+            </tr></thead>
+            <tbody id="mat-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPORTAR -->
+    <section class="view" id="view-imp">
+      <div class="card">
+        <h2>Importar planilha "A Cobrar"</h2>
+        <p class="sub">Envie o Excel (aba <b>2° Onda</b>). A importação cria ou atualiza as matrículas pela chave matrícula e <b>não apaga</b> o status de termo gerado. Colunas reconhecidas: Matrícula, Nome/Cliente, Faturamento (ou Faturamento - A&amp;E), % de Cobrança (ou % Máximo de Cobrança), Negociação, Data Leitura, NOTIFICAÇÃO ENTREGUE, DATA DA 1ª NOTIFICAÇÃO, MAX DATA: ENVIO DE EVIDENCIAS e Tarifa Implementada.</p>
+        <div class="upload-box" id="up-box">
+          <input type="file" id="imp-file" accept=".xlsx,.xlsm,.xls">
+          <div class="form-row">
+            <div class="field"><label>Grupo desta base</label>
+              <select id="imp-grupo"><option>Mercados</option><option>Hospitais</option><option>Postos</option><option>Outros</option></select></div>
+            <div class="field"><label>Onda</label><input id="imp-onda" value="2° Onda"></div>
+            <div class="field"><label>Aba da planilha</label><input id="imp-aba" value="2° Onda"></div>
+            <button class="btn btn-primary" id="btn-imp">Ler e enviar para o Supabase</button>
+          </div>
+        </div>
+        <div class="progress" id="imp-prog"><div></div></div>
+        <div class="log" id="imp-log"></div>
+        <div class="callout amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <div>Reimportar sobrescreve, nas colunas que vêm da planilha, o que foi editado manualmente (por exemplo data de notificação). A planilha é tratada como fonte da verdade.</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="note" id="rodape"></footer>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" style="display:none;">
+  <div class="modal-card">
+    <h2 id="m-titulo">Editar matrícula</h2>
+    <p class="sub" id="m-sub" style="margin-bottom:14px;"></p>
+    <div class="grid2">
+      <div class="field"><label>1ª notificação (data do comunicado)</label><input type="date" id="e-notif-data"></div>
+      <div class="field"><label>Notificação entregue</label><select id="e-notif"><option value="true">Sim</option><option value="false">Não</option></select></div>
+      <div class="field"><label>Máx. data envio de evidências</label><input type="date" id="e-max"></div>
+      <div class="field"><label>Tarifa implementada</label><select id="e-tarifa"><option value="false">Não</option><option value="true">Sim</option></select></div>
+      <div class="field"><label>Negociação (%)</label><input type="number" step="0.01" id="e-neg" placeholder="ex.: 30"></div>
+      <div class="field"><label>Data do termo</label><input type="date" id="e-dtermo"></div>
+      <div class="field full"><label>Observação</label><textarea id="e-obs" rows="3" class="cell-input obs-input"></textarea></div>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" id="e-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="e-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ CONFIGURE AQUI ============ */
+const SUPABASE_URL      = 'https://metstknnhexflqmpgzof.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Wi0PmbWO7oPtoqUv1sRMPw_7A8Hgtx4';
+/* ======================================== */
+
+const $ = id => document.getElementById(id);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let DADOS = [], EDITANDO = null;
+
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const brl = v => v==null ? '–' : Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const pct = v => v==null ? '–' : (Number(v)*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
+const dBR = s => { if(!s) return '–'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
+const mesLbl = s => { if(!s) return '–'; const [y,m]=s.split('-'); return `${MESES[+m-1]}/${y}`; };
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const soma = (arr,f) => arr.reduce((s,r)=>s+(+r[f]||0),0);
+
+function toast(msg, err){
+  const t=$('toast'); t.textContent=msg; t.className='toast show'+(err?' err':'');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast'+(err?' err':''), err?9000:2600);
+}
+
+/* ---------- INÍCIO ---------- */
+$('btn-recarregar').onclick=()=>carregar(true);
+
+/* ---------- ABAS ---------- */
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+b.dataset.view));
+});
+
+/* ---------- CARGA ---------- */
+async function carregar(manual){
+  $('loading').style.display='block';
+  let todos=[], from=0; const passo=1000;
+  while(true){
+    const {data,error}=await sb.from('tee_calculo').select('*').order('matricula').range(from,from+passo-1);
+    if(error){ $('loading').style.display='none'; toast('Erro ao carregar: '+error.message,true); return; }
+    todos=todos.concat(data); if(data.length<passo) break; from+=passo;
+  }
+  DADOS=todos; $('loading').style.display='none';
+  $('sem-base').style.display=DADOS.length?'none':'block';
+  if(DADOS.length) $('f-ref').value=DADOS[0].data_referencia;
+  popularFiltros(); renderTudo();
+  if(manual) toast('Dados atualizados');
+}
+function popularFiltros(){
+  const gv=$('f-grupo').value, mv=$('m-mes').value;
+  const gs=[...new Set(DADOS.map(d=>d.grupo).filter(Boolean))].sort();
+  const ms=[...new Set(DADOS.map(d=>d.mes_entrada).filter(Boolean))].sort();
+  $('f-grupo').innerHTML='<option value="">Todos os grupos</option>'+gs.map(g=>`<option>${esc(g)}</option>`).join('');
+  $('m-mes').innerHTML='<option value="">Todos</option>'+ms.map(m=>`<option value="${m}">${mesLbl(m)}</option>`).join('');
+  $('f-grupo').value=gv; $('m-mes').value=mv;
+}
+$('f-ref').onchange=async()=>{
+  const {error}=await sb.from('tee_config').update({data_referencia:$('f-ref').value||null}).eq('id',1);
+  if(error) toast(error.message,true); else carregar();
+};
+$('f-grupo').onchange=renderTudo;
+['m-busca','m-sit','m-mes','m-termo'].forEach(id=>$(id).addEventListener(id==='m-busca'?'input':'change',renderMat));
+
+const base = () => DADOS.filter(d=>!$('f-grupo').value || d.grupo===$('f-grupo').value);
+function motivos(d){
+  const m=[];
+  if(!d.crit_percentual) m.push('% de cobrança = 0');
+  if(!d.crit_leitura) m.push('leitura não posterior à data máx. de evidências');
+  if(!d.crit_notificado) m.push('não notificado');
+  if(!d.crit_nao_implementada) m.push('tarifa já implementada');
+  return m;
+}
+
+/* ---------- RENDER ---------- */
+function renderTudo(){ renderHero(); renderGeral(); renderMat(); }
+function renderHero(){
+  const b=base();
+  $('hero-meta').innerHTML = DADOS.length
+    ? `<span class="chip">Data de referência <b>${dBR(DADOS[0].data_referencia)}</b></span>
+       <span class="chip">Matrículas <b>${b.length}</b></span>
+       <span class="chip">Aptas <b>${b.filter(d=>d.apta).length}</b></span>`
+    : '';
+  $('rodape').innerHTML='Incremento = (faturamento ÷ 2) × percentual aplicado (máx. 30%). A metade do faturamento corresponde ao esgoto.';
+}
+function renderGeral(){
+  const b=base(), aptas=b.filter(d=>d.apta);
+  const tot=soma(b,'incremento'), totA=soma(aptas,'incremento');
+  const termos=b.filter(d=>d.termo_gerado).length;
+  $('geral-sub').textContent=`${b.length} matrículas${$('f-grupo').value?' do grupo '+$('f-grupo').value:''} · data de referência ${DADOS.length?dBR(DADOS[0].data_referencia):'–'}.`;
+  const porMes={}; b.forEach(d=>{ const k=d.mes_entrada; (porMes[k]=porMes[k]||[]).push(d); });
+  const meses=Object.keys(porMes).sort();
+  let k=`
+    <div class="kpi navy"><div class="label">Matrículas</div><div class="value">${b.length}</div><div class="hint">${aptas.length} aptas · ${b.length-aptas.length} inaptas</div></div>
+    <div class="kpi"><div class="label">Incremento total</div><div class="value">${brl(tot)}</div><div class="hint">Somente aptas: ${brl(totA)}</div></div>`;
+  meses.slice(0,2).forEach((m,i)=>{ const arr=porMes[m];
+    k+=`<div class="kpi ${i?'amber':'leaf'}"><div class="label">Entra em ${mesLbl(m)}</div><div class="value ${i?'amber':'leaf'}">${brl(soma(arr,'incremento'))}</div><div class="hint">${arr.length} matrículas · aptas: ${brl(soma(arr.filter(d=>d.apta),'incremento'))}</div></div>`; });
+  $('geral-kpis').innerHTML=k;
+  $('geral-kpis').className='kpi-row'+(meses.length<2?' k3':'');
+
+  const dist=(el,rows)=>{ const max=Math.max(1,...rows.map(r=>r.v));
+    $(el).innerHTML=rows.length?rows.map(r=>`<div class="dist-row"><div>${esc(r.l)}</div><div class="dist-track"><div class="dist-fill" style="width:${r.v/max*100}%"></div></div><div class="dist-val">${brl(r.v)} <small>· ${r.n}</small></div></div>`).join(''):'<div class="muted">Sem dados.</div>'; };
+  dist('dist-mes',meses.map(m=>({l:mesLbl(m),v:soma(porMes[m],'incremento'),n:porMes[m].length})));
+  const pg={}; b.forEach(d=>{ const g=d.grupo||'Sem grupo'; (pg[g]=pg[g]||[]).push(d); });
+  dist('dist-grupo',Object.keys(pg).sort().map(g=>({l:g,v:soma(pg[g],'incremento'),n:pg[g].length})));
+
+  const nNot=b.filter(d=>!d.crit_notificado).length;
+  const nImp=b.filter(d=>!d.crit_nao_implementada).length;
+  const nLei=b.filter(d=>d.crit_notificado && d.crit_nao_implementada && !d.crit_leitura).length;
+  $('status-cards').innerHTML=`
+    <div class="status-card leaf"><div class="sc-title">Aptas</div><div class="sc-value">${aptas.length}</div><div class="sc-sub">${brl(totA)} de incremento</div>
+      <div class="sc-rule">Atendem aos 4 critérios e podem ter a tarifa implementada.</div><div class="sc-foot"><span>Termos gerados: <b>${termos}</b></span><span>Pendentes: <b>${b.length-termos}</b></span></div></div>
+    <div class="status-card amber"><div class="sc-title">Aguardando notificação</div><div class="sc-value">${nNot}</div><div class="sc-sub">${brl(soma(b.filter(d=>!d.crit_notificado),'incremento'))} bloqueados</div>
+      <div class="sc-rule">Sem comunicado entregue. Registre a data da 1ª notificação pelo botão Editar.</div></div>
+    <div class="status-card rose"><div class="sc-title">Outros bloqueios</div><div class="sc-value">${nImp+nLei}</div><div class="sc-sub">${nImp} tarifa já implementada · ${nLei} leitura antes do prazo</div>
+      <div class="sc-rule">Tarifa já implementada evita cobrança em duplicidade; leitura antes do prazo de evidências aguarda o próximo ciclo.</div></div>`;
+}
+function filtradasMat(){
+  const q=$('m-busca').value.trim().toLowerCase();
+  return base().filter(d=>{
+    if(q && !`${d.matricula} ${d.cliente}`.toLowerCase().includes(q)) return false;
+    if($('m-sit').value==='apta' && !d.apta) return false;
+    if($('m-sit').value==='inapta' && d.apta) return false;
+    if($('m-mes').value && d.mes_entrada!==$('m-mes').value) return false;
+    if($('m-termo').value==='sim' && !d.termo_gerado) return false;
+    if($('m-termo').value==='nao' && d.termo_gerado) return false;
+    return true; });
+}
+function renderMat(){
+  const rows=filtradasMat();
+  $('mat-sub').textContent=`${rows.length} matrículas · incremento filtrado: ${brl(soma(rows,'incremento'))}`;
+  $('mat-body').innerHTML=rows.length?rows.map(d=>{
+    const mt=motivos(d);
+    const sit=d.apta?'<span class="badge b-leaf">Apta</span>':`<span class="badge b-rose" title="${esc(mt.join('; '))}">Inapta</span> <span class="mini">${esc(mt[0]||'')}</span>`;
+    return `<tr>
+      <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td>
+      <td><span class="badge b-gray">${esc(d.grupo||'–')}</span></td><td>${d.bloco??'–'}</td>
+      <td class="num">${pct(d.pct_cobranca)}</td><td class="num">${pct(d.pct_aplicado)}</td><td class="num"><b>${brl(d.incremento)}</b></td>
+      <td>${dBR(d.data_leitura)}</td><td><span class="badge b-water">${mesLbl(d.mes_entrada)}</span></td><td>${dBR(d.data_1a_notificacao)}</td>
+      <td>${sit}</td>
+      <td><input type="checkbox" class="ck" ${d.termo_gerado?'checked':''} data-mat="${d.matricula}" title="${d.data_termo?'Gerado em '+dBR(d.data_termo):'Marcar termo como gerado'}"></td>
+      <td><button class="btn btn-ghost btn-sm" data-edit="${d.matricula}">Editar</button></td></tr>`;
+  }).join(''):'<tr class="empty-row"><td colspan="13">Nenhuma matrícula encontrada.</td></tr>';
+  document.querySelectorAll('#mat-body input.ck').forEach(c=>c.onchange=()=>marcarTermo(c.dataset.mat,c.checked));
+  document.querySelectorAll('#mat-body [data-edit]').forEach(b=>b.onclick=()=>abrirModal(b.dataset.edit));
+}
+async function marcarTermo(mat,v){
+  const {error}=await sb.from('tee_matriculas').update({termo_gerado:v,data_termo:v?new Date().toISOString().slice(0,10):null}).eq('matricula',mat);
+  if(error) toast(error.message,true); else { toast(v?'Termo marcado como gerado':'Termo desmarcado'); carregar(); }
+}
+
+/* ---------- MODAL ---------- */
+function abrirModal(mat){
+  const d=DADOS.find(x=>x.matricula===mat); if(!d) return; EDITANDO=mat;
+  $('m-titulo').textContent=`Matrícula ${d.matricula}`; $('m-sub').textContent=d.cliente||'';
+  $('e-notif-data').value=d.data_1a_notificacao||''; $('e-notif').value=String(!!d.notificacao_entregue);
+  $('e-max').value=d.max_data_evidencias||''; $('e-tarifa').value=String(!!d.tarifa_implementada);
+  $('e-neg').value=d.negociacao!=null?+(d.negociacao*100).toFixed(2):''; $('e-dtermo').value=d.data_termo||''; $('e-obs').value=d.observacao||'';
+  $('modal').style.display='flex';
+}
+const fechar=()=>{ $('modal').style.display='none'; EDITANDO=null; };
+$('e-cancel').onclick=fechar;
+$('modal').onclick=e=>{ if(e.target===$('modal')) fechar(); };
+$('e-save').onclick=async()=>{
+  const n=$('e-neg').value;
+  const upd={ data_1a_notificacao:$('e-notif-data').value||null, notificacao_entregue:$('e-notif').value==='true',
+    max_data_evidencias:$('e-max').value||null, tarifa_implementada:$('e-tarifa').value==='true',
+    negociacao:n===''?null:Math.min(parseFloat(n)/100,10), data_termo:$('e-dtermo').value||null, observacao:$('e-obs').value||null };
+  const {error}=await sb.from('tee_matriculas').update(upd).eq('matricula',EDITANDO);
+  if(error) return toast(error.message,true);
+  fechar(); toast('Matrícula atualizada'); carregar();
+};
+
+/* ---------- EXPORTAR ---------- */
+$('btn-export').onclick=()=>{
+  const rows=filtradasMat().map(d=>({
+    'Matrícula':d.matricula,'Cliente':d.cliente,'Grupo':d.grupo,'Bloco':d.bloco,'Faturamento':+d.faturamento,
+    '% Cobrança':+d.pct_cobranca,'% Aplicado':+d.pct_aplicado,'Incremento (R$)':+d.incremento,
+    'Data Leitura':dBR(d.data_leitura),'Mês de Entrada':mesLbl(d.mes_entrada),'1ª Notificação':dBR(d.data_1a_notificacao),
+    'Notificado':d.notificacao_entregue?'Sim':'Não','Máx. Evidências':dBR(d.max_data_evidencias),
+    'Tarifa Implementada':d.tarifa_implementada?'Sim':'Não','Apta':d.apta?'Sim':'Não','Motivo':motivos(d).join('; '),
+    'Termo Gerado':d.termo_gerado?'Sim':'Não'}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'TEE');
+  XLSX.writeFile(wb,'TEE_export.xlsx');
+};
+
+/* ---------- IMPORTAÇÃO ---------- */
+const norm = s => String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+function num(v){
+  if(v==null||v==='') return null;
+  if(typeof v==='number') return isFinite(v)?v:null;
+  const t=String(v).trim(); const n=t.includes(',')?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t);
+  return isFinite(n)?n:null;
+}
+function dt(v){
+  if(v==null||v==='') return null;
+  if(v instanceof Date){ return new Date(v.getTime()+12*3600e3).toISOString().slice(0,10); }
+  const s=String(v).trim(); let m;
+  if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/))) return `${m[3]}-${m[2]}-${m[1]}`;
+  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+  return null;
+}
+const sim = v => norm(v)==='sim';
+const logImp = t => { const l=$('imp-log'); l.textContent+=(l.textContent?'\n':'')+t; };
+$('imp-file').onchange=()=>$('up-box').classList.toggle('has-file',!!$('imp-file').files[0]);
+
+$('btn-imp').onclick=async()=>{
+  const f=$('imp-file').files[0]; if(!f) return toast('Selecione o arquivo.',true);
+  const btn=$('btn-imp'); btn.disabled=true; $('imp-log').textContent=''; $('imp-prog').style.display='block'; $('imp-prog').firstElementChild.style.width='5%';
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});
+    const aba=wb.SheetNames.find(n=>norm(n)===norm($('imp-aba').value))||wb.SheetNames[0];
+    logImp(`Aba usada: ${aba}`);
+    const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:null,raw:true});
+    const pick=(r,...ks)=>{ for(const k of Object.keys(r)) if(ks.includes(norm(k))) return r[k]; };
+    const mapa=new Map();
+    for(const r of linhas){
+      const mat=String(pick(r,'matricula')??'').trim(); if(!/^\d{6,}$/.test(mat)) continue;
+      let fat=num(pick(r,'faturamento - a&e')); if(fat==null) fat=num(pick(r,'faturamento'));
+      let pc=num(pick(r,'% de cobranca')); if(pc==null) pc=num(pick(r,'% maximo de cobranca'));
+      const ng=num(pick(r,'negociacao'));
+      const reg={ matricula:mat, cliente:String(pick(r,'nome','cliente')??'').trim()||null,
+        grupo:$('imp-grupo').value, onda:$('imp-onda').value, faturamento:fat, pct_cobranca:pc,
+        negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null, data_leitura:dt(pick(r,'data leitura')),
+        data_1a_notificacao:dt(pick(r,'data da 1a notificacao')), notificacao_entregue:sim(pick(r,'notificacao entregue')),
+        max_data_evidencias:dt(pick(r,'max data: envio de evidencias')), tarifa_implementada:sim(pick(r,'tarifa implementada')) };
+      const ant=mapa.get(mat); if(!ant||(ant.faturamento==null&&fat!=null)) mapa.set(mat,reg);
+    }
+    const lote=[...mapa.values()]; logImp(`${lote.length} matrículas válidas encontradas. Enviando…`);
+    for(let i=0;i<lote.length;i+=200){
+      const {error}=await sb.from('tee_matriculas').upsert(lote.slice(i,i+200),{onConflict:'matricula'});
+      if(error) throw error;
+      $('imp-prog').firstElementChild.style.width=Math.round(Math.min(i+200,lote.length)/lote.length*100)+'%';
+      logImp(`  enviadas ${Math.min(i+200,lote.length)}/${lote.length}`);
+    }
+    logImp('✔ Importação concluída.'); toast('Importação concluída'); await carregar();
+  }catch(e){ logImp('✖ Erro: '+(e.message||e)); toast('Erro na importação: '+(e.message||e),true); }
+  btn.disabled=false;
+};
+
+carregar();
+
+</script>
+</body>
+</html>
