@@ -248,7 +248,24 @@
   .exec-kpis .v{ font-family:var(--font-display); font-size:28px; font-weight:800; line-height:1.15; margin-top:4px; }
   .exec-kpis .h{ font-size:12px; color:rgba(255,255,255,.7); margin-top:2px; }
   .exec-kpis .urg .v{ color:#FFD27A; }
-  .detail-head{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+  .detail-head{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; box-shadow:var(--shadow-xs); }
+  /* ---------- cards no padrão da plataforma principal ---------- */
+  .home-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:20px; }
+  @media (max-width:820px){ .home-grid{ grid-template-columns:1fr; } }
+  .mod-card{ background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:28px; box-shadow:var(--shadow-md); cursor:pointer; transition:.2s; display:flex; flex-direction:column; gap:14px; position:relative; overflow:hidden; text-align:left; font:inherit; color:inherit; }
+  .mod-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:var(--water-line); }
+  .mod-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--c,var(--navy)); }
+  .mod-icon{ width:50px; height:50px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:var(--cs,#E6ECF2); color:var(--c,var(--navy)); }
+  .mod-icon svg{ width:24px; height:24px; }
+  .mod-card h2{ font-family:var(--font-display); font-weight:800; font-size:21px; color:var(--navy); margin:0; }
+  .mod-card p{ margin:0; font-size:13.5px; color:var(--text-mut); line-height:1.6; }
+  .mod-stats{ display:flex; gap:24px; flex-wrap:wrap; border-top:1px solid var(--border); padding-top:14px; }
+  .mod-stats div{ font-size:12px; color:var(--text-mut); }
+  .mod-stats b{ display:block; font-family:var(--font-display); font-size:20px; color:var(--navy); margin-top:2px; }
+  .mod-stats .urg b{ color:var(--rose); }
+  .mod-go{ margin-top:auto; font-weight:700; font-size:13.5px; color:var(--water); }
+  .mod-card.vazio .mod-stats b{ color:var(--text-faint); }
+  .mod-tag{ position:absolute; top:24px; right:24px; font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; background:#EEF3F6; color:var(--text-mut); }
   .detail-head h2{ font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--navy); margin:0; }
   .detail-head .sub{ margin:2px 0 0; }
   .detail-right{ margin-left:auto; display:flex; gap:12px; align-items:flex-end; }
@@ -272,6 +289,7 @@
 <div class="hero-wrap">
   <div class="hero-inner">
     <div class="hero-actions" id="hero-actions">
+      <a class="btn btn-sm btn-hero" id="btn-principal" href="#" style="text-decoration:none">← Página principal</a>
       <button class="btn btn-sm btn-hero" id="btn-imp-abrir">Importar planilha</button>
       <button class="btn btn-sm btn-hero" id="btn-recarregar">Atualizar dados</button>
     </div>
@@ -287,7 +305,7 @@
 
   <!-- HOME -->
   <section class="view active" id="view-home">
-    <div class="seg-grid" id="home-cards"></div>
+    <div class="home-grid" id="home-cards"></div>
     <div id="sem-base" class="card" style="display:none;margin-top:16px;"><h2>Nenhuma matrícula importada ainda</h2><p class="sub">Clique em <b>Importar planilha</b> no topo e suba a planilha "A Cobrar" (.xlsx) para começar.</p></div>
   </section>
 
@@ -337,14 +355,13 @@
   <section class="view" id="view-imp">
     <div class="detail-head"><button class="btn btn-ghost btn-sm" data-voltar>← Voltar</button><div><h2>Importar planilha "A Cobrar"</h2></div></div>
     <div class="card">
-      <p class="sub">Envie o Excel (aba <b>2° Onda</b>). A importação cria ou atualiza as matrículas pela chave matrícula e <b>não apaga</b> executivo, fase nem status de termo. Colunas reconhecidas: Matrícula, Nome/Cliente, Ciclo, Executivo (opcional), Faturamento (ou Faturamento - A&amp;E), % de Cobrança (ou % Máximo de Cobrança), Negociação, Data Leitura, NOTIFICAÇÃO ENTREGUE, DATA DA 1ª NOTIFICAÇÃO, MAX DATA: ENVIO DE EVIDENCIAS e Tarifa Implementada.</p>
+      <p class="sub">Envie o Excel com <b>todas as ondas</b>: cada aba "1° Onda", "2° Onda", "3° Onda"… é lida e a onda de cada matrícula é identificada pelo nome da aba (ou pela coluna <b>Onda</b>, quando existir). Abas sem coluna Matrícula (Dinâmica, Planilha1…) são ignoradas. A importação cria ou atualiza as matrículas pela chave matrícula e <b>não apaga</b> executivo, fase nem status de termo. Colunas reconhecidas: Matrícula, Nome/Cliente, Ciclo, Executivo (opcional), Faturamento (ou Faturamento - A&amp;E), % de Cobrança (ou % Máximo de Cobrança), Negociação, Data Leitura, NOTIFICAÇÃO ENTREGUE, DATA DA 1ª NOTIFICAÇÃO, MAX DATA: ENVIO DE EVIDENCIAS e Tarifa Implementada.</p>
       <div class="upload-box" id="up-box">
         <input type="file" id="imp-file" accept=".xlsx,.xlsm,.xls">
         <div class="form-row">
           <div class="field"><label>Segmento desta base</label>
             <select id="imp-grupo"><option>Hospitais</option><option>Postos de Gasolina</option><option>Mercados</option><option>Shoppings</option><option>Hotéis</option><option>Restaurantes</option><option>Outros</option></select></div>
-          <div class="field"><label>Onda</label><input id="imp-onda" value="2° Onda"></div>
-          <div class="field"><label>Aba da planilha</label><input id="imp-aba" value="2° Onda"></div>
+          <div class="field"><label>Onda (só se a planilha não indicar)</label><input id="imp-onda" placeholder="ex.: 2° Onda"></div>
           <button class="btn btn-primary" id="btn-imp">Ler e enviar para o Supabase</button>
         </div>
       </div>
@@ -407,6 +424,8 @@ const ETAPAS={
   sem_tee:     {l:'Sem TEE',          b:'b-gray',  c:'#B8C4CC'}
 };
 const ORDEM=['implementada','apta','aguardando','comunicar','sem_tee'];
+/* Link do botão "← Página principal" (plataforma Grandes Clientes). Troque pelo endereço da sua plataforma. */
+const PLATAFORMA_URL='../vencidos-gc/';
 /* Cards fixos de segmento: aparecem sempre, mesmo sem planilha importada */
 const SEGMENTOS=['Hospitais','Postos de Gasolina','Mercados','Shoppings','Hotéis','Restaurantes'];
 const SEG_ALIAS={'postos':'Postos de Gasolina','posto':'Postos de Gasolina','postos de gasolina':'Postos de Gasolina','hospitais':'Hospitais','hospitais e clinicas':'Hospitais','hospital':'Hospitais','mercados':'Mercados','mercado':'Mercados','supermercados':'Mercados','shoppings':'Shoppings','shopping':'Shoppings','hoteis':'Hotéis','hotel':'Hotéis','restaurantes':'Restaurantes','restaurante':'Restaurantes'};
@@ -431,6 +450,7 @@ function go(v,seg){
 }
 document.querySelectorAll('[data-voltar]').forEach(b=>b.onclick=()=>go('home'));
 $('btn-imp-abrir').onclick=()=>go('imp');
+$('btn-principal').href=PLATAFORMA_URL;
 $('btn-recarregar').onclick=()=>carregar(true);
 
 /* ---------- CARGA ---------- */
@@ -462,29 +482,53 @@ function render(){
 }
 
 /* ---------- HOME ---------- */
+const ICO={
+  exec:'<path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/><circle cx="12" cy="14" r="1.5"/>',
+  'Hospitais':'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 7v6M9 10h6M9 21v-4h6v4"/>',
+  'Postos de Gasolina':'<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12M4 10h10"/><path d="M14 8h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V9l-3-3"/>',
+  'Mercados':'<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.7 12.5a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.2L21 8H6"/>',
+  'Shoppings':'<path d="M6 7h12l1 14H5L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/>',
+  'Hotéis':'<path d="M3 20V7M3 14h18v6M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>',
+  'Restaurantes':'<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1-3 3.5-3 7h3"/>',
+  outro:'<path d="M12 2.7s-6 6.3-6 11.3a6 6 0 0 0 12 0c0-5-6-11.3-6-11.3z"/>'
+};
+const COR={'Hospitais':['var(--rose)','var(--rose-soft)'],'Postos de Gasolina':['var(--amber)','var(--amber-soft)'],'Mercados':['var(--leaf)','var(--leaf-soft)'],
+  'Shoppings':['#6A45B8','#EFEAFA'],'Hotéis':['var(--water)','var(--water-soft)'],'Restaurantes':['#B0457A','#F8E8F0']};
+const DESC={'Hospitais':'Hospitais e clínicas: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
+  'Postos de Gasolina':'Postos de combustível: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
+  'Mercados':'Mercados e supermercados: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
+  'Shoppings':'Shoppings: agenda com o cliente, percentual definido e matrículas liberadas para virar.',
+  'Hotéis':'Hotéis: segmento previsto no projeto — os números aparecem quando a planilha for importada.',
+  'Restaurantes':'Restaurantes: segmento previsto no projeto — os números aparecem quando a planilha for importada.'};
+const svg=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const brlC=v=>{ v=+v||0; return v>=1e6?'R$ '+(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' M':v>=1e3?'R$ '+(v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':brl(v); };
+const fmtN=n=>Number(n).toLocaleString('pt-BR');
+
 function renderHome(){
   const ap=DADOS.filter(d=>d.etapa==='apta'), pr=DADOS.filter(d=>d.prioridade);
-  let h=`<div class="seg-card exec" data-go="exec">
-    <h3>EXECUTOR</h3>
-    <div class="sc-sub">Matrículas aptas a virar e prioridades pela proximidade do ciclo de leitura.</div>
-    <div class="exec-kpis">
-      <div><div class="l">Aptas a virar</div><div class="v">${ap.length}</div><div class="h">${brl(soma(ap,'incremento'))} de incremento</div></div>
-      <div class="urg"><div class="l">Prioridades</div><div class="v">${pr.length}</div><div class="h">leitura em até ${JAN()} dias ou já passou</div></div>
-      <div><div class="l">A comunicar</div><div class="v">${cnt(DADOS,'comunicar')}</div><div class="h">sem data de comunicado</div></div>
-      <div><div class="l">Implementadas</div><div class="v">${cnt(DADOS,'implementada')}</div><div class="h">de ${DADOS.length} matrículas</div></div>
-    </div></div>`;
+  let h=`<button class="mod-card" data-go="exec" style="--c:var(--navy);--cs:#E6ECF2">
+    <div class="mod-icon">${svg(ICO.exec)}</div>
+    <h2>Executor</h2>
+    <p>Visão do coordenador: matrículas aptas a virar, prioridades pela proximidade do ciclo de leitura, comunicados pendentes e o que já foi implementado em todos os segmentos.</p>
+    <div class="mod-stats">
+      <div>Aptas a virar<b>${fmtN(ap.length)}</b></div>
+      <div class="${pr.length?'urg':''}">Prioridades<b>${fmtN(pr.length)}</b></div>
+      <div>A comunicar<b>${fmtN(cnt(DADOS,'comunicar'))}</b></div>
+      <div>Implementadas<b>${fmtN(cnt(DADOS,'implementada'))}</b></div>
+    </div>
+    <div class="mod-go">Abrir →</div></button>`;
   const extras=[...new Set(DADOS.map(segDe))].filter(g=>!SEGMENTOS.includes(g)).sort();
   [...SEGMENTOS,...extras].forEach(g=>{
-    const rows=DADOS.filter(d=>segDe(d)===g), n=rows.length;
-    if(!n){ h+=`<div class="seg-card vazio" data-go="seg" data-seg="${esc(g)}">
-      <h3>${esc(g)}</h3><div class="sc-sub">Ainda sem planilha importada</div>
-      <div class="big">0<small>matrículas</small></div>
-      <div class="stack"></div><div class="legend"><span style="--c:#B8C4CC">Aguardando base</span></div></div>`; return; }
-    h+=`<div class="seg-card" data-go="seg" data-seg="${esc(g)}">
-      <h3>${esc(g)}</h3><div class="sc-sub">${n} matrículas · ${brl(soma(rows,'incremento'))} de incremento</div>
-      <div class="big">${cnt(rows,'apta')}<small>aptas a implementar</small></div>
-      <div class="stack">${ORDEM.map(e=>`<i style="width:${cnt(rows,e)/n*100}%;background:${ETAPAS[e].c}"></i>`).join('')}</div>
-      <div class="legend">${ORDEM.filter(e=>cnt(rows,e)).map(e=>`<span style="--c:${ETAPAS[e].c}">${ETAPAS[e].l} <b>${cnt(rows,e)}</b></span>`).join('')}</div></div>`;
+    const rows=DADOS.filter(d=>segDe(d)===g), n=rows.length, [c,cs]=COR[g]||['var(--navy-3)','#E6ECF2'];
+    const stats=n?`<div>Matrículas<b>${fmtN(n)}</b></div><div>Aptas<b>${fmtN(cnt(rows,'apta'))}</b></div><div>A comunicar<b>${fmtN(cnt(rows,'comunicar'))}</b></div><div>Incremento<b>${brlC(soma(rows,'incremento'))}</b></div>`
+                  :`<div>Matrículas<b>0</b></div><div>Aptas<b>–</b></div><div>Incremento<b>–</b></div>`;
+    h+=`<button class="mod-card${n?'':' vazio'}" data-go="seg" data-seg="${esc(g)}" style="--c:${c};--cs:${cs}">
+      ${n?'':'<span class="mod-tag">Ainda sem planilha</span>'}
+      <div class="mod-icon">${svg(ICO[g]||ICO.outro)}</div>
+      <h2>${esc(g)}</h2>
+      <p>${DESC[g]||'Matrículas importadas neste segmento: comunicados, aptas e incremento previsto.'}</p>
+      <div class="mod-stats">${stats}</div>
+      <div class="mod-go">Abrir →</div></button>`;
   });
   $('home-cards').innerHTML=h;
   document.querySelectorAll('#home-cards [data-go]').forEach(c=>c.onclick=()=>go(c.dataset.go,c.dataset.seg));
@@ -539,15 +583,15 @@ function renderSeg(){
   tabs('seg-tabs',T,SEGTAB,k=>{ SEGTAB=k; renderSeg(); });
   const q=$('seg-busca').value.trim().toLowerCase();
   SEG_ROWS=minhas.filter(d=>(SEGTAB==='todas'||d.etapa===SEGTAB)&&(!q||`${d.matricula} ${d.cliente}`.toLowerCase().includes(q)));
-  $('seg-head').innerHTML='<tr><th>Matrícula</th><th>Cliente</th><th>Ciclo</th><th>Leitura</th><th class="num">% aplic.</th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th>Executivo</th><th></th></tr>';
+  $('seg-head').innerHTML='<tr><th>Matrícula</th><th>Cliente</th><th>Onda</th><th>Ciclo</th><th>Leitura</th><th class="num">% aplic.</th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th>Executivo</th><th></th></tr>';
   $('seg-body').innerHTML=SEG_ROWS.length?SEG_ROWS.map(d=>`<tr>
-    <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(d.ciclo||'–')}</td>
+    <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(d.onda||'–')}</td><td>${esc(d.ciclo||'–')}</td>
     <td>${dBR(d.data_leitura)}<div class="mini">${diasTxt(d)}</div></td>
     <td class="num">${pct(d.pct_aplicado)}</td><td class="num"><b>${brl(d.incremento)}</b></td>
     <td>${comunicadoInput(d)}</td><td>${aptaTxt(d)}</td><td>${etapaBadge(d)}</td>
     <td>${d.fase?`<span class="badge b-gray">${esc(d.fase)}</span>`:'<span class="mini">–</span>'}</td>
     <td>${esc(d.executivo||'–')}</td><td><button class="btn btn-ghost btn-sm" data-edit="${d.matricula}">Editar</button></td></tr>`).join('')
-    :'<tr class="empty-row"><td colspan="12">Nenhuma matrícula neste filtro.</td></tr>';
+    :'<tr class="empty-row"><td colspan="13">Nenhuma matrícula neste filtro.</td></tr>';
   ligarLinhas('seg-body');
 }
 $('seg-exec').onchange=()=>{ localStorage.setItem('tee_exec',$('seg-exec').value); renderSeg(); };
@@ -630,7 +674,7 @@ $('e-save').onclick=async()=>{
 
 /* ---------- EXPORTAR ---------- */
 $('btn-export').onclick=()=>{
-  const rows=SEG_ROWS.map(d=>({'Matrícula':d.matricula,'Cliente':d.cliente,'Segmento':segDe(d),'Executivo':d.executivo,'Ciclo':d.ciclo,
+  const rows=SEG_ROWS.map(d=>({'Matrícula':d.matricula,'Cliente':d.cliente,'Segmento':segDe(d),'Executivo':d.executivo,'Onda':d.onda,'Ciclo':d.ciclo,
     'Faturamento':+d.faturamento,'% Aplicado':+d.pct_aplicado,'Incremento (R$)':+d.incremento,'Data Leitura':dBR(d.data_leitura),
     'Data do Comunicado':dBR(d.data_1a_notificacao),'Máx. Evidências':dBR(d.max_data_evidencias),'Apta a partir de':dBR(d.data_apta),
     'Mês de Entrada':mesLbl(d.mes_entrada),'Etapa':ETAPAS[d.etapa].l,'Fase':d.fase||''}));
@@ -652,25 +696,38 @@ $('btn-imp').onclick=async()=>{
   const f=$('imp-file').files[0]; if(!f) return toast('Selecione o arquivo.',true);
   const btn=$('btn-imp'); btn.disabled=true; $('imp-log').textContent=''; $('imp-prog').style.display='block'; $('imp-prog').firstElementChild.style.width='5%';
   try{
-    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});
-    const aba=wb.SheetNames.find(n=>norm(n)===norm($('imp-aba').value))||wb.SheetNames[0]; logImp(`Aba usada: ${aba}`);
-    const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:null,raw:true});
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,sheetRows:20000});
     const pick=(r,...ks)=>{ for(const k of Object.keys(r)) if(ks.includes(norm(k))) return r[k]; };
-    const temExec=linhas.some(r=>Object.keys(r).some(k=>['executivo','responsavel','analista'].includes(norm(k))));
-    const mapa=new Map(), impl=[];
-    for(const r of linhas){
-      const mat=String(pick(r,'matricula')??'').trim(); if(!/^\d{6,}$/.test(mat)) continue;
-      let fat=num(pick(r,'faturamento - a&e')); if(fat==null) fat=num(pick(r,'faturamento'));
-      let pc=num(pick(r,'% de cobranca')); if(pc==null) pc=num(pick(r,'% maximo de cobranca'));
-      const ng=num(pick(r,'negociacao')), ci=pick(r,'ciclo');
-      const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:$('imp-grupo').value,onda:$('imp-onda').value,
-        ciclo:ci==null?null:String(ci).trim(),faturamento:fat,pct_cobranca:pc,negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null,
-        data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao')),
-        notificacao_entregue:sim(pick(r,'notificacao entregue')),max_data_evidencias:dt(pick(r,'max data: envio de evidencias')),
-        tarifa_implementada:sim(pick(r,'tarifa implementada'))};
-      if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
-      const ant=mapa.get(mat); if(!ant||(ant.faturamento==null&&fat!=null)) mapa.set(mat,reg);
+    const ondaNum=v=>{ const m=String(v??'').match(/(\d+)\s*[°ºª.o]?\s*onda/i)||String(v??'').match(/^\s*(\d+)\s*[°ºª]?\s*$/); return m?+m[1]:null; };
+    const ondaManual=$('imp-onda').value.trim();
+    const mapa=new Map(), impl=[], porOnda={};
+    for(const aba of wb.SheetNames){
+      const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:null,raw:true});
+      if(!linhas.some(r=>Object.keys(r).some(k=>norm(k)==='matricula'))){ logImp(`Aba "${aba}": ignorada (sem coluna Matrícula)`); continue; }
+      const temExec=linhas.some(r=>Object.keys(r).some(k=>['executivo','responsavel','analista'].includes(norm(k))));
+      const nAba=ondaNum(aba); let lidas=0;
+      for(const r of linhas){
+        const mat=String(pick(r,'matricula')??'').trim().replace(/\.0+$/,''); if(!/^\d{6,}$/.test(mat)) continue;
+        const nCol=ondaNum(pick(r,'onda')); const n=nCol??nAba;
+        const onda=n?`${n}° Onda`:(ondaManual||'Sem onda');
+        let fat=num(pick(r,'faturamento - a&e')); if(fat==null) fat=num(pick(r,'faturamento a & e')); if(fat==null) fat=num(pick(r,'faturamento'));
+        let pc=num(pick(r,'% de cobranca')); if(pc==null) pc=num(pick(r,'% maximo de cobranca'));
+        const ng=num(pick(r,'negociacao')), ci=pick(r,'ciclo');
+        const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:$('imp-grupo').value,onda,
+          ciclo:ci==null?null:String(ci).trim(),faturamento:fat,pct_cobranca:pc,negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null,
+          data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao')),
+          notificacao_entregue:sim(pick(r,'notificacao entregue')),max_data_evidencias:dt(pick(r,'max data: envio de evidencias')),
+          tarifa_implementada:sim(pick(r,'tarifa implementada'))};
+        if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
+        reg._n=n||0; lidas++;
+        // a mesma matrícula em mais de uma onda: fica a onda mais recente
+        const ant=mapa.get(mat);
+        if(!ant||reg._n>ant._n||(reg._n===ant._n&&ant.faturamento==null&&fat!=null)) mapa.set(mat,reg);
+      }
+      logImp(`Aba "${aba}": ${lidas} linhas${nAba?` · ${nAba}° Onda`:''}`);
     }
+    mapa.forEach(r=>{ porOnda[r.onda]=(porOnda[r.onda]||0)+1; delete r._n; });
+    logImp('Matrículas por onda: '+Object.keys(porOnda).sort().map(k=>`${k} = ${porOnda[k]}`).join(' · '));
     const lote=[...mapa.values()]; lote.forEach(r=>{ if(r.tarifa_implementada) impl.push(r.matricula); });
     logImp(`${lote.length} matrículas válidas. Enviando…`);
     for(let i=0;i<lote.length;i+=200){
