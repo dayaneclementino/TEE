@@ -241,6 +241,7 @@
   .seg-card.exec{ grid-column:1/-1; background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%); border-color:transparent; color:#fff; }
   .seg-card.exec h3{ color:#fff; font-size:22px; } .seg-card.exec .sc-sub{ color:rgba(255,255,255,.72); }
   .seg-card.exec:hover{ border-color:transparent; }
+  .seg-card.vazio{ border-style:dashed; background:#FBFDFE; } .seg-card.vazio .big{ color:var(--text-faint); }
   .exec-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   .exec-kpis > div{ background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:14px 16px; }
   .exec-kpis .l{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.7); }
@@ -341,7 +342,7 @@
         <input type="file" id="imp-file" accept=".xlsx,.xlsm,.xls">
         <div class="form-row">
           <div class="field"><label>Segmento desta base</label>
-            <select id="imp-grupo"><option>Mercados</option><option>Hospitais</option><option>Postos</option><option>Outros</option></select></div>
+            <select id="imp-grupo"><option>Hospitais</option><option>Postos de Gasolina</option><option>Mercados</option><option>Shoppings</option><option>Hotéis</option><option>Restaurantes</option><option>Outros</option></select></div>
           <div class="field"><label>Onda</label><input id="imp-onda" value="2° Onda"></div>
           <div class="field"><label>Aba da planilha</label><input id="imp-aba" value="2° Onda"></div>
           <button class="btn btn-primary" id="btn-imp">Ler e enviar para o Supabase</button>
@@ -406,6 +407,10 @@ const ETAPAS={
   sem_tee:     {l:'Sem TEE',          b:'b-gray',  c:'#B8C4CC'}
 };
 const ORDEM=['implementada','apta','aguardando','comunicar','sem_tee'];
+/* Cards fixos de segmento: aparecem sempre, mesmo sem planilha importada */
+const SEGMENTOS=['Hospitais','Postos de Gasolina','Mercados','Shoppings','Hotéis','Restaurantes'];
+const SEG_ALIAS={'postos':'Postos de Gasolina','posto':'Postos de Gasolina','postos de gasolina':'Postos de Gasolina','hospitais':'Hospitais','hospitais e clinicas':'Hospitais','hospital':'Hospitais','mercados':'Mercados','mercado':'Mercados','supermercados':'Mercados','shoppings':'Shoppings','shopping':'Shoppings','hoteis':'Hotéis','hotel':'Hotéis','restaurantes':'Restaurantes','restaurante':'Restaurantes'};
+const segDe=d=>{ const g=String(d.grupo??'').trim(); if(!g) return 'Sem segmento'; const k=g.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); return SEG_ALIAS[k]||g; };
 const brl=v=>v==null?'–':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const pct=v=>v==null?'–':(Number(v)*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
 const dBR=s=>{ if(!s) return '–'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
@@ -436,12 +441,12 @@ async function carregar(manual){
   let todos=[],from=0;
   while(true){
     const {data,error}=await sb.from('tee_calculo').select('*').order('matricula').range(from,from+999);
-    if(error){ $('loading').style.display='none'; toast('Erro ao carregar: '+error.message+' — rode o tee_supabase.sql (v2) no Supabase.',true); return; }
+    if(error){ $('loading').style.display='none'; toast('Erro ao carregar: '+error.message+' — rode o tee_supabase.sql (v2) no Supabase.',true); render(); return; }
     todos=todos.concat(data); if(data.length<1000) break; from+=1000;
   }
   DADOS=todos; $('loading').style.display='none';
   if(DADOS.length) $('f-ref').value=DADOS[0].data_referencia;
-  $('sem-base').style.display=DADOS.length?'none':'block';
+  $('sem-base').style.display='none';
   const ex=[...new Set(DADOS.map(d=>d.executivo).filter(Boolean))].sort();
   $('lista-exec').innerHTML=ex.map(e=>`<option value="${esc(e)}">`).join('');
   render(); if(manual) toast('Dados atualizados');
@@ -458,10 +463,9 @@ function render(){
 
 /* ---------- HOME ---------- */
 function renderHome(){
-  if(!DADOS.length){ $('home-cards').innerHTML=''; return; }
   const ap=DADOS.filter(d=>d.etapa==='apta'), pr=DADOS.filter(d=>d.prioridade);
   let h=`<div class="seg-card exec" data-go="exec">
-    <h3>EXECUTOR <span style="font-weight:600;font-size:14px;opacity:.75">· sou eu</span></h3>
+    <h3>EXECUTOR</h3>
     <div class="sc-sub">Matrículas aptas a virar e prioridades pela proximidade do ciclo de leitura.</div>
     <div class="exec-kpis">
       <div><div class="l">Aptas a virar</div><div class="v">${ap.length}</div><div class="h">${brl(soma(ap,'incremento'))} de incremento</div></div>
@@ -469,9 +473,13 @@ function renderHome(){
       <div><div class="l">A comunicar</div><div class="v">${cnt(DADOS,'comunicar')}</div><div class="h">sem data de comunicado</div></div>
       <div><div class="l">Implementadas</div><div class="v">${cnt(DADOS,'implementada')}</div><div class="h">de ${DADOS.length} matrículas</div></div>
     </div></div>`;
-  const grupos=[...new Set(DADOS.map(d=>d.grupo||'Sem segmento'))].sort();
-  grupos.forEach(g=>{
-    const rows=DADOS.filter(d=>(d.grupo||'Sem segmento')===g), n=rows.length;
+  const extras=[...new Set(DADOS.map(segDe))].filter(g=>!SEGMENTOS.includes(g)).sort();
+  [...SEGMENTOS,...extras].forEach(g=>{
+    const rows=DADOS.filter(d=>segDe(d)===g), n=rows.length;
+    if(!n){ h+=`<div class="seg-card vazio" data-go="seg" data-seg="${esc(g)}">
+      <h3>${esc(g)}</h3><div class="sc-sub">Ainda sem planilha importada</div>
+      <div class="big">0<small>matrículas</small></div>
+      <div class="stack"></div><div class="legend"><span style="--c:#B8C4CC">Aguardando base</span></div></div>`; return; }
     h+=`<div class="seg-card" data-go="seg" data-seg="${esc(g)}">
       <h3>${esc(g)}</h3><div class="sc-sub">${n} matrículas · ${brl(soma(rows,'incremento'))} de incremento</div>
       <div class="big">${cnt(rows,'apta')}<small>aptas a implementar</small></div>
@@ -511,7 +519,7 @@ function ligarLinhas(tbodyId){
 /* ---------- SEGMENTO ---------- */
 let SEG_ROWS=[];
 function renderSeg(){
-  const base=DADOS.filter(d=>(d.grupo||'Sem segmento')===SEG);
+  const base=DADOS.filter(d=>segDe(d)===SEG);
   $('seg-titulo').textContent=SEG;
   const exs=[...new Set(base.map(d=>d.executivo).filter(Boolean))].sort();
   const guardado=localStorage.getItem('tee_exec')||'';
@@ -549,7 +557,7 @@ $('seg-busca').oninput=renderSeg;
 let EXEC_ROWS=[];
 function renderExec(){
   const ap=DADOS.filter(d=>d.etapa==='apta'), pr=DADOS.filter(d=>d.prioridade);
-  $('exec-sub').textContent=`${DADOS.length} matrículas em ${new Set(DADOS.map(d=>d.grupo)).size} segmentos · prioridade = leitura em até ${JAN()} dias ou já passou`;
+  $('exec-sub').textContent=`${DADOS.length} matrículas em ${new Set(DADOS.map(segDe)).size} segmentos · prioridade = leitura em até ${JAN()} dias ou já passou`;
   $('exec-kpis').innerHTML=
     `<div class="kpi leaf"><div class="label">Aptas a virar</div><div class="value leaf">${ap.length}</div><div class="hint">${brl(soma(ap,'incremento'))} de incremento</div></div>
      <div class="kpi rose"><div class="label">Prioridades</div><div class="value rose">${pr.length}</div><div class="hint">${pr.filter(d=>d.prioridade==='implementar').length} para implementar · ${pr.filter(d=>d.prioridade==='comunicar').length} para comunicar</div></div>
@@ -563,7 +571,7 @@ function renderExec(){
   $('exec-head').innerHTML='<tr><th><input type="checkbox" class="ck" id="sel-all"></th><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Executivo</th><th>Leitura</th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th></th></tr>';
   $('exec-body').innerHTML=EXEC_ROWS.length?EXEC_ROWS.map(d=>`<tr>
     <td><input type="checkbox" class="ck" data-sel="${d.matricula}" ${SEL.has(d.matricula)?'checked':''}></td>
-    <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(d.grupo||'–')}</td>
+    <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(segDe(d))}</td>
     <td>${esc(d.executivo||'–')}</td><td>${dBR(d.data_leitura)}<div class="mini">${diasTxt(d)}</div></td>
     <td class="num"><b>${brl(d.incremento)}</b></td><td>${comunicadoInput(d)}</td><td>${aptaTxt(d)}</td><td>${etapaBadge(d)}</td>
     <td>${faseSel(d)}</td><td><button class="btn btn-ghost btn-sm" data-edit="${d.matricula}">Editar</button></td></tr>`).join('')
@@ -622,7 +630,7 @@ $('e-save').onclick=async()=>{
 
 /* ---------- EXPORTAR ---------- */
 $('btn-export').onclick=()=>{
-  const rows=SEG_ROWS.map(d=>({'Matrícula':d.matricula,'Cliente':d.cliente,'Segmento':d.grupo,'Executivo':d.executivo,'Ciclo':d.ciclo,
+  const rows=SEG_ROWS.map(d=>({'Matrícula':d.matricula,'Cliente':d.cliente,'Segmento':segDe(d),'Executivo':d.executivo,'Ciclo':d.ciclo,
     'Faturamento':+d.faturamento,'% Aplicado':+d.pct_aplicado,'Incremento (R$)':+d.incremento,'Data Leitura':dBR(d.data_leitura),
     'Data do Comunicado':dBR(d.data_1a_notificacao),'Máx. Evidências':dBR(d.max_data_evidencias),'Apta a partir de':dBR(d.data_apta),
     'Mês de Entrada':mesLbl(d.mes_entrada),'Etapa':ETAPAS[d.etapa].l,'Fase':d.fase||''}));
