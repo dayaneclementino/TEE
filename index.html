@@ -218,18 +218,52 @@
   footer.note{ margin-top:30px; font-size:12px; color:var(--text-mut); line-height:1.7; text-align:center; padding:0 20px; }
 
   
-  /* ---------- extras TEE ---------- */
+  /* ---------- extras TEE v2 ---------- */
   .modal-bg{ position:fixed; inset:0; background:rgba(10,42,67,.55); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; z-index:900; padding:20px; }
   .modal-card{ background:var(--surface); border-radius:var(--radius); padding:26px; width:min(560px,100%); max-height:92vh; overflow:auto; box-shadow:var(--shadow-lg); }
   .modal-card h2{ font-family:var(--font-display); font-size:17px; font-weight:800; color:var(--navy); margin:0 0 4px; }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .grid2 .full{ grid-column:1/-1; }
-  .field textarea{ font-size:13px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#FBFDFE; color:var(--text); }
-  .upload-box input[type=file]{ font-size:13px; }
-  .status-card{ cursor:default; }
+  .field textarea{ font-size:13px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#FBFDFE; color:var(--text); font-family:inherit; }
+  .view{ display:none; } .view.active{ display:block; }
+  .seg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+  .seg-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; cursor:pointer; box-shadow:var(--shadow-xs); transition:.18s; position:relative; overflow:hidden; }
+  .seg-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--water-line); }
+  .seg-card h3{ font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--navy); margin:0 0 2px; }
+  .seg-card .sc-sub{ font-size:12.5px; color:var(--text-mut); margin-bottom:14px; }
+  .seg-card .big{ font-family:var(--font-display); font-size:26px; font-weight:800; color:var(--navy); line-height:1.1; }
+  .seg-card .big small{ font-size:12px; font-weight:600; color:var(--text-mut); margin-left:6px; }
+  .stack{ display:flex; height:10px; border-radius:100px; overflow:hidden; background:#EEF3F6; margin:14px 0 10px; }
+  .stack i{ display:block; height:100%; }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--text-mut); }
+  .legend b{ color:var(--navy); }
+  .legend span::before{ content:''; display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; background:var(--c); }
+  .seg-card.exec{ grid-column:1/-1; background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%); border-color:transparent; color:#fff; }
+  .seg-card.exec h3{ color:#fff; font-size:22px; } .seg-card.exec .sc-sub{ color:rgba(255,255,255,.72); }
+  .seg-card.exec:hover{ border-color:transparent; }
+  .exec-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .exec-kpis > div{ background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:14px 16px; }
+  .exec-kpis .l{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.7); }
+  .exec-kpis .v{ font-family:var(--font-display); font-size:28px; font-weight:800; line-height:1.15; margin-top:4px; }
+  .exec-kpis .h{ font-size:12px; color:rgba(255,255,255,.7); margin-top:2px; }
+  .exec-kpis .urg .v{ color:#FFD27A; }
+  .detail-head{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+  .detail-head h2{ font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--navy); margin:0; }
+  .detail-head .sub{ margin:2px 0 0; }
+  .detail-right{ margin-left:auto; display:flex; gap:12px; align-items:flex-end; }
+  .detail-right select{ padding:8px 12px; font-size:13px; min-width:200px; }
+  .chips-filter{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .chips-filter button{ border:1px solid var(--border); background:#fff; color:var(--navy); border-radius:100px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .chips-filter button b{ margin-left:6px; color:var(--text-mut); }
+  .chips-filter button.on{ background:var(--navy); color:#fff; border-color:var(--navy); } .chips-filter button.on b{ color:rgba(255,255,255,.8); }
+  .bulk{ display:none; align-items:center; gap:10px; flex-wrap:wrap; background:var(--water-soft); border:1px solid var(--water-line); border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:13px; }
+  .bulk.on{ display:flex; } .bulk input,.bulk select{ padding:7px 10px; font-size:13px; border:1px solid var(--border); border-radius:8px; }
+  td input[type=date], td select.fase{ padding:5px 8px; font-size:12.5px; border:1px solid var(--border); border-radius:8px; background:#fff; font-family:inherit; color:var(--text); }
+  td select.fase{ max-width:170px; }
   .mini{ font-size:11.5px; color:var(--text-mut); }
+  .urg-txt{ color:var(--rose); font-weight:700; } .soon-txt{ color:var(--amber); font-weight:700; }
   input[type=checkbox].ck{ accent-color:var(--water); width:16px; height:16px; cursor:pointer; }
-  @media (max-width:820px){ .kpi-row,.kpi-row.k3{ grid-template-columns:1fr 1fr; } .two-col,.status-grid,.grid2{ grid-template-columns:1fr; } .hero-actions{ position:static; margin-bottom:14px; } }
+  @media (max-width:820px){ .kpi-row,.kpi-row.k3{ grid-template-columns:1fr 1fr; } .exec-kpis{ grid-template-columns:1fr 1fr; } .grid2{ grid-template-columns:1fr; } .hero-actions{ position:static; margin-bottom:14px; } .detail-right{ margin-left:0; } }
 
 </style>
 </head>
@@ -237,106 +271,98 @@
 <div class="hero-wrap">
   <div class="hero-inner">
     <div class="hero-actions" id="hero-actions">
+      <button class="btn btn-sm btn-hero" id="btn-imp-abrir">Importar planilha</button>
       <button class="btn btn-sm btn-hero" id="btn-recarregar">Atualizar dados</button>
     </div>
     <div class="eyebrow"><span class="dot"></span>Águas do Rio · Grandes Clientes</div>
     <h1>Gestão TEE · Tarifa Especial de Esgoto</h1>
-    <p>Elegibilidade, incremento por mês de entrada e controle dos termos de adesão das matrículas com efluente fora do padrão.</p>
+    <p>Quem comunicar, quando cada matrícula fica apta e o que já foi implementado — por executivo e por segmento.</p>
     <div class="hero-meta" id="hero-meta"></div>
   </div>
 </div>
 
 <div class="app">
-<!-- APP -->
-  <div id="main-area">
-    <nav class="tabs" id="tabs">
-      <button class="active" data-view="geral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="lbl">Visão geral</span></button>
-      <button data-view="mat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="lbl">Matrículas</span></button>
-      <button data-view="imp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></svg><span class="lbl">Importar</span></button>
-    </nav>
+  <div id="loading" class="loading">Carregando dados…</div>
 
-    <div class="panel-top" id="filtros-globais">
-      <div class="filters">
-        <div class="field"><label>Grupo</label><select id="f-grupo"><option value="">Todos os grupos</option></select></div>
-        <div class="field"><label>Data de referência (hoje)</label><input type="date" id="f-ref" style="padding:8px 12px;font-size:13px;"></div>
-      </div>
-      <div class="filter-note">O filtro de grupo vale para a Visão geral e para a aba Matrículas. A data de referência define em qual mês cada incremento entra na fatura.</div>
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <div class="seg-grid" id="home-cards"></div>
+    <div id="sem-base" class="card" style="display:none;margin-top:16px;"><h2>Nenhuma matrícula importada ainda</h2><p class="sub">Clique em <b>Importar planilha</b> no topo e suba a planilha "A Cobrar" (.xlsx) para começar.</p></div>
+  </section>
+
+  <!-- EXECUTOR -->
+  <section class="view" id="view-exec">
+    <div class="detail-head">
+      <button class="btn btn-ghost btn-sm" data-voltar>← Voltar</button>
+      <div><h2>Executor · visão do coordenador</h2><p class="sub" id="exec-sub"></p></div>
     </div>
-
-    <div id="loading" class="loading">Carregando dados…</div>
-    <div id="sem-base" class="card" style="display:none;"><h2>Nenhuma matrícula importada ainda</h2><p class="sub">Vá na aba <b>Importar</b> e suba a planilha "A Cobrar" (.xlsx) para começar.</p></div>
-
-    <!-- VISÃO GERAL -->
-    <section class="view active" id="view-geral">
-      <div class="card">
-        <h2>Visão geral do incremento TEE</h2>
-        <p class="sub" id="geral-sub"></p>
-        <div class="kpi-row" id="geral-kpis"></div>
+    <div class="kpi-row" id="exec-kpis"></div>
+    <div class="card" style="margin-top:16px;">
+      <div class="chips-filter" id="exec-tabs"></div>
+      <div class="bulk" id="exec-bulk">
+        <span id="bulk-n">0 selecionadas</span>
+        <input id="bulk-exec" list="lista-exec" placeholder="Atribuir ao executivo…">
+        <button class="btn btn-primary btn-sm" id="bulk-ok">Atribuir</button>
+        <select id="bulk-fase"><option value="">Definir fase…</option></select>
+        <button class="btn btn-primary btn-sm" id="bulk-fase-ok">Aplicar fase</button>
       </div>
-      <div class="two-col">
-        <div class="card"><h2>Incremento por mês de entrada</h2><p class="sub">Leitura já realizada no mês de referência empurra a cobrança para o mês seguinte.</p><div class="dist-bars" id="dist-mes"></div></div>
-        <div class="card"><h2>Incremento por grupo</h2><p class="sub">Soma do incremento de todas as matrículas do grupo.</p><div class="dist-bars" id="dist-grupo"></div></div>
-      </div>
-      <div class="card">
-        <h2>Situação para implementação</h2>
-        <p class="sub">Critérios: percentual acima de 0%, leitura posterior à data máxima de evidências, cliente notificado e tarifa ainda não implementada.</p>
-        <div class="status-grid" id="status-cards"></div>
-      </div>
-    </section>
+      <div class="tablewrap scroll"><table><thead id="exec-head"></thead><tbody id="exec-body"></tbody></table></div>
+    </div>
+  </section>
 
-    <!-- MATRÍCULAS -->
-    <section class="view" id="view-mat">
-      <div class="card">
-        <div class="card-head">
-          <div><h2>Matrículas</h2><p class="sub" id="mat-sub"></p></div>
-          <button class="btn btn-ghost btn-sm" id="btn-export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg>Exportar Excel</button>
-        </div>
-        <div class="form-row" style="margin:0 0 14px;">
-          <div class="field"><label>Buscar matrícula / cliente</label><input id="m-busca" placeholder="ex.: 100001364 ou ZONA SUL" style="padding:8px 12px;font-size:13px;min-width:240px;"></div>
-          <div class="field"><label>Situação</label><select id="m-sit" style="padding:8px 12px;font-size:13px;"><option value="">Todas</option><option value="apta">Aptas</option><option value="inapta">Inaptas</option></select></div>
-          <div class="field"><label>Mês de entrada</label><select id="m-mes" style="padding:8px 12px;font-size:13px;"><option value="">Todos</option></select></div>
-          <div class="field"><label>Termo</label><select id="m-termo" style="padding:8px 12px;font-size:13px;"><option value="">Todos</option><option value="sim">Gerado</option><option value="nao">Pendente</option></select></div>
-        </div>
-        <div class="tablewrap scroll">
-          <table>
-            <thead><tr>
-              <th>Matrícula</th><th>Cliente</th><th>Grupo</th><th>Bloco</th>
-              <th class="num">% Cobrança</th><th class="num">% Aplicado</th><th class="num">Incremento</th>
-              <th>Leitura</th><th>Mês entrada</th><th>1ª Notif.</th><th>Situação</th><th>Termo</th><th></th>
-            </tr></thead>
-            <tbody id="mat-body"></tbody>
-          </table>
-        </div>
+  <!-- SEGMENTO -->
+  <section class="view" id="view-seg">
+    <div class="detail-head">
+      <button class="btn btn-ghost btn-sm" data-voltar>← Voltar</button>
+      <div><h2 id="seg-titulo">Segmento</h2><p class="sub" id="seg-sub"></p></div>
+      <div class="detail-right">
+        <div class="field"><label>Executivo (minha rota)</label><select id="seg-exec"></select></div>
+        <button class="btn btn-ghost btn-sm" id="btn-export">Exportar Excel</button>
       </div>
-    </section>
+    </div>
+    <div class="kpi-row" id="seg-kpis"></div>
+    <div class="card" style="margin-top:16px;">
+      <div class="chips-filter" id="seg-tabs"></div>
+      <div class="form-row" style="margin:0 0 12px;">
+        <div class="field"><label>Buscar matrícula / cliente</label><input id="seg-busca" placeholder="ex.: 100001364 ou ZONA SUL" style="padding:8px 12px;font-size:13px;min-width:260px;"></div>
+      </div>
+      <div class="callout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div>Informe a <b>data do comunicado</b> de cada matrícula. O sistema soma 30 dias para o envio de evidências e mostra em <b>"Apta a partir de"</b> a primeira leitura depois desse prazo.</div></div>
+      <div class="tablewrap scroll" style="margin-top:12px;"><table><thead id="seg-head"></thead><tbody id="seg-body"></tbody></table></div>
+    </div>
+  </section>
 
-    <!-- IMPORTAR -->
-    <section class="view" id="view-imp">
-      <div class="card">
-        <h2>Importar planilha "A Cobrar"</h2>
-        <p class="sub">Envie o Excel (aba <b>2° Onda</b>). A importação cria ou atualiza as matrículas pela chave matrícula e <b>não apaga</b> o status de termo gerado. Colunas reconhecidas: Matrícula, Nome/Cliente, Faturamento (ou Faturamento - A&amp;E), % de Cobrança (ou % Máximo de Cobrança), Negociação, Data Leitura, NOTIFICAÇÃO ENTREGUE, DATA DA 1ª NOTIFICAÇÃO, MAX DATA: ENVIO DE EVIDENCIAS e Tarifa Implementada.</p>
-        <div class="upload-box" id="up-box">
-          <input type="file" id="imp-file" accept=".xlsx,.xlsm,.xls">
-          <div class="form-row">
-            <div class="field"><label>Grupo desta base</label>
-              <select id="imp-grupo"><option>Mercados</option><option>Hospitais</option><option>Postos</option><option>Outros</option></select></div>
-            <div class="field"><label>Onda</label><input id="imp-onda" value="2° Onda"></div>
-            <div class="field"><label>Aba da planilha</label><input id="imp-aba" value="2° Onda"></div>
-            <button class="btn btn-primary" id="btn-imp">Ler e enviar para o Supabase</button>
-          </div>
-        </div>
-        <div class="progress" id="imp-prog"><div></div></div>
-        <div class="log" id="imp-log"></div>
-        <div class="callout amber">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-          <div>Reimportar sobrescreve, nas colunas que vêm da planilha, o que foi editado manualmente (por exemplo data de notificação). A planilha é tratada como fonte da verdade.</div>
+  <!-- IMPORTAR -->
+  <section class="view" id="view-imp">
+    <div class="detail-head"><button class="btn btn-ghost btn-sm" data-voltar>← Voltar</button><div><h2>Importar planilha "A Cobrar"</h2></div></div>
+    <div class="card">
+      <p class="sub">Envie o Excel (aba <b>2° Onda</b>). A importação cria ou atualiza as matrículas pela chave matrícula e <b>não apaga</b> executivo, fase nem status de termo. Colunas reconhecidas: Matrícula, Nome/Cliente, Ciclo, Executivo (opcional), Faturamento (ou Faturamento - A&amp;E), % de Cobrança (ou % Máximo de Cobrança), Negociação, Data Leitura, NOTIFICAÇÃO ENTREGUE, DATA DA 1ª NOTIFICAÇÃO, MAX DATA: ENVIO DE EVIDENCIAS e Tarifa Implementada.</p>
+      <div class="upload-box" id="up-box">
+        <input type="file" id="imp-file" accept=".xlsx,.xlsm,.xls">
+        <div class="form-row">
+          <div class="field"><label>Segmento desta base</label>
+            <select id="imp-grupo"><option>Mercados</option><option>Hospitais</option><option>Postos</option><option>Outros</option></select></div>
+          <div class="field"><label>Onda</label><input id="imp-onda" value="2° Onda"></div>
+          <div class="field"><label>Aba da planilha</label><input id="imp-aba" value="2° Onda"></div>
+          <button class="btn btn-primary" id="btn-imp">Ler e enviar para o Supabase</button>
         </div>
       </div>
-    </section>
+      <div class="progress" id="imp-prog"><div></div></div>
+      <div class="log" id="imp-log"></div>
+      <div class="callout amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div>Reimportar sobrescreve, nas colunas que vêm da planilha (como a data do comunicado), o que foi digitado na plataforma. A planilha é tratada como fonte da verdade.</div></div>
+      <div class="form-row" style="margin-top:14px;">
+        <div class="field"><label>Data de referência (hoje)</label><input type="date" id="f-ref"></div>
+        <div class="field"><label>Prioridade: leitura em até (dias)</label><input type="number" id="f-janela" min="0" style="max-width:150px;"></div>
+        <button class="btn btn-ghost btn-sm" id="btn-cfg">Salvar parâmetros</button>
+      </div>
+    </div>
+  </section>
 
-    <footer class="note" id="rodape"></footer>
-  </div>
+  <footer class="note" id="rodape">Incremento = (faturamento ÷ 2) × percentual aplicado (máx. 30%). Data máxima de evidências = comunicado + 30 dias.</footer>
 </div>
+
+<datalist id="lista-exec"></datalist>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal" style="display:none;">
@@ -344,13 +370,11 @@
     <h2 id="m-titulo">Editar matrícula</h2>
     <p class="sub" id="m-sub" style="margin-bottom:14px;"></p>
     <div class="grid2">
-      <div class="field"><label>1ª notificação (data do comunicado)</label><input type="date" id="e-notif-data"></div>
-      <div class="field"><label>Notificação entregue</label><select id="e-notif"><option value="true">Sim</option><option value="false">Não</option></select></div>
-      <div class="field"><label>Máx. data envio de evidências</label><input type="date" id="e-max"></div>
-      <div class="field"><label>Tarifa implementada</label><select id="e-tarifa"><option value="false">Não</option><option value="true">Sim</option></select></div>
+      <div class="field"><label>Data do comunicado</label><input type="date" id="e-notif-data"></div>
+      <div class="field"><label>Executivo</label><input id="e-exec" list="lista-exec" placeholder="Nome do executivo"></div>
       <div class="field"><label>Negociação (%)</label><input type="number" step="0.01" id="e-neg" placeholder="ex.: 30"></div>
       <div class="field"><label>Data do termo</label><input type="date" id="e-dtermo"></div>
-      <div class="field full"><label>Observação</label><textarea id="e-obs" rows="3" class="cell-input obs-input"></textarea></div>
+      <div class="field full"><label>Observação</label><textarea id="e-obs" rows="3"></textarea></div>
     </div>
     <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-ghost" id="e-cancel">Cancelar</button>
@@ -358,175 +382,239 @@
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============ CONFIGURE AQUI ============ */
 const SUPABASE_URL      = 'https://metstknnhexflqmpgzof.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Wi0PmbWO7oPtoqUv1sRMPw_7A8Hgtx4';
+/* Fases que o coordenador pode atribuir (edite a lista à vontade) */
+const FASES = ['A comunicar','Comunicado','Aguardando evidências','Apta à implementação','Termo enviado','Termo assinado','Implementada'];
 /* ======================================== */
 
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let DADOS = [], EDITANDO = null;
+let DADOS=[], CFG={janela_prioridade_dias:7}, VIEW='home', SEG=null, SEGTAB='todas', EXECTAB='prioridades', EDITANDO=null;
+const SEL=new Set();
 
-const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const brl = v => v==null ? '–' : Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const pct = v => v==null ? '–' : (Number(v)*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
-const dBR = s => { if(!s) return '–'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
-const mesLbl = s => { if(!s) return '–'; const [y,m]=s.split('-'); return `${MESES[+m-1]}/${y}`; };
-const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const soma = (arr,f) => arr.reduce((s,r)=>s+(+r[f]||0),0);
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const ETAPAS={
+  comunicar:   {l:'A comunicar',      b:'b-rose',  c:'var(--rose)'},
+  aguardando:  {l:'Aguardando prazo', b:'b-amber', c:'var(--amber)'},
+  apta:        {l:'Apta',             b:'b-leaf',  c:'var(--leaf)'},
+  implementada:{l:'Implementada',     b:'b-water', c:'var(--water)'},
+  sem_tee:     {l:'Sem TEE',          b:'b-gray',  c:'#B8C4CC'}
+};
+const ORDEM=['implementada','apta','aguardando','comunicar','sem_tee'];
+const brl=v=>v==null?'–':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const pct=v=>v==null?'–':(Number(v)*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
+const dBR=s=>{ if(!s) return '–'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
+const mesLbl=s=>{ if(!s) return '–'; const [y,m]=s.split('-'); return `${MESES[+m-1]}/${y}`; };
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const soma=(a,f)=>a.reduce((s,r)=>s+(+r[f]||0),0);
+const cnt=(a,e)=>a.filter(d=>d.etapa===e).length;
+const JAN=()=>+CFG.janela_prioridade_dias||7;
 
-function toast(msg, err){
-  const t=$('toast'); t.textContent=msg; t.className='toast show'+(err?' err':'');
-  clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast'+(err?' err':''), err?9000:2600);
+function toast(msg,err){ const t=$('toast'); t.textContent=msg; t.className='toast show'+(err?' err':''); clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',err?9000:3200); }
+
+/* ---------- NAVEGAÇÃO ---------- */
+function go(v,seg){
+  VIEW=v; if(seg!==undefined){ SEG=seg; SEGTAB='todas'; }
+  SEL.clear();
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));
+  render(); window.scrollTo({top:0,behavior:'smooth'});
 }
-
-/* ---------- INÍCIO ---------- */
+document.querySelectorAll('[data-voltar]').forEach(b=>b.onclick=()=>go('home'));
+$('btn-imp-abrir').onclick=()=>go('imp');
 $('btn-recarregar').onclick=()=>carregar(true);
-
-/* ---------- ABAS ---------- */
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));
-  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+b.dataset.view));
-});
 
 /* ---------- CARGA ---------- */
 async function carregar(manual){
   $('loading').style.display='block';
-  let todos=[], from=0; const passo=1000;
+  const cfg=await sb.from('tee_config').select('*').eq('id',1).maybeSingle();
+  if(cfg.data){ CFG=cfg.data; $('f-janela').value=CFG.janela_prioridade_dias??7; }
+  let todos=[],from=0;
   while(true){
-    const {data,error}=await sb.from('tee_calculo').select('*').order('matricula').range(from,from+passo-1);
-    if(error){ $('loading').style.display='none'; toast('Erro ao carregar: '+error.message,true); return; }
-    todos=todos.concat(data); if(data.length<passo) break; from+=passo;
+    const {data,error}=await sb.from('tee_calculo').select('*').order('matricula').range(from,from+999);
+    if(error){ $('loading').style.display='none'; toast('Erro ao carregar: '+error.message+' — rode o tee_supabase.sql (v2) no Supabase.',true); return; }
+    todos=todos.concat(data); if(data.length<1000) break; from+=1000;
   }
   DADOS=todos; $('loading').style.display='none';
-  $('sem-base').style.display=DADOS.length?'none':'block';
   if(DADOS.length) $('f-ref').value=DADOS[0].data_referencia;
-  popularFiltros(); renderTudo();
-  if(manual) toast('Dados atualizados');
+  $('sem-base').style.display=DADOS.length?'none':'block';
+  const ex=[...new Set(DADOS.map(d=>d.executivo).filter(Boolean))].sort();
+  $('lista-exec').innerHTML=ex.map(e=>`<option value="${esc(e)}">`).join('');
+  render(); if(manual) toast('Dados atualizados');
 }
-function popularFiltros(){
-  const gv=$('f-grupo').value, mv=$('m-mes').value;
-  const gs=[...new Set(DADOS.map(d=>d.grupo).filter(Boolean))].sort();
-  const ms=[...new Set(DADOS.map(d=>d.mes_entrada).filter(Boolean))].sort();
-  $('f-grupo').innerHTML='<option value="">Todos os grupos</option>'+gs.map(g=>`<option>${esc(g)}</option>`).join('');
-  $('m-mes').innerHTML='<option value="">Todos</option>'+ms.map(m=>`<option value="${m}">${mesLbl(m)}</option>`).join('');
-  $('f-grupo').value=gv; $('m-mes').value=mv;
-}
-$('f-ref').onchange=async()=>{
-  const {error}=await sb.from('tee_config').update({data_referencia:$('f-ref').value||null}).eq('id',1);
-  if(error) toast(error.message,true); else carregar();
+$('btn-cfg').onclick=async()=>{
+  const {error}=await sb.from('tee_config').update({data_referencia:$('f-ref').value||null,janela_prioridade_dias:+$('f-janela').value||7}).eq('id',1);
+  if(error) toast(error.message,true); else { toast('Parâmetros salvos'); carregar(); }
 };
-$('f-grupo').onchange=renderTudo;
-['m-busca','m-sit','m-mes','m-termo'].forEach(id=>$(id).addEventListener(id==='m-busca'?'input':'change',renderMat));
 
-const base = () => DADOS.filter(d=>!$('f-grupo').value || d.grupo===$('f-grupo').value);
-function motivos(d){
-  const m=[];
-  if(!d.crit_percentual) m.push('% de cobrança = 0');
-  if(!d.crit_leitura) m.push('leitura não posterior à data máx. de evidências');
-  if(!d.crit_notificado) m.push('não notificado');
-  if(!d.crit_nao_implementada) m.push('tarifa já implementada');
-  return m;
+function render(){
+  $('hero-meta').innerHTML=DADOS.length?`<span class="chip">Data de referência <b>${dBR(DADOS[0].data_referencia)}</b></span><span class="chip">Matrículas <b>${DADOS.length}</b></span><span class="chip">Aptas <b>${cnt(DADOS,'apta')}</b></span>`:'';
+  if(VIEW==='home') renderHome(); if(VIEW==='exec') renderExec(); if(VIEW==='seg') renderSeg();
 }
 
-/* ---------- RENDER ---------- */
-function renderTudo(){ renderHero(); renderGeral(); renderMat(); }
-function renderHero(){
-  const b=base();
-  $('hero-meta').innerHTML = DADOS.length
-    ? `<span class="chip">Data de referência <b>${dBR(DADOS[0].data_referencia)}</b></span>
-       <span class="chip">Matrículas <b>${b.length}</b></span>
-       <span class="chip">Aptas <b>${b.filter(d=>d.apta).length}</b></span>`
-    : '';
-  $('rodape').innerHTML='Incremento = (faturamento ÷ 2) × percentual aplicado (máx. 30%). A metade do faturamento corresponde ao esgoto.';
+/* ---------- HOME ---------- */
+function renderHome(){
+  if(!DADOS.length){ $('home-cards').innerHTML=''; return; }
+  const ap=DADOS.filter(d=>d.etapa==='apta'), pr=DADOS.filter(d=>d.prioridade);
+  let h=`<div class="seg-card exec" data-go="exec">
+    <h3>EXECUTOR <span style="font-weight:600;font-size:14px;opacity:.75">· sou eu</span></h3>
+    <div class="sc-sub">Matrículas aptas a virar e prioridades pela proximidade do ciclo de leitura.</div>
+    <div class="exec-kpis">
+      <div><div class="l">Aptas a virar</div><div class="v">${ap.length}</div><div class="h">${brl(soma(ap,'incremento'))} de incremento</div></div>
+      <div class="urg"><div class="l">Prioridades</div><div class="v">${pr.length}</div><div class="h">leitura em até ${JAN()} dias ou já passou</div></div>
+      <div><div class="l">A comunicar</div><div class="v">${cnt(DADOS,'comunicar')}</div><div class="h">sem data de comunicado</div></div>
+      <div><div class="l">Implementadas</div><div class="v">${cnt(DADOS,'implementada')}</div><div class="h">de ${DADOS.length} matrículas</div></div>
+    </div></div>`;
+  const grupos=[...new Set(DADOS.map(d=>d.grupo||'Sem segmento'))].sort();
+  grupos.forEach(g=>{
+    const rows=DADOS.filter(d=>(d.grupo||'Sem segmento')===g), n=rows.length;
+    h+=`<div class="seg-card" data-go="seg" data-seg="${esc(g)}">
+      <h3>${esc(g)}</h3><div class="sc-sub">${n} matrículas · ${brl(soma(rows,'incremento'))} de incremento</div>
+      <div class="big">${cnt(rows,'apta')}<small>aptas a implementar</small></div>
+      <div class="stack">${ORDEM.map(e=>`<i style="width:${cnt(rows,e)/n*100}%;background:${ETAPAS[e].c}"></i>`).join('')}</div>
+      <div class="legend">${ORDEM.filter(e=>cnt(rows,e)).map(e=>`<span style="--c:${ETAPAS[e].c}">${ETAPAS[e].l} <b>${cnt(rows,e)}</b></span>`).join('')}</div></div>`;
+  });
+  $('home-cards').innerHTML=h;
+  document.querySelectorAll('#home-cards [data-go]').forEach(c=>c.onclick=()=>go(c.dataset.go,c.dataset.seg));
 }
-function renderGeral(){
-  const b=base(), aptas=b.filter(d=>d.apta);
-  const tot=soma(b,'incremento'), totA=soma(aptas,'incremento');
-  const termos=b.filter(d=>d.termo_gerado).length;
-  $('geral-sub').textContent=`${b.length} matrículas${$('f-grupo').value?' do grupo '+$('f-grupo').value:''} · data de referência ${DADOS.length?dBR(DADOS[0].data_referencia):'–'}.`;
-  const porMes={}; b.forEach(d=>{ const k=d.mes_entrada; (porMes[k]=porMes[k]||[]).push(d); });
-  const meses=Object.keys(porMes).sort();
-  let k=`
-    <div class="kpi navy"><div class="label">Matrículas</div><div class="value">${b.length}</div><div class="hint">${aptas.length} aptas · ${b.length-aptas.length} inaptas</div></div>
-    <div class="kpi"><div class="label">Incremento total</div><div class="value">${brl(tot)}</div><div class="hint">Somente aptas: ${brl(totA)}</div></div>`;
-  meses.slice(0,2).forEach((m,i)=>{ const arr=porMes[m];
-    k+=`<div class="kpi ${i?'amber':'leaf'}"><div class="label">Entra em ${mesLbl(m)}</div><div class="value ${i?'amber':'leaf'}">${brl(soma(arr,'incremento'))}</div><div class="hint">${arr.length} matrículas · aptas: ${brl(soma(arr.filter(d=>d.apta),'incremento'))}</div></div>`; });
-  $('geral-kpis').innerHTML=k;
-  $('geral-kpis').className='kpi-row'+(meses.length<2?' k3':'');
 
-  const dist=(el,rows)=>{ const max=Math.max(1,...rows.map(r=>r.v));
-    $(el).innerHTML=rows.length?rows.map(r=>`<div class="dist-row"><div>${esc(r.l)}</div><div class="dist-track"><div class="dist-fill" style="width:${r.v/max*100}%"></div></div><div class="dist-val">${brl(r.v)} <small>· ${r.n}</small></div></div>`).join(''):'<div class="muted">Sem dados.</div>'; };
-  dist('dist-mes',meses.map(m=>({l:mesLbl(m),v:soma(porMes[m],'incremento'),n:porMes[m].length})));
-  const pg={}; b.forEach(d=>{ const g=d.grupo||'Sem grupo'; (pg[g]=pg[g]||[]).push(d); });
-  dist('dist-grupo',Object.keys(pg).sort().map(g=>({l:g,v:soma(pg[g],'incremento'),n:pg[g].length})));
+/* ---------- COMPONENTES ---------- */
+function diasTxt(d){
+  const n=d.dias_leitura; if(n==null) return '–';
+  if(n<0) return `<span class="urg-txt">passou há ${-n} d</span>`;
+  if(n===0) return '<span class="urg-txt">hoje</span>';
+  if(n<=JAN()) return `<span class="soon-txt">em ${n} d</span>`;
+  return `em ${n} d`;
+}
+function aptaTxt(d){
+  if(d.etapa==='implementada') return '<span class="mini">já implementada</span>';
+  if(d.etapa==='sem_tee') return '<span class="mini">% de cobrança = 0</span>';
+  if(!d.data_apta) return '<span class="mini">informe o comunicado</span>';
+  return `<b>${dBR(d.data_apta)}</b><div class="mini">entra em ${mesLbl(d.mes_entrada)}</div>`;
+}
+const etapaBadge=d=>`<span class="badge ${ETAPAS[d.etapa].b}">${ETAPAS[d.etapa].l}</span>`;
+const comunicadoInput=d=>`<input type="date" value="${d.data_1a_notificacao||''}" data-com="${d.matricula}">`;
+const faseSel=d=>`<select class="fase" data-fase="${d.matricula}"><option value="">— definir —</option>${FASES.map(f=>`<option ${d.fase===f?'selected':''}>${f}</option>`).join('')}</select>`;
+const tabs=(el,list,atual,fn)=>{ $(el).innerHTML=list.map(t=>`<button class="${t.k===atual?'on':''}" data-k="${t.k}">${t.l}<b>${t.n}</b></button>`).join(''); $(el).querySelectorAll('button').forEach(b=>b.onclick=()=>fn(b.dataset.k)); };
 
-  const nNot=b.filter(d=>!d.crit_notificado).length;
-  const nImp=b.filter(d=>!d.crit_nao_implementada).length;
-  const nLei=b.filter(d=>d.crit_notificado && d.crit_nao_implementada && !d.crit_leitura).length;
-  $('status-cards').innerHTML=`
-    <div class="status-card leaf"><div class="sc-title">Aptas</div><div class="sc-value">${aptas.length}</div><div class="sc-sub">${brl(totA)} de incremento</div>
-      <div class="sc-rule">Atendem aos 4 critérios e podem ter a tarifa implementada.</div><div class="sc-foot"><span>Termos gerados: <b>${termos}</b></span><span>Pendentes: <b>${b.length-termos}</b></span></div></div>
-    <div class="status-card amber"><div class="sc-title">Aguardando notificação</div><div class="sc-value">${nNot}</div><div class="sc-sub">${brl(soma(b.filter(d=>!d.crit_notificado),'incremento'))} bloqueados</div>
-      <div class="sc-rule">Sem comunicado entregue. Registre a data da 1ª notificação pelo botão Editar.</div></div>
-    <div class="status-card rose"><div class="sc-title">Outros bloqueios</div><div class="sc-value">${nImp+nLei}</div><div class="sc-sub">${nImp} tarifa já implementada · ${nLei} leitura antes do prazo</div>
-      <div class="sc-rule">Tarifa já implementada evita cobrança em duplicidade; leitura antes do prazo de evidências aguarda o próximo ciclo.</div></div>`;
+function ligarLinhas(tbodyId){
+  const tb=$(tbodyId);
+  tb.querySelectorAll('[data-com]').forEach(i=>i.onchange=()=>setComunicado(i.dataset.com,i.value));
+  tb.querySelectorAll('[data-fase]').forEach(s=>s.onchange=()=>setFase([s.dataset.fase],s.value));
+  tb.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>abrirModal(b.dataset.edit));
 }
-function filtradasMat(){
-  const q=$('m-busca').value.trim().toLowerCase();
-  return base().filter(d=>{
-    if(q && !`${d.matricula} ${d.cliente}`.toLowerCase().includes(q)) return false;
-    if($('m-sit').value==='apta' && !d.apta) return false;
-    if($('m-sit').value==='inapta' && d.apta) return false;
-    if($('m-mes').value && d.mes_entrada!==$('m-mes').value) return false;
-    if($('m-termo').value==='sim' && !d.termo_gerado) return false;
-    if($('m-termo').value==='nao' && d.termo_gerado) return false;
-    return true; });
+
+/* ---------- SEGMENTO ---------- */
+let SEG_ROWS=[];
+function renderSeg(){
+  const base=DADOS.filter(d=>(d.grupo||'Sem segmento')===SEG);
+  $('seg-titulo').textContent=SEG;
+  const exs=[...new Set(base.map(d=>d.executivo).filter(Boolean))].sort();
+  const guardado=localStorage.getItem('tee_exec')||'';
+  const cur=$('seg-exec').value||guardado;
+  $('seg-exec').innerHTML='<option value="">Todos os executivos</option>'+exs.map(e=>`<option>${esc(e)}</option>`).join('')+'<option value="__sem">(sem executivo)</option>';
+  $('seg-exec').value=[...$('seg-exec').options].some(o=>o.value===cur)?cur:'';
+  const ve=$('seg-exec').value;
+  const minhas=base.filter(d=>!ve||(ve==='__sem'?!d.executivo:d.executivo===ve));
+  $('seg-sub').textContent=`${minhas.length} matrículas${ve&&ve!=='__sem'?' de '+ve:''} · ${brl(soma(minhas,'incremento'))} de incremento`;
+  const k=(l,e,cl,h)=>`<div class="kpi ${cl}"><div class="label">${l}</div><div class="value ${cl}">${cnt(minhas,e)}</div><div class="hint">${h}</div></div>`;
+  $('seg-kpis').innerHTML=
+    k('A comunicar','comunicar','rose','Informe a data do comunicado')+
+    k('Aguardando prazo','aguardando','amber','Comunicadas, prazo de 30 dias em curso')+
+    k('Aptas','apta','leaf',brl(soma(minhas.filter(d=>d.etapa==='apta'),'incremento'))+' de incremento')+
+    k('Implementadas','implementada','','tarifa já em vigor');
+  const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','apta','implementada','sem_tee'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)}))];
+  tabs('seg-tabs',T,SEGTAB,k=>{ SEGTAB=k; renderSeg(); });
+  const q=$('seg-busca').value.trim().toLowerCase();
+  SEG_ROWS=minhas.filter(d=>(SEGTAB==='todas'||d.etapa===SEGTAB)&&(!q||`${d.matricula} ${d.cliente}`.toLowerCase().includes(q)));
+  $('seg-head').innerHTML='<tr><th>Matrícula</th><th>Cliente</th><th>Ciclo</th><th>Leitura</th><th class="num">% aplic.</th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th>Executivo</th><th></th></tr>';
+  $('seg-body').innerHTML=SEG_ROWS.length?SEG_ROWS.map(d=>`<tr>
+    <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(d.ciclo||'–')}</td>
+    <td>${dBR(d.data_leitura)}<div class="mini">${diasTxt(d)}</div></td>
+    <td class="num">${pct(d.pct_aplicado)}</td><td class="num"><b>${brl(d.incremento)}</b></td>
+    <td>${comunicadoInput(d)}</td><td>${aptaTxt(d)}</td><td>${etapaBadge(d)}</td>
+    <td>${d.fase?`<span class="badge b-gray">${esc(d.fase)}</span>`:'<span class="mini">–</span>'}</td>
+    <td>${esc(d.executivo||'–')}</td><td><button class="btn btn-ghost btn-sm" data-edit="${d.matricula}">Editar</button></td></tr>`).join('')
+    :'<tr class="empty-row"><td colspan="12">Nenhuma matrícula neste filtro.</td></tr>';
+  ligarLinhas('seg-body');
 }
-function renderMat(){
-  const rows=filtradasMat();
-  $('mat-sub').textContent=`${rows.length} matrículas · incremento filtrado: ${brl(soma(rows,'incremento'))}`;
-  $('mat-body').innerHTML=rows.length?rows.map(d=>{
-    const mt=motivos(d);
-    const sit=d.apta?'<span class="badge b-leaf">Apta</span>':`<span class="badge b-rose" title="${esc(mt.join('; '))}">Inapta</span> <span class="mini">${esc(mt[0]||'')}</span>`;
-    return `<tr>
-      <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td>
-      <td><span class="badge b-gray">${esc(d.grupo||'–')}</span></td><td>${d.bloco??'–'}</td>
-      <td class="num">${pct(d.pct_cobranca)}</td><td class="num">${pct(d.pct_aplicado)}</td><td class="num"><b>${brl(d.incremento)}</b></td>
-      <td>${dBR(d.data_leitura)}</td><td><span class="badge b-water">${mesLbl(d.mes_entrada)}</span></td><td>${dBR(d.data_1a_notificacao)}</td>
-      <td>${sit}</td>
-      <td><input type="checkbox" class="ck" ${d.termo_gerado?'checked':''} data-mat="${d.matricula}" title="${d.data_termo?'Gerado em '+dBR(d.data_termo):'Marcar termo como gerado'}"></td>
-      <td><button class="btn btn-ghost btn-sm" data-edit="${d.matricula}">Editar</button></td></tr>`;
-  }).join(''):'<tr class="empty-row"><td colspan="13">Nenhuma matrícula encontrada.</td></tr>';
-  document.querySelectorAll('#mat-body input.ck').forEach(c=>c.onchange=()=>marcarTermo(c.dataset.mat,c.checked));
-  document.querySelectorAll('#mat-body [data-edit]').forEach(b=>b.onclick=()=>abrirModal(b.dataset.edit));
+$('seg-exec').onchange=()=>{ localStorage.setItem('tee_exec',$('seg-exec').value); renderSeg(); };
+$('seg-busca').oninput=renderSeg;
+
+/* ---------- EXECUTOR ---------- */
+let EXEC_ROWS=[];
+function renderExec(){
+  const ap=DADOS.filter(d=>d.etapa==='apta'), pr=DADOS.filter(d=>d.prioridade);
+  $('exec-sub').textContent=`${DADOS.length} matrículas em ${new Set(DADOS.map(d=>d.grupo)).size} segmentos · prioridade = leitura em até ${JAN()} dias ou já passou`;
+  $('exec-kpis').innerHTML=
+    `<div class="kpi leaf"><div class="label">Aptas a virar</div><div class="value leaf">${ap.length}</div><div class="hint">${brl(soma(ap,'incremento'))} de incremento</div></div>
+     <div class="kpi rose"><div class="label">Prioridades</div><div class="value rose">${pr.length}</div><div class="hint">${pr.filter(d=>d.prioridade==='implementar').length} para implementar · ${pr.filter(d=>d.prioridade==='comunicar').length} para comunicar</div></div>
+     <div class="kpi amber"><div class="label">A comunicar</div><div class="value amber">${cnt(DADOS,'comunicar')}</div><div class="hint">sem data de comunicado</div></div>
+     <div class="kpi"><div class="label">Implementadas</div><div class="value">${cnt(DADOS,'implementada')}</div><div class="hint">de ${DADOS.length} matrículas</div></div>`;
+  const T=[{k:'prioridades',l:'Prioridades',n:pr.length},{k:'aptas',l:'Aptas a virar',n:ap.length},{k:'comunicar',l:'A comunicar',n:cnt(DADOS,'comunicar')},
+    {k:'aguardando',l:'Aguardando prazo',n:cnt(DADOS,'aguardando')},{k:'implementada',l:'Implementadas',n:cnt(DADOS,'implementada')},{k:'todas',l:'Todas',n:DADOS.length}];
+  tabs('exec-tabs',T,EXECTAB,k=>{ EXECTAB=k; SEL.clear(); renderExec(); });
+  const f={prioridades:d=>d.prioridade,aptas:d=>d.etapa==='apta',comunicar:d=>d.etapa==='comunicar',aguardando:d=>d.etapa==='aguardando',implementada:d=>d.etapa==='implementada',todas:()=>true}[EXECTAB];
+  EXEC_ROWS=DADOS.filter(f).sort((a,b)=>(a.dias_leitura??9999)-(b.dias_leitura??9999)||a.matricula.localeCompare(b.matricula));
+  $('exec-head').innerHTML='<tr><th><input type="checkbox" class="ck" id="sel-all"></th><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Executivo</th><th>Leitura</th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th></th></tr>';
+  $('exec-body').innerHTML=EXEC_ROWS.length?EXEC_ROWS.map(d=>`<tr>
+    <td><input type="checkbox" class="ck" data-sel="${d.matricula}" ${SEL.has(d.matricula)?'checked':''}></td>
+    <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(d.grupo||'–')}</td>
+    <td>${esc(d.executivo||'–')}</td><td>${dBR(d.data_leitura)}<div class="mini">${diasTxt(d)}</div></td>
+    <td class="num"><b>${brl(d.incremento)}</b></td><td>${comunicadoInput(d)}</td><td>${aptaTxt(d)}</td><td>${etapaBadge(d)}</td>
+    <td>${faseSel(d)}</td><td><button class="btn btn-ghost btn-sm" data-edit="${d.matricula}">Editar</button></td></tr>`).join('')
+    :'<tr class="empty-row"><td colspan="12">Nada por aqui.</td></tr>';
+  ligarLinhas('exec-body');
+  $('exec-body').querySelectorAll('[data-sel]').forEach(c=>c.onchange=()=>{ c.checked?SEL.add(c.dataset.sel):SEL.delete(c.dataset.sel); bulkUI(); });
+  $('sel-all').onchange=e=>{ EXEC_ROWS.forEach(d=>e.target.checked?SEL.add(d.matricula):SEL.delete(d.matricula)); renderExec(); };
+  $('bulk-fase').innerHTML='<option value="">Definir fase…</option>'+FASES.map(x=>`<option>${x}</option>`).join('');
+  bulkUI();
 }
-async function marcarTermo(mat,v){
-  const {error}=await sb.from('tee_matriculas').update({termo_gerado:v,data_termo:v?new Date().toISOString().slice(0,10):null}).eq('matricula',mat);
-  if(error) toast(error.message,true); else { toast(v?'Termo marcado como gerado':'Termo desmarcado'); carregar(); }
+function bulkUI(){ $('exec-bulk').classList.toggle('on',SEL.size>0); $('bulk-n').textContent=`${SEL.size} selecionada(s)`; }
+$('bulk-ok').onclick=async()=>{
+  const nome=$('bulk-exec').value.trim(); if(!nome||!SEL.size) return toast('Selecione matrículas e informe o executivo.',true);
+  const {error}=await sb.from('tee_matriculas').update({executivo:nome}).in('matricula',[...SEL]);
+  if(error) return toast(error.message,true);
+  toast(`${SEL.size} matrículas atribuídas a ${nome}`); SEL.clear(); $('bulk-exec').value=''; carregar();
+};
+$('bulk-fase-ok').onclick=()=>{ const f=$('bulk-fase').value; if(!f||!SEL.size) return toast('Selecione matrículas e a fase.',true); setFase([...SEL],f); };
+
+/* ---------- AÇÕES ---------- */
+async function setComunicado(mat,val){
+  const d=DADOS.find(x=>x.matricula===mat); const upd={data_1a_notificacao:val||null,notificacao_entregue:!!val};
+  if(val && (!d.fase||d.fase==='A comunicar')) upd.fase='Comunicado';
+  if(!val && d.fase==='Comunicado') upd.fase='A comunicar';
+  const {error}=await sb.from('tee_matriculas').update(upd).eq('matricula',mat);
+  if(error) return toast(error.message,true);
+  await carregar();
+  const n=DADOS.find(x=>x.matricula===mat);
+  toast(val&&n&&n.data_apta?`${mat}: apta a partir de ${dBR(n.data_apta)} (entra em ${mesLbl(n.mes_entrada)})`:'Comunicado removido');
+}
+async function setFase(mats,fase){
+  const upd={fase:fase||null}; if(fase) upd.tarifa_implementada=(fase==='Implementada');
+  const {error}=await sb.from('tee_matriculas').update(upd).in('matricula',mats);
+  if(error) return toast(error.message,true);
+  toast(`Fase "${fase||'—'}" aplicada a ${mats.length} matrícula(s)`); SEL.clear(); carregar();
 }
 
 /* ---------- MODAL ---------- */
 function abrirModal(mat){
   const d=DADOS.find(x=>x.matricula===mat); if(!d) return; EDITANDO=mat;
   $('m-titulo').textContent=`Matrícula ${d.matricula}`; $('m-sub').textContent=d.cliente||'';
-  $('e-notif-data').value=d.data_1a_notificacao||''; $('e-notif').value=String(!!d.notificacao_entregue);
-  $('e-max').value=d.max_data_evidencias||''; $('e-tarifa').value=String(!!d.tarifa_implementada);
+  $('e-notif-data').value=d.data_1a_notificacao||''; $('e-exec').value=d.executivo||'';
   $('e-neg').value=d.negociacao!=null?+(d.negociacao*100).toFixed(2):''; $('e-dtermo').value=d.data_termo||''; $('e-obs').value=d.observacao||'';
   $('modal').style.display='flex';
 }
 const fechar=()=>{ $('modal').style.display='none'; EDITANDO=null; };
-$('e-cancel').onclick=fechar;
-$('modal').onclick=e=>{ if(e.target===$('modal')) fechar(); };
+$('e-cancel').onclick=fechar; $('modal').onclick=e=>{ if(e.target===$('modal')) fechar(); };
 $('e-save').onclick=async()=>{
-  const n=$('e-neg').value;
-  const upd={ data_1a_notificacao:$('e-notif-data').value||null, notificacao_entregue:$('e-notif').value==='true',
-    max_data_evidencias:$('e-max').value||null, tarifa_implementada:$('e-tarifa').value==='true',
-    negociacao:n===''?null:Math.min(parseFloat(n)/100,10), data_termo:$('e-dtermo').value||null, observacao:$('e-obs').value||null };
+  const n=$('e-neg').value, nd=$('e-notif-data').value;
+  const upd={data_1a_notificacao:nd||null,notificacao_entregue:!!nd,executivo:$('e-exec').value.trim()||null,
+    negociacao:n===''?null:Math.min(parseFloat(n)/100,10),data_termo:$('e-dtermo').value||null,termo_gerado:!!$('e-dtermo').value,observacao:$('e-obs').value||null};
   const {error}=await sb.from('tee_matriculas').update(upd).eq('matricula',EDITANDO);
   if(error) return toast(error.message,true);
   fechar(); toast('Matrícula atualizada'); carregar();
@@ -534,35 +622,22 @@ $('e-save').onclick=async()=>{
 
 /* ---------- EXPORTAR ---------- */
 $('btn-export').onclick=()=>{
-  const rows=filtradasMat().map(d=>({
-    'Matrícula':d.matricula,'Cliente':d.cliente,'Grupo':d.grupo,'Bloco':d.bloco,'Faturamento':+d.faturamento,
-    '% Cobrança':+d.pct_cobranca,'% Aplicado':+d.pct_aplicado,'Incremento (R$)':+d.incremento,
-    'Data Leitura':dBR(d.data_leitura),'Mês de Entrada':mesLbl(d.mes_entrada),'1ª Notificação':dBR(d.data_1a_notificacao),
-    'Notificado':d.notificacao_entregue?'Sim':'Não','Máx. Evidências':dBR(d.max_data_evidencias),
-    'Tarifa Implementada':d.tarifa_implementada?'Sim':'Não','Apta':d.apta?'Sim':'Não','Motivo':motivos(d).join('; '),
-    'Termo Gerado':d.termo_gerado?'Sim':'Não'}));
-  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'TEE');
-  XLSX.writeFile(wb,'TEE_export.xlsx');
+  const rows=SEG_ROWS.map(d=>({'Matrícula':d.matricula,'Cliente':d.cliente,'Segmento':d.grupo,'Executivo':d.executivo,'Ciclo':d.ciclo,
+    'Faturamento':+d.faturamento,'% Aplicado':+d.pct_aplicado,'Incremento (R$)':+d.incremento,'Data Leitura':dBR(d.data_leitura),
+    'Data do Comunicado':dBR(d.data_1a_notificacao),'Máx. Evidências':dBR(d.max_data_evidencias),'Apta a partir de':dBR(d.data_apta),
+    'Mês de Entrada':mesLbl(d.mes_entrada),'Etapa':ETAPAS[d.etapa].l,'Fase':d.fase||''}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'TEE'); XLSX.writeFile(wb,`TEE_${SEG}.xlsx`);
 };
 
 /* ---------- IMPORTAÇÃO ---------- */
-const norm = s => String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
-function num(v){
-  if(v==null||v==='') return null;
-  if(typeof v==='number') return isFinite(v)?v:null;
-  const t=String(v).trim(); const n=t.includes(',')?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t);
-  return isFinite(n)?n:null;
-}
-function dt(v){
-  if(v==null||v==='') return null;
-  if(v instanceof Date){ return new Date(v.getTime()+12*3600e3).toISOString().slice(0,10); }
-  const s=String(v).trim(); let m;
-  if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/))) return `${m[3]}-${m[2]}-${m[1]}`;
-  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
-  return null;
-}
-const sim = v => norm(v)==='sim';
-const logImp = t => { const l=$('imp-log'); l.textContent+=(l.textContent?'\n':'')+t; };
+const norm=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+function num(v){ if(v==null||v==='') return null; if(typeof v==='number') return isFinite(v)?v:null;
+  const t=String(v).trim(); const n=t.includes(',')?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t); return isFinite(n)?n:null; }
+function dt(v){ if(v==null||v==='') return null; if(v instanceof Date) return new Date(v.getTime()+12*3600e3).toISOString().slice(0,10);
+  const s=String(v).trim(); let m; if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/))) return `${m[3]}-${m[2]}-${m[1]}`;
+  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`; return null; }
+const sim=v=>norm(v)==='sim';
+const logImp=t=>{ const l=$('imp-log'); l.textContent+=(l.textContent?'\n':'')+t; };
 $('imp-file').onchange=()=>$('up-box').classList.toggle('has-file',!!$('imp-file').files[0]);
 
 $('btn-imp').onclick=async()=>{
@@ -570,31 +645,32 @@ $('btn-imp').onclick=async()=>{
   const btn=$('btn-imp'); btn.disabled=true; $('imp-log').textContent=''; $('imp-prog').style.display='block'; $('imp-prog').firstElementChild.style.width='5%';
   try{
     const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});
-    const aba=wb.SheetNames.find(n=>norm(n)===norm($('imp-aba').value))||wb.SheetNames[0];
-    logImp(`Aba usada: ${aba}`);
+    const aba=wb.SheetNames.find(n=>norm(n)===norm($('imp-aba').value))||wb.SheetNames[0]; logImp(`Aba usada: ${aba}`);
     const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:null,raw:true});
     const pick=(r,...ks)=>{ for(const k of Object.keys(r)) if(ks.includes(norm(k))) return r[k]; };
-    const mapa=new Map();
+    const temExec=linhas.some(r=>Object.keys(r).some(k=>['executivo','responsavel','analista'].includes(norm(k))));
+    const mapa=new Map(), impl=[];
     for(const r of linhas){
       const mat=String(pick(r,'matricula')??'').trim(); if(!/^\d{6,}$/.test(mat)) continue;
       let fat=num(pick(r,'faturamento - a&e')); if(fat==null) fat=num(pick(r,'faturamento'));
       let pc=num(pick(r,'% de cobranca')); if(pc==null) pc=num(pick(r,'% maximo de cobranca'));
-      const ng=num(pick(r,'negociacao'));
-      const reg={ matricula:mat, cliente:String(pick(r,'nome','cliente')??'').trim()||null,
-        grupo:$('imp-grupo').value, onda:$('imp-onda').value, faturamento:fat, pct_cobranca:pc,
-        negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null, data_leitura:dt(pick(r,'data leitura')),
-        data_1a_notificacao:dt(pick(r,'data da 1a notificacao')), notificacao_entregue:sim(pick(r,'notificacao entregue')),
-        max_data_evidencias:dt(pick(r,'max data: envio de evidencias')), tarifa_implementada:sim(pick(r,'tarifa implementada')) };
+      const ng=num(pick(r,'negociacao')), ci=pick(r,'ciclo');
+      const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:$('imp-grupo').value,onda:$('imp-onda').value,
+        ciclo:ci==null?null:String(ci).trim(),faturamento:fat,pct_cobranca:pc,negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null,
+        data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao')),
+        notificacao_entregue:sim(pick(r,'notificacao entregue')),max_data_evidencias:dt(pick(r,'max data: envio de evidencias')),
+        tarifa_implementada:sim(pick(r,'tarifa implementada'))};
+      if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
       const ant=mapa.get(mat); if(!ant||(ant.faturamento==null&&fat!=null)) mapa.set(mat,reg);
     }
-    const lote=[...mapa.values()]; logImp(`${lote.length} matrículas válidas encontradas. Enviando…`);
+    const lote=[...mapa.values()]; lote.forEach(r=>{ if(r.tarifa_implementada) impl.push(r.matricula); });
+    logImp(`${lote.length} matrículas válidas. Enviando…`);
     for(let i=0;i<lote.length;i+=200){
-      const {error}=await sb.from('tee_matriculas').upsert(lote.slice(i,i+200),{onConflict:'matricula'});
-      if(error) throw error;
-      $('imp-prog').firstElementChild.style.width=Math.round(Math.min(i+200,lote.length)/lote.length*100)+'%';
-      logImp(`  enviadas ${Math.min(i+200,lote.length)}/${lote.length}`);
+      const {error}=await sb.from('tee_matriculas').upsert(lote.slice(i,i+200),{onConflict:'matricula'}); if(error) throw error;
+      $('imp-prog').firstElementChild.style.width=Math.round(Math.min(i+200,lote.length)/lote.length*100)+'%'; logImp(`  enviadas ${Math.min(i+200,lote.length)}/${lote.length}`);
     }
-    logImp('✔ Importação concluída.'); toast('Importação concluída'); await carregar();
+    for(let i=0;i<impl.length;i+=150){ const {error}=await sb.from('tee_matriculas').update({fase:'Implementada'}).in('matricula',impl.slice(i,i+150)); if(error) throw error; }
+    logImp(`✔ Concluído (${impl.length} já implementadas na planilha).`); toast('Importação concluída'); await carregar();
   }catch(e){ logImp('✖ Erro: '+(e.message||e)); toast('Erro na importação: '+(e.message||e),true); }
   btn.disabled=false;
 };
