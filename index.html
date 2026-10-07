@@ -487,13 +487,14 @@ const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agos
 const ETAPAS={
   comunicar:   {l:'A comunicar',      b:'b-rose',  c:'var(--rose)'},
   aguardando:  {l:'Aguardando prazo', b:'b-amber', c:'var(--amber)'},
+  sem_pct:     {l:'Prazo cumprido · sem % de TEE', b:'b-amber', c:'#D9A44A'},
   apta:        {l:'Apta',             b:'b-leaf',  c:'var(--leaf)'},
   fluxo:       {l:'Em andamento',     b:'b-navy',  c:'var(--navy-3)'},
   implementada:{l:'Implementada',     b:'b-water', c:'var(--water)'},
   fora:        {l:'Retirada / não implementar', b:'b-gray', c:'#8A9BA8'},
   sem_tee:     {l:'Sem TEE',          b:'b-gray',  c:'#B8C4CC'}
 };
-const ORDEM=['implementada','fluxo','apta','aguardando','comunicar','sem_tee','fora'];
+const ORDEM=['implementada','fluxo','apta','sem_pct','aguardando','comunicar','sem_tee','fora'];
 /* Link do botão "← Página principal" (plataforma Grandes Clientes). Troque pelo endereço da sua plataforma. */
 const PLATAFORMA_URL='../vencidos-gc/';
 /* Cards fixos de segmento: aparecem sempre, mesmo sem planilha importada */
@@ -536,6 +537,7 @@ function proxLeitura(dataLeitura, aPartir){
   const em=(yy,mm)=>{ const ult=new Date(Date.UTC(yy,mm,0)).getUTCDate(); return `${yy}-${String(mm).padStart(2,'0')}-${String(Math.min(dia,ult)).padStart(2,'0')}`; };
   let c=em(y,m); if(c<aPartir){ c=m===12?em(y+1,1):em(y,m+1); } return c;
 }
+const temPct=d=>(+d.pct_aplicado>0)||(+d.pct_cobranca>0);
 function regraApta(d0){
   const mat=String(d0.matricula), g=GEST[mat]||{}, hoje=hojeISO();
   const d={...d0, gest:g, entrou_rota:g.entrou_rota||null, prazo_comunicado:g.prazo_comunicado||null, fase_desde:g.fase_desde||null,
@@ -549,7 +551,7 @@ function regraApta(d0){
   if(FASES_FORA.includes(d.fase)) d.etapa='fora';
   else if(d.fase==='Implementada'||d0.etapa==='implementada') d.etapa='implementada';
   else if(FASES_FLUXO.includes(d.fase)) d.etapa='fluxo';
-  else if(d.data_1a_notificacao) d.etapa = hoje>=d.data_apta ? 'apta' : 'aguardando';
+  else if(d.data_1a_notificacao) d.etapa = hoje<d.data_apta ? 'aguardando' : (temPct(d) ? 'apta' : 'sem_pct');   // apta exige % de TEE na planilha
   else if(d0.etapa==='sem_tee' && !g.entrou_rota) d.etapa='sem_tee';
   else d.etapa='comunicar';
   const perto=d.dias_leitura!=null && d.dias_leitura<=JAN();
@@ -671,6 +673,7 @@ function aptaTxt(d){
   if(d.etapa==='fora') return `<span class="mini">${esc(d.fase)}</span>`;
   if(d.etapa==='comunicar') return d.prazo_comunicado ? `<span class="${d.prazo_comunicado<hojeISO()?'urg-txt':'mini'}">comunicar até ${dBR(d.prazo_comunicado)}</span>` : '<span class="mini">informe o comunicado</span>';
   if(!d.data_apta) return '<span class="mini">informe o comunicado</span>';
+  if(d.etapa==='sem_pct') return `<b>${dBR(d.data_apta)}</b><div class="soon-txt" style="font-size:11.5px">falta o % de TEE na planilha</div>`;
   return `<b>${dBR(d.data_apta)}</b><div class="mini">entra em ${mesLbl(d.mes_entrada)}</div>`;
 }
 const etapaBadge=d=>d.etapa==='fluxo'
@@ -712,7 +715,7 @@ function renderSeg(){
     k('Aguardando prazo','aguardando','amber','Comunicadas, prazo de 30 dias em curso')+
     k('Aptas','apta','leaf',brl(soma(minhas.filter(d=>d.etapa==='apta'),'incremento'))+' de incremento')+
     k('Implementadas','implementada','','tarifa já em vigor');
-  const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','apta','fluxo','implementada','sem_tee','fora'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)}))];
+  const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','sem_pct','apta','fluxo','implementada','sem_tee','fora'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)}))];
   tabs('seg-tabs',T,SEGTAB,k=>{ SEGTAB=k; renderSeg(); });
   const q=$('seg-busca').value.trim().toLowerCase();
   SEG_ROWS=minhas.filter(d=>(SEGTAB==='todas'||d.etapa===SEGTAB)&&(!q||`${d.matricula} ${d.cliente}`.toLowerCase().includes(q)));
@@ -741,9 +744,9 @@ function renderExec(){
      <div class="kpi amber"><div class="label">A comunicar</div><div class="value amber">${cnt(DADOS,'comunicar')}</div><div class="hint">sem data de comunicado</div></div>
      <div class="kpi"><div class="label">Implementadas</div><div class="value">${cnt(DADOS,'implementada')}</div><div class="hint">de ${DADOS.length} matrículas</div></div>`;
   const T=[{k:'prioridades',l:'Prioridades',n:pr.length},{k:'aptas',l:'Aptas a virar',n:ap.length},{k:'comunicar',l:'A comunicar',n:cnt(DADOS,'comunicar')},
-    {k:'aguardando',l:'Aguardando prazo',n:cnt(DADOS,'aguardando')},{k:'fluxo',l:'Em andamento (fase)',n:cnt(DADOS,'fluxo')},{k:'implementada',l:'Implementadas',n:cnt(DADOS,'implementada')},{k:'todas',l:'Todas',n:DADOS.length}];
+    {k:'aguardando',l:'Aguardando prazo',n:cnt(DADOS,'aguardando')},{k:'sem_pct',l:'Sem % de TEE',n:cnt(DADOS,'sem_pct')},{k:'fluxo',l:'Em andamento (fase)',n:cnt(DADOS,'fluxo')},{k:'implementada',l:'Implementadas',n:cnt(DADOS,'implementada')},{k:'todas',l:'Todas',n:DADOS.length}];
   tabs('exec-tabs',T,EXECTAB,k=>{ EXECTAB=k; SEL.clear(); renderExec(); });
-  const f={prioridades:d=>d.prioridade,aptas:d=>d.etapa==='apta',comunicar:d=>d.etapa==='comunicar',aguardando:d=>d.etapa==='aguardando',fluxo:d=>d.etapa==='fluxo',implementada:d=>d.etapa==='implementada',todas:()=>true}[EXECTAB];
+  const f={prioridades:d=>d.prioridade,aptas:d=>d.etapa==='apta',comunicar:d=>d.etapa==='comunicar',aguardando:d=>d.etapa==='aguardando',sem_pct:d=>d.etapa==='sem_pct',fluxo:d=>d.etapa==='fluxo',implementada:d=>d.etapa==='implementada',todas:()=>true}[EXECTAB];
   EXEC_ROWS=DADOS.filter(f).sort((a,b)=>(a.dias_leitura??9999)-(b.dias_leitura??9999)||a.matricula.localeCompare(b.matricula));
   $('exec-head').innerHTML='<tr><th><input type="checkbox" class="ck" id="sel-all"></th><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Executivo</th><th>Na rota desde</th><th>Próx. leitura</th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th>Termo</th><th></th></tr>';
   $('exec-body').innerHTML=EXEC_ROWS.length?EXEC_ROWS.map(d=>`<tr>
@@ -869,7 +872,7 @@ function renderGestor(){
   const gp={}; [...ap,...fl,...ag].forEach(d=>{ const k=d.mes_entrada?d.mes_entrada.slice(0,7):'sem'; (gp[k]=gp[k]||[]).push(d); }); let ac2=0;
   $('g-prev').innerHTML=Object.keys(gp).sort().map(k=>{ const v=soma(gp[k],'incremento'); ac2+=v; return `<tr><td><b>${k==='sem'?'Sem leitura cadastrada':mesLbl(k)}</b></td><td class="num">${fmtN(gp[k].length)}</td><td class="num">${brl(v)}</td><td class="num"><b>${brl(ac2)}</b></td></tr>`; }).join('')||'<tr class="empty-row"><td colspan="4">—</td></tr>';
   // onde está
-  const grupos=[['A comunicar',d=>d.etapa==='comunicar'],['Aguardando prazo (30 dias)',d=>d.etapa==='aguardando'],['Apta',d=>d.etapa==='apta'],...FASES_FLUXO.map(f=>[f,d=>d.etapa==='fluxo'&&d.fase===f]),['Implementada',d=>d.etapa==='implementada'],['Tarifa retirada / Não implementar',d=>d.etapa==='fora']];
+  const grupos=[['A comunicar',d=>d.etapa==='comunicar'],['Aguardando prazo (30 dias)',d=>d.etapa==='aguardando'],['Prazo cumprido · sem % de TEE',d=>d.etapa==='sem_pct'],['Apta',d=>d.etapa==='apta'],...FASES_FLUXO.map(f=>[f,d=>d.etapa==='fluxo'&&d.fase===f]),['Implementada',d=>d.etapa==='implementada'],['Tarifa retirada / Não implementar',d=>d.etapa==='fora']];
   const totI=soma(DADOS,'incremento')||1;
   $('g-onde').innerHTML=grupos.map(([l,f])=>{ const g=DADOS.filter(f), v=soma(g,'incremento'); return `<tr><td><b>${l}</b></td><td class="num">${fmtN(g.length)}</td><td class="num">${brl(v)}</td><td><div class="g-bar"><i style="width:${v/totI*100}%"></i></div></td></tr>`; }).join('');
   // termos
