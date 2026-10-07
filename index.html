@@ -407,7 +407,8 @@
 const SUPABASE_URL      = 'https://metstknnhexflqmpgzof.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Wi0PmbWO7oPtoqUv1sRMPw_7A8Hgtx4';
 /* Fases que o coordenador pode atribuir (edite a lista à vontade) */
-const FASES = ['A comunicar','Comunicado','Aguardando evidências','Apta à implementação','Termo enviado','Termo assinado','Implementada'];
+const FASES = ['A comunicar','Comunicado','Aguardando evidências','Apta à implementação','Aguardando agenda','Termo enviado','Termo assinado','Implementada','Tarifa retirada','Não implementar'];
+const FASES_FORA = ['Tarifa retirada','Não implementar'];   // saem das aptas/prioridades
 /* ======================================== */
 
 const $ = id => document.getElementById(id);
@@ -421,9 +422,10 @@ const ETAPAS={
   aguardando:  {l:'Aguardando prazo', b:'b-amber', c:'var(--amber)'},
   apta:        {l:'Apta',             b:'b-leaf',  c:'var(--leaf)'},
   implementada:{l:'Implementada',     b:'b-water', c:'var(--water)'},
+  fora:        {l:'Retirada / não implementar', b:'b-gray', c:'#8A9BA8'},
   sem_tee:     {l:'Sem TEE',          b:'b-gray',  c:'#B8C4CC'}
 };
-const ORDEM=['implementada','apta','aguardando','comunicar','sem_tee'];
+const ORDEM=['implementada','apta','aguardando','comunicar','sem_tee','fora'];
 /* Link do botão "← Página principal" (plataforma Grandes Clientes). Troque pelo endereço da sua plataforma. */
 const PLATAFORMA_URL='../vencidos-gc/';
 /* Cards fixos de segmento: aparecem sempre, mesmo sem planilha importada */
@@ -459,6 +461,7 @@ $('btn-recarregar').onclick=()=>carregar(true);
 const isoAdd=(iso,n)=>{ const [y,m,d]=iso.split('-').map(Number); return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10); };
 const isoAddMes=(iso,n)=>{ const [y,m,d]=iso.split('-').map(Number); const ult=new Date(Date.UTC(y,m-1+n+1,0)).getUTCDate(); return new Date(Date.UTC(y,m-1+n,Math.min(d,ult))).toISOString().slice(0,10); };
 function regraApta(d){
+  if(FASES_FORA.includes(d.fase)) return {...d, etapa:'fora', prioridade:null};
   if(d.etapa==='implementada'||d.etapa==='sem_tee'||!d.data_1a_notificacao) return d;
   const com=String(d.data_1a_notificacao).slice(0,10), apta=isoAdd(com,30);
   const ref=(d.data_referencia&&String(d.data_referencia).slice(0,10))||new Date().toISOString().slice(0,10);
@@ -563,6 +566,7 @@ function diasTxt(d){
 function aptaTxt(d){
   if(d.etapa==='implementada') return '<span class="mini">já implementada</span>';
   if(d.etapa==='sem_tee') return '<span class="mini">% de cobrança = 0</span>';
+  if(d.etapa==='fora') return `<span class="mini">${esc(d.fase)}</span>`;
   if(!d.data_apta) return '<span class="mini">informe o comunicado</span>';
   return `<b>${dBR(d.data_apta)}</b><div class="mini">entra em ${mesLbl(d.mes_entrada)}</div>`;
 }
@@ -597,7 +601,7 @@ function renderSeg(){
     k('Aguardando prazo','aguardando','amber','Comunicadas, prazo de 30 dias em curso')+
     k('Aptas','apta','leaf',brl(soma(minhas.filter(d=>d.etapa==='apta'),'incremento'))+' de incremento')+
     k('Implementadas','implementada','','tarifa já em vigor');
-  const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','apta','implementada','sem_tee'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)}))];
+  const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','apta','implementada','sem_tee','fora'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)}))];
   tabs('seg-tabs',T,SEGTAB,k=>{ SEGTAB=k; renderSeg(); });
   const q=$('seg-busca').value.trim().toLowerCase();
   SEG_ROWS=minhas.filter(d=>(SEGTAB==='todas'||d.etapa===SEGTAB)&&(!q||`${d.matricula} ${d.cliente}`.toLowerCase().includes(q)));
