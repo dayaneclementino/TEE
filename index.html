@@ -377,7 +377,7 @@
     </div>
   </section>
 
-  <footer class="note" id="rodape">Incremento = (faturamento ÷ 2) × percentual aplicado (máx. 30%). Data máxima de evidências = comunicado + 30 dias.</footer>
+  <footer class="note" id="rodape">Incremento = (faturamento ÷ 2) × percentual aplicado (máx. 30%). Apta a partir de = comunicado + 30 dias (data máxima de evidências).</footer>
 </div>
 
 <datalist id="lista-exec"></datalist>
@@ -453,6 +453,22 @@ $('btn-imp-abrir').onclick=()=>go('imp');
 $('btn-principal').href=PLATAFORMA_URL;
 $('btn-recarregar').onclick=()=>carregar(true);
 
+/* ---------- REGRA: apta = comunicado + 30 dias ----------
+   A matrícula fica apta assim que passam 30 dias da data do comunicado (prazo de defesa).
+   "Entra em" = mês da 1ª leitura a partir da data apta (pelo ciclo de leitura da matrícula). */
+const isoAdd=(iso,n)=>{ const [y,m,d]=iso.split('-').map(Number); return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10); };
+const isoAddMes=(iso,n)=>{ const [y,m,d]=iso.split('-').map(Number); const ult=new Date(Date.UTC(y,m-1+n+1,0)).getUTCDate(); return new Date(Date.UTC(y,m-1+n,Math.min(d,ult))).toISOString().slice(0,10); };
+function regraApta(d){
+  if(d.etapa==='implementada'||d.etapa==='sem_tee'||!d.data_1a_notificacao) return d;
+  const com=String(d.data_1a_notificacao).slice(0,10), apta=isoAdd(com,30);
+  const ref=(d.data_referencia&&String(d.data_referencia).slice(0,10))||new Date().toISOString().slice(0,10);
+  let entra=apta;
+  if(d.data_leitura){ let l=String(d.data_leitura).slice(0,10), k=0; while(l<apta&&k<36){ l=isoAddMes(l,1); k++; } while(k<36&&isoAddMes(l,-1)>=apta){ l=isoAddMes(l,-1); k++; } entra=l; }
+  const etapa=ref>=apta?'apta':'aguardando';
+  const perto=d.dias_leitura!=null&&d.dias_leitura<=JAN();
+  return {...d, data_apta:apta, mes_entrada:entra.slice(0,7)+'-01', etapa, prioridade: etapa==='apta'&&perto?'implementar':null};
+}
+
 /* ---------- CARGA ---------- */
 async function carregar(manual){
   $('loading').style.display='block';
@@ -464,7 +480,7 @@ async function carregar(manual){
     if(error){ $('loading').style.display='none'; toast('Erro ao carregar: '+error.message+' — rode o tee_supabase.sql (v2) no Supabase.',true); render(); return; }
     todos=todos.concat(data); if(data.length<1000) break; from+=1000;
   }
-  DADOS=todos; $('loading').style.display='none';
+  DADOS=todos.map(regraApta); $('loading').style.display='none';
   if(DADOS.length) $('f-ref').value=DADOS[0].data_referencia;
   $('sem-base').style.display='none';
   const ex=[...new Set(DADOS.map(d=>d.executivo).filter(Boolean))].sort();
