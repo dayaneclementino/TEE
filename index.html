@@ -599,8 +599,11 @@ function regraApta(d0){
   else if(d0.etapa==='sem_tee' && !g.entrou_rota) d.etapa='sem_tee';
   else d.etapa='comunicar';
   const perto=d.dias_leitura!=null && d.dias_leitura<=JAN();
-  const entraAgora = d.etapa==='apta' || d.etapa==='fluxo' || (d.etapa==='aguardando' && d.prox_leitura && d.data_apta<=d.prox_leitura);
-  d.prioridade = perto && entraAgora ? 'implementar' : (perto && d.etapa==='comunicar' ? 'comunicar' : null);
+  // prioridade só para quem já pode virar: comunicado feito, prazo de resposta (30 dias) encerrado e % de TEE.
+  // Não comunicados e quem ainda está dentro do prazo NÃO entram como prioridade.
+  const liberada = publico ? norm(g.pode_virar).startsWith('sim')
+                           : !!(d.data_1a_notificacao && d.data_apta && hoje>=d.data_apta && temPct(d));
+  d.prioridade = perto && liberada && (d.etapa==='apta' || d.etapa==='fluxo') ? 'implementar' : null;
   return d;
 }
 
@@ -809,7 +812,7 @@ function renderExec(){
   $('exec-sub').textContent=`${DADOS.length} matrículas em ${new Set(DADOS.map(segDe)).size} segmentos · prioridade = entra na leitura atual (próxima leitura em até ${JAN()} dias; a leitura é sempre no mesmo dia do mês — se já passou, conta a seguinte)`;
   $('exec-kpis').innerHTML=
     `<div class="kpi leaf"><div class="label">Aptas a virar</div><div class="value leaf">${ap.length}</div><div class="hint">${brl(soma(ap,'incremento'))} de incremento</div></div>
-     <div class="kpi rose"><div class="label">Prioridades</div><div class="value rose">${pr.length}</div><div class="hint">${pr.filter(d=>d.prioridade==='implementar').length} para implementar · ${pr.filter(d=>d.prioridade==='comunicar').length} para comunicar</div></div>
+     <div class="kpi rose"><div class="label">Prioridades</div><div class="value rose">${pr.length}</div><div class="hint">aptas que entram na leitura atual (comunicadas e com prazo encerrado)</div></div>
      <div class="kpi amber"><div class="label">A comunicar</div><div class="value amber">${cnt(DADOS,'comunicar')}</div><div class="hint">sem data de comunicado</div></div>
      <div class="kpi"><div class="label">Implementadas</div><div class="value">${cnt(DADOS,'implementada')}</div><div class="hint">de ${DADOS.length} matrículas</div></div>`;
   const T=[{k:'prioridades',l:'Prioridades',n:pr.length},{k:'aptas',l:'Aptas a virar',n:ap.length},{k:'comunicar',l:'A comunicar',n:cnt(DADOS,'comunicar')},
