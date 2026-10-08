@@ -280,9 +280,12 @@
   td select.fase{ max-width:170px; }
   .mini{ font-size:11.5px; color:var(--text-mut); }
   .b-navy{ background:#DCE7F1; color:var(--navy); }
+  .btn-sol{ background:var(--water); color:#fff; border:none; font-size:11.5px; padding:6px 10px; white-space:nowrap; } .btn-sol:hover{ background:var(--navy-3); }
+  select.termo-sol{ background:var(--amber-soft); } select.termo-ela{ background:#EFEAFA; }
   select.termo-env{ background:var(--water-soft); } select.termo-ass{ background:var(--leaf-soft); } select.termo-rec{ background:var(--rose-soft); }
   .g-kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; } @media (max-width:900px){ .g-kpis{ grid-template-columns:1fr; } }
   .g-two{ display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:900px){ .g-two{ grid-template-columns:1fr; } }
+  #g-onde tr.total td{ background:var(--water-soft); border-top:1px solid var(--water-line); font-weight:800; color:var(--navy); }
   .g-note{ font-size:12px; color:var(--text-mut); margin-top:8px; line-height:1.5; }
   .g-bar{ height:8px; background:#EEF3F6; border-radius:8px; overflow:hidden; min-width:80px; } .g-bar i{ display:block; height:100%; background:var(--water); }
   .urg-txt{ color:var(--rose); font-weight:700; } .soon-txt{ color:var(--amber); font-weight:700; }
@@ -386,13 +389,20 @@
       <div class="card" style="margin-top:16px;">
         <h2>Onde está cada matrícula</h2>
         <p class="sub">Etapa / fase atual, quantidade e incremento mensal.</p>
-        <div class="tablewrap"><table><thead><tr><th>Etapa / fase</th><th class="num">Matrículas</th><th class="num">Incremento</th><th style="width:30%"></th></tr></thead><tbody id="g-onde"></tbody></table></div>
+        <div class="tablewrap"><table><thead><tr><th>Etapa / fase</th><th class="num">Matrículas</th><th class="num">% real</th><th class="num">% cobrada</th><th class="num">Incremento</th><th style="width:22%"></th></tr></thead><tbody id="g-onde"></tbody></table></div>
+        <p class="g-note">% real = percentual medido na planilha (% de cobrança / lista de virada). % cobrada = o que entra na fatura, limitado a 30%. Médias ponderadas pelo faturamento das matrículas com percentual informado.</p>
       </div>
       <div class="card" style="margin-top:16px;">
         <h2>Termos de adesão</h2>
         <p class="sub">Toda matrícula apta (ou em andamento) deve ter o termo enviado — e depois assinado ou recusado.</p>
         <div class="tablewrap"><table><thead><tr><th>Status do termo</th><th class="num">Matrículas</th><th class="num">Incremento</th></tr></thead><tbody id="g-termo"></tbody></table></div>
       </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head"><div><h2>Termos de adesão — solicitações dos executivos</h2><p class="sub">O executivo clica em <b>Solicitar termo de adesão</b>; quando o termo for disponibilizado, marque <b>Termo elaborado</b>. Assim ficam medidos o tempo de elaboração e os termos que não foram enviados porque ainda não existiam.</p></div>
+        <button class="btn btn-ghost btn-sm" id="g-sol-xls">Baixar relação de solicitações</button></div>
+      <div class="g-kpis" id="g-sol-kpis" style="grid-template-columns:repeat(4,1fr);margin:6px 0 14px"></div>
+      <div class="tablewrap scroll"><table><thead><tr><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Solicitado por</th><th>Solicitado em</th><th>Situação</th><th class="num">Incremento</th><th></th></tr></thead><tbody id="g-sol"></tbody></table></div>
     </div>
     <div class="card" style="margin-top:16px;">
       <div class="card-head"><div><h2>Comunicados pendentes na rota</h2><p class="sub">Matrículas que entraram na rota e ainda não têm data de comunicado, pelo prazo de conclusão.</p></div></div>
@@ -467,7 +477,7 @@
       <div class="field"><label>Data do comunicado</label><input type="date" id="e-notif-data"></div>
       <div class="field"><label>Executivo</label><input id="e-exec" list="lista-exec" placeholder="Nome do executivo"></div>
       <div class="field"><label>Negociação (%)</label><input type="number" step="0.01" id="e-neg" placeholder="ex.: 30"></div>
-      <div class="field"><label>Termo de adesão</label><select id="e-termo"><option value="">— sem registro —</option><option>Enviado</option><option>Assinado</option><option>Recusa de assinatura</option></select></div>
+      <div class="field"><label>Termo de adesão</label><select id="e-termo"><option value="">— sem registro —</option><option>Solicitado</option><option>Elaborado</option><option>Enviado</option><option>Assinado</option><option>Recusa de assinatura</option></select></div>
       <div class="field"><label>Data do termo</label><input type="date" id="e-dtermo"></div>
       <div class="field"><label>Entrou na rota em</label><input type="date" id="e-rota"></div>
       <div class="field"><label>Prazo do comunicado</label><input type="date" id="e-prazo"></div>
@@ -490,7 +500,8 @@ const FASES = ['A comunicar','Comunicado','Aguardando evidências','Apta à impl
 const FASES_FORA  = ['Tarifa retirada','Não implementar'];                                   // saem das aptas/prioridades
 const FASES_FLUXO = ['Aguardando agenda','DA do gerente','Setor de cadastro','Setor de faturamento']; // saem de "apta" e ficam na fase indicada
 const FASE_COL = {'Aguardando agenda':'dt_agenda','DA do gerente':'dt_gerente','Setor de cadastro':'dt_cadastro','Setor de faturamento':'dt_faturamento','Implementada':'dt_implementada','Tarifa retirada':'dt_encerrada','Não implementar':'dt_encerrada'};
-const TERMOS = ['Enviado','Assinado','Recusa de assinatura'];   // termo não é fase: vale para todas as aptas
+const TERMOS = ['Solicitado','Elaborado','Enviado','Assinado','Recusa de assinatura'];   // termo não é fase: vale para todas as aptas
+const TERMO_COL = {'Solicitado':'termo_solicitado_em','Elaborado':'termo_elaborado_em','Enviado':'termo_enviado_em','Assinado':'termo_assinado_em','Recusa de assinatura':'termo_assinado_em'};
 const SLA_INICIO = '2026-10-06';                                  // o SLA conta a partir desta data
 /* ======================================== */
 
@@ -559,7 +570,8 @@ const temPct=d=>(+d.pct_aplicado>0)||(+d.pct_cobranca>0);
 function regraApta(d0){
   const mat=String(d0.matricula), g=GEST[mat]||{}, hoje=hojeISO();
   const d={...d0, gest:g, entrou_rota:g.entrou_rota||null, prazo_comunicado:g.prazo_comunicado||null, fase_desde:g.fase_desde||null,
-    termo_status:g.termo_status||(d0.fase==='Termo assinado'?'Assinado':d0.fase==='Termo enviado'?'Enviado':null), termo_data:g.termo_data||d0.data_termo||null};
+    termo_status:g.termo_status||(d0.fase==='Termo assinado'?'Assinado':d0.fase==='Termo enviado'?'Enviado':null), termo_data:g.termo_data||d0.data_termo||null,
+    t_sol:g.termo_solicitado_em||null, t_sol_por:g.termo_solicitado_por||null, t_elab:g.termo_elaborado_em||null, t_env:g.termo_enviado_em||null, t_ass:g.termo_assinado_em||null};
   if(['Termo enviado','Termo assinado'].includes(d.fase)) d.fase='Apta à implementação';
   if(d.data_leitura){ d.prox_leitura=proxLeitura(d.data_leitura,hoje); d.dias_leitura=diasEntre(hoje,d.prox_leitura); }
   if(d.data_1a_notificacao){
@@ -714,9 +726,15 @@ const etapaBadge=d=>d.etapa==='fluxo'
   ? `<span class="badge ${ETAPAS.fluxo.b}">${esc(d.fase)}</span>${d.fase_desde?`<div class="mini">há ${diasEntre(d.fase_desde,hojeISO())} d</div>`:''}`
   : `<span class="badge ${ETAPAS[d.etapa].b}">${ETAPAS[d.etapa].l}</span>`;
 const rotaTxt=d=>d.entrou_rota?`<b>${dBR(d.entrou_rota)}</b><div class="mini">há ${diasEntre(d.entrou_rota,hojeISO())} d</div>`:'<span class="mini">–</span>';
-const termoSel=d=>['apta','fluxo','implementada'].includes(d.etapa)
-  ? `<select class="fase termo-${(d.termo_status||'').slice(0,3).toLowerCase()}" data-termo="${d.matricula}"><option value="">— termo —</option>${TERMOS.map(t=>`<option ${d.termo_status===t?'selected':''}>${t}</option>`).join('')}</select>${d.termo_data&&d.termo_status?`<div class="mini">${dBR(d.termo_data)}</div>`:''}`
-  : '<span class="mini">–</span>';
+const termoSel=d=>{
+  if(!['apta','fluxo','implementada'].includes(d.etapa)) return '<span class="mini">–</span>';
+  const st=d.termo_status||'';
+  const btn=!st?`<button class="btn btn-sm btn-sol" data-soltermo="${d.matricula}">Solicitar termo de adesão</button>`:'';
+  const sel=`<select class="fase termo-${st.slice(0,3).toLowerCase()}" data-termo="${d.matricula}"><option value="">— termo —</option>${TERMOS.map(t=>`<option ${st===t?'selected':''}>${t}</option>`).join('')}</select>`;
+  const info=[d.t_sol?`solicitado ${dBR(d.t_sol)}${d.t_sol_por?' por '+esc(d.t_sol_por):''}`:'', d.t_elab?`elaborado ${dBR(d.t_elab)}${d.t_sol?` (${diasEntre(d.t_sol,d.t_elab)} d)`:''}`:'', d.t_env?`enviado ${dBR(d.t_env)}`:'', d.t_ass?`${st==='Recusa de assinatura'?'recusa':'assinado'} ${dBR(d.t_ass)}`:''].filter(Boolean).join(' · ');
+  const espera = st==='Solicitado'&&d.t_sol ? `<div class="soon-txt" style="font-size:11.5px">aguardando elaboração há ${diasEntre(d.t_sol,hojeISO())} d</div>` : '';
+  return `${btn}${btn?'<div style="height:4px"></div>':''}${sel}${info?`<div class="mini">${info}</div>`:''}${espera}`;
+};
 const leituraTxt=d=>d.prox_leitura?`${dBR(d.prox_leitura)}<div class="mini">${diasTxt(d)}</div>`:'–';
 const comunicadoInput=d=>segDe(d)==='Públicos'?'<span class="mini">não se aplica (Público)</span>':`<input type="date" value="${d.data_1a_notificacao||''}" data-com="${d.matricula}">`;
 const faseSel=d=>`<select class="fase" data-fase="${d.matricula}"><option value="">— definir —</option>${FASES.map(f=>`<option ${d.fase===f?'selected':''}>${f}</option>`).join('')}</select>`;
@@ -728,6 +746,7 @@ function ligarLinhas(tbodyId){
   tb.querySelectorAll('[data-fase]').forEach(s=>s.onchange=()=>setFase([s.dataset.fase],s.value));
   tb.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>abrirModal(b.dataset.edit));
   tb.querySelectorAll('[data-termo]').forEach(s=>s.onchange=()=>setTermo(s.dataset.termo,s.value));
+  tb.querySelectorAll('[data-soltermo]').forEach(b=>b.onclick=()=>solicitarTermo(b.dataset.soltermo));
 }
 
 /* ---------- SEGMENTO ---------- */
@@ -835,11 +854,21 @@ async function registrarFase(mats,fase,data){
   const b=await sb.from('tee_fase_log').insert(mats.map(m=>({matricula:String(m),fase,data})));
   if(a.error||b.error) toast('Fase salva, mas o histórico não: '+((a.error||b.error).message),true);
 }
-async function setTermo(mat,val){
+async function setTermo(mat,val,por){
   if(!GEST_OK) return toast('Rode o gestao_tee_painel.sql no Supabase para registrar termos.',true);
-  const {error}=await sb.from('tee_gestao').upsert([{matricula:String(mat),termo_status:val||null,termo_data:val?hojeISO():null}],{onConflict:'matricula'});
-  if(error) return toast(error.message,true);
-  toast(val?`${mat}: termo ${val.toLowerCase()} em ${dBR(hojeISO())}`:'Status do termo removido'); carregar();
+  const hoje=hojeISO(), r={matricula:String(mat),termo_status:val||null,termo_data:val?hoje:null};
+  if(val&&TERMO_COL[val]) r[TERMO_COL[val]]=hoje;
+  if(val==='Solicitado'&&por) r.termo_solicitado_por=por;
+  if(!val){ Object.values(TERMO_COL).forEach(c=>r[c]=null); r.termo_solicitado_por=null; }
+  const {error}=await sb.from('tee_gestao').upsert([r],{onConflict:'matricula'});
+  if(error) return toast(error.message+(/check/i.test(error.message)?' — rode de novo o gestao_tee_painel.sql':''),true);
+  toast(val?`${mat}: termo ${val.toLowerCase()} em ${dBR(hoje)}`:'Status do termo removido'); carregar();
+}
+async function solicitarTermo(mat){
+  const d=DADOS.find(x=>String(x.matricula)===String(mat)); if(!d) return;
+  let por=($('seg-exec')&&VIEW==='seg'&&$('seg-exec').value&&$('seg-exec').value!=='__sem')?$('seg-exec').value:(d.executivo||'');
+  if(!por){ por=(window.prompt('Seu nome (executivo que está solicitando o termo):')||'').trim(); if(!por) return; }
+  await setTermo(mat,'Solicitado',por);
 }
 async function setFase(mats,fase){
   const upd={fase:fase||null}; if(fase) upd.tarifa_implementada=(fase==='Implementada');
@@ -866,7 +895,9 @@ $('e-save').onclick=async()=>{
   const {error}=await sb.from('tee_matriculas').update(upd).eq('matricula',EDITANDO);
   if(error) return toast(error.message,true);
   if(GEST_OK){ const t=$('e-termo').value;
-    const r=await sb.from('tee_gestao').upsert([{matricula:String(EDITANDO),termo_status:t||null,termo_data:t?($('e-dtermo').value||hojeISO()):null,entrou_rota:$('e-rota').value||null,prazo_comunicado:$('e-prazo').value||null}],{onConflict:'matricula'});
+    const reg={matricula:String(EDITANDO),termo_status:t||null,termo_data:t?($('e-dtermo').value||hojeISO()):null,entrou_rota:$('e-rota').value||null,prazo_comunicado:$('e-prazo').value||null};
+    const ant=DADOS.find(x=>String(x.matricula)===String(EDITANDO)); if(t&&TERMO_COL[t]&&(!ant||ant.termo_status!==t)) reg[TERMO_COL[t]]=$('e-dtermo').value||hojeISO();
+    const r=await sb.from('tee_gestao').upsert([reg],{onConflict:'matricula'});
     if(r.error) toast(r.error.message,true); }
   fechar(); toast('Matrícula atualizada'); carregar();
 };
@@ -892,16 +923,30 @@ function renderGestor(){
   const tc=tempoComunicar(), rota=DADOS.filter(d=>d.entrou_rota&&d.entrou_rota>=SLA_INICIO);
   const noPrazo=rota.filter(d=>d.data_1a_notificacao&&d.prazo_comunicado&&String(d.data_1a_notificacao).slice(0,10)<=d.prazo_comunicado).length, comPrazo=rota.filter(d=>d.data_1a_notificacao&&d.prazo_comunicado).length;
   const pend=DADOS.filter(d=>d.etapa==='comunicar'&&d.entrou_rota), atr=pend.filter(d=>d.prazo_comunicado&&d.prazo_comunicado<hoje);
-  const semTermo=[...ap,...fl].filter(d=>!d.termo_status);
-  $('g-sub').textContent=`${fmtN(DADOS.length)} matrículas · SLA registrado desde ${dBR(SLA_INICIO)} · atualizado em ${dBR(hoje)}`; $('g-sla-ini').textContent=dBR(SLA_INICIO);
   const K=(c,l,v,h)=>`<div class="kpi ${c}"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="hint">${h}</div></div>`;
+  const semTermo=[...ap,...fl].filter(d=>!d.termo_status);
+  const solPend=DADOS.filter(d=>d.termo_status==='Solicitado');
+  const tElab=DADOS.filter(d=>d.t_sol&&d.t_elab&&d.t_elab>=d.t_sol).map(d=>diasEntre(d.t_sol,d.t_elab));
+  const elabNaoEnv=DADOS.filter(d=>d.termo_status==='Elaborado');
+  const tEnv=DADOS.filter(d=>d.t_elab&&d.t_env&&d.t_env>=d.t_elab).map(d=>diasEntre(d.t_elab,d.t_env));
+  $('g-sol-kpis').innerHTML=
+    K('amber','Aguardando elaboração',fmtN(solPend.length),'solicitados pelos executivos, ainda sem termo elaborado')+
+    K('','Tempo médio: solicitação → elaborado',tElab.length?d1(media(tElab))+' dias':'–',`${fmtN(tElab.length)} termos medidos`)+
+    K(elabNaoEnv.length?'rose':'leaf','Elaborados ainda não enviados',fmtN(elabNaoEnv.length),`termo já disponível e o executivo não enviou${tEnv.length?` · média elaborado → enviado ${d1(media(tEnv))} d`:''}`)+
+    K(semTermo.length?'rose':'leaf','Aptas sem solicitação',fmtN(semTermo.length),'aptas / em andamento sem pedido de termo');
+  const lst=DADOS.filter(d=>d.t_sol&&['Solicitado','Elaborado'].includes(d.termo_status)).sort((a,b)=>(a.termo_status==='Solicitado'?0:1)-(b.termo_status==='Solicitado'?0:1)||a.t_sol.localeCompare(b.t_sol));
+  $('g-sol').innerHTML=lst.map(d=>`<tr><td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(segDe(d))}</td><td>${esc(d.t_sol_por||d.executivo||'–')}</td><td>${dBR(d.t_sol)}</td>
+    <td>${d.termo_status==='Solicitado'?`<span class="badge b-amber">Aguardando elaboração · ${diasEntre(d.t_sol,hoje)} d</span>`:`<span class="badge b-navy">Elaborado ${dBR(d.t_elab)} · não enviado há ${diasEntre(d.t_elab,hoje)} d</span>`}</td>
+    <td class="num">${brl(d.incremento)}</td><td>${d.termo_status==='Solicitado'?`<button class="btn btn-sm btn-sol" data-elab="${d.matricula}">Marcar termo elaborado</button>`:''}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="8">Nenhuma solicitação em aberto.</td></tr>';
+  document.querySelectorAll('#g-sol [data-elab]').forEach(b=>b.onclick=()=>setTermo(b.dataset.elab,'Elaborado'));
+  $('g-sub').textContent=`${fmtN(DADOS.length)} matrículas · SLA registrado desde ${dBR(SLA_INICIO)} · atualizado em ${dBR(hoje)}`; $('g-sla-ini').textContent=dBR(SLA_INICIO);
   $('g-kpis').innerHTML=
     K('leaf','Incremento mensal implementado',brlC(soma(imp,'incremento')),`${fmtN(imp.length)} matrículas com a tarifa em vigor (R$/mês)`)+
     K('','Incremento em aptas e em andamento',brlC(soma([...ap,...fl],'incremento')),`${fmtN(ap.length)} aptas · ${fmtN(fl.length)} em andamento (DA, cadastro, faturamento, agenda)`)+
     K('amber','Incremento aguardando prazo',brlC(soma(ag,'incremento')),`${fmtN(ag.length)} comunicadas, dentro dos 30 dias de defesa`)+
     K('','Tempo médio para comunicar',tc.n?d1(tc.media)+' dias':'–',tc.n?`entre a entrada na rota e a data do comunicado · ${fmtN(tc.n)} comunicados medidos`:'aparece a partir do 1º comunicado registrado')+
     K(atr.length?'rose':'leaf','Comunicados pendentes',fmtN(pend.length),`${fmtN(atr.length)} com prazo vencido${comPrazo?` · ${Math.round(noPrazo/comPrazo*100)}% dos feitos dentro do prazo`:''}`)+
-    K(semTermo.length?'rose':'leaf','Termos a enviar',fmtN(semTermo.length),`aptas / em andamento sem termo registrado · ${fmtN(DADOS.filter(d=>d.termo_status==='Assinado').length)} assinados`);
+    K(solPend.length?'amber':'leaf','Termos solicitados a elaborar',fmtN(solPend.length),`pedidos dos executivos aguardando elaboração${tElab.length?` · tempo médio de elaboração ${d1(media(tElab))} d`:''}`);
   // SLA
   $('g-sla').innerHTML=ETAPAS_SLA.map(e=>{
     const feitos=DADOS.map(d=>{ const a=e.ini(d), b=e.fim(d); return a&&b&&b>=SLA_INICIO&&b>=a?diasEntre(a,b):null; }).filter(v=>v!=null);
@@ -917,7 +962,15 @@ function renderGestor(){
   // onde está
   const grupos=[['A comunicar',d=>d.etapa==='comunicar'],['Aguardando prazo (30 dias)',d=>d.etapa==='aguardando'],['Prazo cumprido · sem % de TEE',d=>d.etapa==='sem_pct'],['Público · aguardando liberação',d=>d.etapa==='liberacao'],['Público · não pode virar',d=>d.etapa==='nao_virar'],['Apta',d=>d.etapa==='apta'],...FASES_FLUXO.map(f=>[f,d=>d.etapa==='fluxo'&&d.fase===f]),['Implementada',d=>d.etapa==='implementada'],['Tarifa retirada / Não implementar',d=>d.etapa==='fora']];
   const totI=soma(DADOS,'incremento')||1;
-  $('g-onde').innerHTML=grupos.map(([l,f])=>{ const g=DADOS.filter(f), v=soma(g,'incremento'); return `<tr><td><b>${l}</b></td><td class="num">${fmtN(g.length)}</td><td class="num">${brl(v)}</td><td><div class="g-bar"><i style="width:${v/totI*100}%"></i></div></td></tr>`; }).join('');
+  // % real (medido na planilha) e % cobrada (limite de 30%), média ponderada pelo faturamento
+  const pctReal=d=>{ const v=d.gest&&d.gest.pct_virada!=null?+d.gest.pct_virada:(d.pct_cobranca!=null&&d.pct_cobranca!==''?+d.pct_cobranca:(d.pct_aplicado!=null?+d.pct_aplicado:null)); return v!=null&&isFinite(v)&&v>0?v:null; };
+  const pctCobr=d=>{ const r=pctReal(d); const a=d.pct_aplicado!=null&&+d.pct_aplicado>0?+d.pct_aplicado:r; return a==null?null:Math.min(a,0.30); };
+  const fatPeso=d=>{ const f=+d.faturamento||(d.gest&&+d.gest.fat_ae)||0; return f>0?f:1; };
+  const mediaPct=(g,fn)=>{ let n=0,dv=0; g.forEach(d=>{ const v=fn(d); if(v!=null){ const w=fatPeso(d); n+=v*w; dv+=w; } }); return dv?n/dv:null; };
+  const fP=v=>v==null?'<span class="mini">–</span>':(v*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+  const linhaOnde=(l,g,cls)=>{ const v=soma(g,'incremento'), real=mediaPct(g,pctReal), cob=mediaPct(g,pctCobr);
+    return `<tr${cls?` class="${cls}"`:''}><td><b>${l}</b></td><td class="num">${fmtN(g.length)}</td><td class="num">${fP(real)}${real!=null&&real>0.30?' <span class="mini">(acima do teto)</span>':''}</td><td class="num"><b>${fP(cob)}</b></td><td class="num">${brl(v)}</td><td>${cls?'':`<div class="g-bar"><i style="width:${v/totI*100}%"></i></div>`}</td></tr>`; };
+  $('g-onde').innerHTML=grupos.map(([l,f])=>linhaOnde(l,DADOS.filter(f))).join('')+linhaOnde('Total',DADOS,'total');
   // termos
   const base=[...ap,...fl,...imp]; const tl=[['Sem termo registrado',d=>!d.termo_status],...TERMOS.map(t=>[t,d=>d.termo_status===t])];
   $('g-termo').innerHTML=tl.map(([l,f])=>{ const g=base.filter(f); return `<tr><td><b>${l}</b></td><td class="num">${fmtN(g.length)}</td><td class="num">${brl(soma(g,'incremento'))}</td></tr>`; }).join('');
@@ -925,11 +978,18 @@ function renderGestor(){
   $('g-pend').innerHTML=pend.sort((a,b)=>(a.prazo_comunicado||'9').localeCompare(b.prazo_comunicado||'9')).map(d=>{ const at=d.prazo_comunicado&&d.prazo_comunicado<hoje;
     return `<tr><td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(segDe(d))}</td><td>${esc(d.executivo||'–')}</td><td>${dBR(d.entrou_rota)}</td><td>${dBR(d.prazo_comunicado)}</td><td>${!d.prazo_comunicado?'<span class="mini">sem prazo</span>':at?`<span class="badge b-rose">Atrasado ${diasEntre(d.prazo_comunicado,hoje)} d</span>`:'<span class="badge b-leaf">No prazo</span>'}</td><td class="num">${diasEntre(d.entrou_rota,hoje)}</td></tr>`; }).join('')||'<tr class="empty-row"><td colspan="8">Nenhum comunicado pendente na rota.</td></tr>';
 }
+$('g-sol-xls').onclick=()=>{
+  const rows=DADOS.filter(d=>d.t_sol).sort((a,b)=>a.t_sol.localeCompare(b.t_sol)).map(d=>({'Matrícula':d.matricula,'Cliente':d.cliente,'Segmento':segDe(d),'Executivo':d.executivo||'',
+    'Solicitado por':d.t_sol_por||'','Solicitado em':dBR(d.t_sol),'Elaborado em':dBR(d.t_elab),'Dias p/ elaborar':d.t_elab?diasEntre(d.t_sol,d.t_elab):'',
+    'Enviado em':dBR(d.t_env),'Assinado/recusa em':dBR(d.t_ass),'Status do termo':d.termo_status||'','Dias em aberto':d.termo_status==='Solicitado'?diasEntre(d.t_sol,hojeISO()):'','Incremento (R$/mês)':+d.incremento||0,'Etapa':ETAPAS[d.etapa].l,'Fase':d.fase||''}));
+  if(!rows.length) return toast('Nenhuma solicitação de termo registrada ainda.',true);
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Solicitações de termo'); XLSX.writeFile(wb,`TEE_solicitacoes_termo_${hojeISO()}.xlsx`);
+};
 $('g-export').onclick=()=>{
   const rows=DADOS.map(d=>({'Matrícula':d.matricula,'Cliente':d.cliente,'Segmento':segDe(d),'Executivo':d.executivo||'','Etapa':ETAPAS[d.etapa].l,'Fase':d.fase||'',
     'Incremento (R$/mês)':+d.incremento||0,'Entrou na rota':dBR(d.entrou_rota),'Prazo do comunicado':dBR(d.prazo_comunicado),'Data do comunicado':dBR(d.data_1a_notificacao),
     'Apta a partir de':dBR(d.data_apta),'DA do gerente':dBR(d.gest.dt_gerente),'Setor de cadastro':dBR(d.gest.dt_cadastro),'Setor de faturamento':dBR(d.gest.dt_faturamento),
-    'Implementada em':dBR(d.gest.dt_implementada),'Termo':d.termo_status||'','Data do termo':dBR(d.termo_data),'Próxima leitura':dBR(d.prox_leitura),'Mês de entrada':mesLbl(d.mes_entrada)}));
+    'Implementada em':dBR(d.gest.dt_implementada),'Termo':d.termo_status||'','Termo solicitado em':dBR(d.t_sol),'Solicitado por':d.t_sol_por||'','Termo elaborado em':dBR(d.t_elab),'Data do termo':dBR(d.termo_data),'Próxima leitura':dBR(d.prox_leitura),'Mês de entrada':mesLbl(d.mes_entrada)}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Painel do Gestor'); XLSX.writeFile(wb,`TEE_Painel_Gestor_${hojeISO()}.xlsx`);
 };
 
