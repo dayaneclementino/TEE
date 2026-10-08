@@ -536,7 +536,7 @@
       <div class="progress" id="imp-prog"><div></div></div>
       <div class="log" id="imp-log"></div>
       <div class="callout amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        <div>Reimportar sobrescreve, nas colunas que vêm da planilha (como a data do comunicado), o que foi digitado na plataforma. A planilha é tratada como fonte da verdade.</div></div>
+        <div>A planilha <b>cria matrículas novas</b>. Para as que já estão na plataforma, ela atualiza <b>apenas percentuais, ciclo/data de leitura e faturamento</b> (célula vazia não apaga nada). Fases, data do comunicado, tarifa implementada, executivo e termo são tratados <b>somente na plataforma</b> e prevalecem sobre a planilha.</div></div>
     </div>
     <div class="card" style="margin-top:16px;">
       <h2>Coletas do Projeto TEE — planilha de alvos e coletas</h2>
@@ -989,6 +989,12 @@ async function setComunicado(mat,val){
   const n=DADOS.find(x=>x.matricula===mat);
   toast(val&&n&&n.data_apta?`${mat}: apta a partir de ${dBR(n.data_apta)} (entra em ${mesLbl(n.mes_entrada)})`:'Comunicado removido');
 }
+// upsert seguro: linhas com colunas diferentes vão em lotes separados (senão a coluna ausente seria gravada como vazia)
+async function upsertSeguro(tabela,rows,tam,onProg){
+  const grupos={}; rows.forEach(r=>{ const k=Object.keys(r).sort().join('|'); (grupos[k]=grupos[k]||[]).push(r); });
+  let feitos=0;
+  for(const g of Object.values(grupos)){ for(let i=0;i<g.length;i+=tam){ const {error}=await sb.from(tabela).upsert(g.slice(i,i+tam),{onConflict:'matricula'}); if(error) throw new Error(tabela+': '+error.message); feitos+=Math.min(tam,g.length-i); if(onProg) onProg(feitos,rows.length); } }
+}
 // grava a data de cada passagem de fase (base do SLA do Painel do Gestor)
 async function registrarFase(mats,fase,data){
   if(!GEST_OK) return;
@@ -1188,26 +1194,28 @@ $('btn-imp-pub').onclick=async()=>{
     }
     // cruzamento
     const mats=[...new Set([...Object.keys(base),...Object.keys(lista)])];
-    const regs=[], gest=[], impl=[]; let semBase=0, entr=0;
+    const regs=[], gest=[], impl=[]; let semBase=0, entr=0; const jaExiste=new Set(DADOS.map(d=>String(d.matricula)));
     for(const m of mats){
       const b=base[m]||{}, li=lista[m];
       const implementada=teeNaFatura(b.tipo)||teeNaFatura(li&&li.tipo);
       const onda=(li&&li.onda)||b.onda;
       const r={matricula:m,grupo:'Públicos'}; const cli=b.cliente||(li&&li.nome); if(cli) r.cliente=String(cli).trim();
       if(onda) r.onda=`${Math.round(onda)}° Onda`; if(b.fat_ae!=null) r.faturamento=b.fat_ae; if(li&&li.pct!=null) r.pct_cobranca=li.pct;
-      if(implementada){ r.tarifa_implementada=true; impl.push(m); }
-      regs.push(r);
+      const existe=jaExiste.has(m);
+      if(existe){ ['grupo','cliente','onda'].forEach(k=>delete r[k]); }   // existente: só faturamento e %
+      else if(implementada){ r.tarifa_implementada=true; impl.push(m); }  // tarifa/fase só para matrícula nova
+      if(Object.keys(r).length>1) regs.push(r);
       const g={matricula:m}; if(b.fat_ae!=null) g.fat_ae=b.fat_ae; if(b.possibilidade) g.possibilidade=b.possibilidade;
       if(li){ g.pode_virar=li.pode_virar; g.pct_virada=li.pct; g.esfera=li.esfera?String(li.esfera).trim():null; g.lista_em=hoje;
         if(!fb||base[m]){ /* ok */ } else semBase++;
         g.valor_entrante = (b.fat_ae!=null&&li.pct!=null) ? Math.round(b.fat_ae/2*li.pct*100)/100 : li.potencial; if(g.valor_entrante!=null) entr+=g.valor_entrante; }
       gest.push(g);
     }
-    for(let i=0;i<regs.length;i+=200){ const {error}=await sb.from('tee_matriculas').upsert(regs.slice(i,i+200),{onConflict:'matricula'}); if(error) throw new Error('tee_matriculas: '+error.message); }
+    await upsertSeguro('tee_matriculas',regs,200);
     for(let i=0;i<impl.length;i+=150){ await sb.from('tee_matriculas').update({fase:'Implementada'}).in('matricula',impl.slice(i,i+150)); }
-    for(let i=0;i<gest.length;i+=500){ const {error}=await sb.from('tee_gestao').upsert(gest.slice(i,i+500),{onConflict:'matricula'}); if(error) throw new Error('tee_gestao: '+error.message); }
+    await upsertSeguro('tee_gestao',gest,500);
     if(fl) L(`Valor entrante da lista: R$ ${entr.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}/mês${semBase?` · ${semBase} matrícula(s) da lista sem dados na base (usado o Potencial Incremento da lista)`:''}`);
-    L(`${regs.length} matrículas do Público gravadas · ${impl.length} já implementadas (T.E.E. na fatura).`);
+    L(`${mats.filter(m=>!jaExiste.has(m)).length} matrículas novas no Público${impl.length?` (${impl.length} já com T.E.E. na fatura)`:''} · existentes: atualizados só faturamento e % — fases e tarifa implementada ficam como estão na plataforma.`);
     L('✔ Concluído.'); toast('Carteira Pública importada'); $('imp-pub-lista').value=''; $('imp-pub-base').value=''; await carregar();
   }catch(e){ L('✖ Erro: '+(e.message||e)); toast('Erro: '+(e.message||e),true); }
   btn.disabled=false;
@@ -1262,7 +1270,7 @@ $('btn-imp-com').onclick=async()=>{
     if(semData) L(`${semData} sem data de envio — entrada na rota registrada como hoje (${dBR(hoje)}).`);
     for(let i=0;i<novas.length;i+=200){ const {error}=await sb.from('tee_matriculas').insert(novas.slice(i,i+200)); if(error) throw new Error('Criando matrículas novas: '+error.message); }
     if(novas.length){ const pg={}; novas.forEach(n=>pg[n.grupo]=(pg[n.grupo]||0)+1); L('Novas por segmento: '+Object.entries(pg).map(([k,v])=>`${k} ${v}`).join(' · ')); }
-    for(let i=0;i<gest.length;i+=500){ const {error}=await sb.from('tee_gestao').upsert(gest.slice(i,i+500),{onConflict:'matricula'}); if(error) throw error; }
+    await upsertSeguro('tee_gestao',gest,500);
     for(const [data,mats] of Object.entries(comunic)){
       for(let i=0;i<mats.length;i+=150){ const part=mats.slice(i,i+150);
         const {error}=await sb.from('tee_matriculas').update({data_1a_notificacao:data,notificacao_entregue:true}).in('matricula',part); if(error) throw error;
@@ -1576,6 +1584,8 @@ $('btn-imp').onclick=async()=>{
           notificacao_entregue:sim(pick(r,'notificacao entregue')),max_data_evidencias:dt(pick(r,'max data: envio de evidencias')),
           tarifa_implementada:sim(pick(r,'tarifa implementada'))||teeNaFatura(pick(r,'tipo de faturamento','faturamento'))};
         if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
+        // planilha só ACRESCENTA/ATUALIZA: célula vazia não apaga o que foi preenchido na plataforma
+        Object.keys(reg).forEach(k=>{ if(k!=='matricula'&&(reg[k]==null||reg[k]===''||reg[k]===false)) delete reg[k]; });
         reg._n=n||0; lidas++;
         // a mesma matrícula em mais de uma onda: fica a onda mais recente
         const ant=mapa.get(mat);
@@ -1585,16 +1595,22 @@ $('btn-imp').onclick=async()=>{
     }
     mapa.forEach(r=>{ porOnda[r.onda]=(porOnda[r.onda]||0)+1; delete r._n; });
     logImp('Matrículas por onda: '+Object.keys(porOnda).sort().map(k=>`${k} = ${porOnda[k]}`).join(' · '));
-    const lote=[...mapa.values()]; lote.forEach(r=>{ if(r.tarifa_implementada) impl.push(r.matricula); });
-    const conhecidas=new Set(DADOS.map(d=>String(d.matricula))), novas=lote.map(r=>String(r.matricula)).filter(m=>!conhecidas.has(m)&&!(GEST[m]&&GEST[m].entrou_rota));
+    // Regra: a planilha CRIA matrículas novas (com todos os dados). Para as que já existem na plataforma,
+    // atualiza só percentuais, ciclo/data de leitura e faturamento — fases, comunicado, tarifa implementada,
+    // executivo e termo são tratados na plataforma e nunca são alterados pela importação.
+    const conhecidas=new Set(DADOS.map(d=>String(d.matricula)));
+    const PERMITIDOS=['matricula','faturamento','pct_cobranca','negociacao','ciclo','data_leitura'];
+    const lote=[...mapa.values()].map(r=>{ if(!conhecidas.has(String(r.matricula))) return r; const o={}; PERMITIDOS.forEach(k=>{ if(r[k]!=null&&r[k]!=='') o[k]=r[k]; }); return o; }).filter(r=>Object.keys(r).length>1);
+    lote.forEach(r=>{ if(r.tarifa_implementada&&!conhecidas.has(String(r.matricula))) impl.push(r.matricula); });
+    const nNovas=[...mapa.keys()].filter(m=>!conhecidas.has(String(m))).length;
+    logImp(`${nNovas} matrículas novas · ${[...mapa.keys()].length-nNovas} já existentes (atualizados só %, ciclo/leitura e faturamento)`);
+    const novas=lote.map(r=>String(r.matricula)).filter(m=>!conhecidas.has(m)&&!(GEST[m]&&GEST[m].entrou_rota));
     logImp(`${lote.length} matrículas válidas. Enviando…`);
-    for(let i=0;i<lote.length;i+=200){
-      const {error}=await sb.from('tee_matriculas').upsert(lote.slice(i,i+200),{onConflict:'matricula'}); if(error) throw error;
-      $('imp-prog').firstElementChild.style.width=Math.round(Math.min(i+200,lote.length)/lote.length*100)+'%'; logImp(`  enviadas ${Math.min(i+200,lote.length)}/${lote.length}`);
-    }
+    await upsertSeguro('tee_matriculas',lote,200,(f,t)=>{ $('imp-prog').firstElementChild.style.width=Math.round(f/t*100)+'%'; });
+    logImp(`  enviadas ${lote.length}`);
     for(let i=0;i<impl.length;i+=150){ const {error}=await sb.from('tee_matriculas').update({fase:'Implementada'}).in('matricula',impl.slice(i,i+150)); if(error) throw error; }
     if(novas.length && GEST_OK){ for(let i=0;i<novas.length;i+=500){ await sb.from('tee_gestao').upsert(novas.slice(i,i+500).map(m=>({matricula:m,entrou_rota:hojeISO(),origem:f.name})),{onConflict:'matricula'}); } logImp(`${novas.length} matrículas novas — entraram na rota em ${dBR(hojeISO())}.`); }
-    logImp(`✔ Concluído (${impl.length} já implementadas na planilha).`); toast('Importação concluída'); await carregar();
+    logImp(`✔ Concluído${impl.length?` (${impl.length} matrículas novas já entram como implementadas)`:''}.`); toast('Importação concluída'); await carregar();
   }catch(e){ logImp('✖ Erro: '+(e.message||e)); toast('Erro na importação: '+(e.message||e),true); }
   btn.disabled=false;
 };
