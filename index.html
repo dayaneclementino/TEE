@@ -336,6 +336,12 @@
       </div>
       <div class="tablewrap scroll"><table><thead id="exec-head"></thead><tbody id="exec-body"></tbody></table></div>
     </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head"><div><h2>Termos de adesão — solicitações dos executivos</h2><p class="sub">Na tabela acima (coluna Termo) o executivo clica em <b>Solicitar termo de adesão</b>; quando o termo for disponibilizado, marque <b>Termo elaborado</b>. Assim ficam medidos o tempo de elaboração e os termos que não foram enviados porque ainda não existiam.</p></div>
+        <button class="btn btn-ghost btn-sm" id="g-sol-xls">Baixar relação de solicitações</button></div>
+      <div class="g-kpis" id="g-sol-kpis" style="grid-template-columns:repeat(4,1fr);margin:6px 0 14px"></div>
+      <div class="tablewrap scroll"><table><thead><tr><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Solicitado por</th><th>Solicitado em</th><th>Situação</th><th class="num">Incremento</th><th></th></tr></thead><tbody id="g-sol"></tbody></table></div>
+    </div>
   </section>
 
   <!-- SEGMENTO -->
@@ -397,12 +403,6 @@
         <p class="sub">Toda matrícula apta (ou em andamento) deve ter o termo enviado — e depois assinado ou recusado.</p>
         <div class="tablewrap"><table><thead><tr><th>Status do termo</th><th class="num">Matrículas</th><th class="num">Incremento</th></tr></thead><tbody id="g-termo"></tbody></table></div>
       </div>
-    </div>
-    <div class="card" style="margin-top:16px;">
-      <div class="card-head"><div><h2>Termos de adesão — solicitações dos executivos</h2><p class="sub">O executivo clica em <b>Solicitar termo de adesão</b>; quando o termo for disponibilizado, marque <b>Termo elaborado</b>. Assim ficam medidos o tempo de elaboração e os termos que não foram enviados porque ainda não existiam.</p></div>
-        <button class="btn btn-ghost btn-sm" id="g-sol-xls">Baixar relação de solicitações</button></div>
-      <div class="g-kpis" id="g-sol-kpis" style="grid-template-columns:repeat(4,1fr);margin:6px 0 14px"></div>
-      <div class="tablewrap scroll"><table><thead><tr><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Solicitado por</th><th>Solicitado em</th><th>Situação</th><th class="num">Incremento</th><th></th></tr></thead><tbody id="g-sol"></tbody></table></div>
     </div>
     <div class="card" style="margin-top:16px;">
       <div class="card-head"><div><h2>Comunicados pendentes na rota</h2><p class="sub">Matrículas que entraram na rota e ainda não têm data de comunicado, pelo prazo de conclusão.</p></div></div>
@@ -829,7 +829,7 @@ function renderExec(){
   $('exec-body').querySelectorAll('[data-sel]').forEach(c=>c.onchange=()=>{ c.checked?SEL.add(c.dataset.sel):SEL.delete(c.dataset.sel); bulkUI(); });
   $('sel-all').onchange=e=>{ EXEC_ROWS.forEach(d=>e.target.checked?SEL.add(d.matricula):SEL.delete(d.matricula)); renderExec(); };
   $('bulk-fase').innerHTML='<option value="">Definir fase…</option>'+FASES.map(x=>`<option>${x}</option>`).join('');
-  bulkUI();
+  bulkUI(); renderTermos();
 }
 function bulkUI(){ $('exec-bulk').classList.toggle('on',SEL.size>0); $('bulk-n').textContent=`${SEL.size} selecionada(s)`; }
 $('bulk-ok').onclick=async()=>{
@@ -909,6 +909,27 @@ $('e-save').onclick=async()=>{
   fechar(); toast('Matrícula atualizada'); carregar();
 };
 
+/* ---------- TERMOS DE ADESÃO (aba do Executor) ---------- */
+function renderTermos(){
+  const hoje=hojeISO(), ap=DADOS.filter(d=>d.etapa==='apta'), fl=DADOS.filter(d=>d.etapa==='fluxo');
+  const K=(c,l,v,h)=>`<div class="kpi ${c}"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="hint">${h}</div></div>`;
+  const semTermo=[...ap,...fl].filter(d=>!d.termo_status);
+  const solPend=DADOS.filter(d=>d.termo_status==='Solicitado');
+  const tElab=DADOS.filter(d=>d.t_sol&&d.t_elab&&d.t_elab>=d.t_sol).map(d=>diasEntre(d.t_sol,d.t_elab));
+  const elabNaoEnv=DADOS.filter(d=>d.termo_status==='Elaborado');
+  const tEnv=DADOS.filter(d=>d.t_elab&&d.t_env&&d.t_env>=d.t_elab).map(d=>diasEntre(d.t_elab,d.t_env));
+  $('g-sol-kpis').innerHTML=
+    K('amber','Aguardando elaboração',fmtN(solPend.length),'solicitados pelos executivos, ainda sem termo elaborado')+
+    K('','Tempo médio: solicitação → elaborado',tElab.length?d1(media(tElab))+' dias':'–',`${fmtN(tElab.length)} termos medidos`)+
+    K(elabNaoEnv.length?'rose':'leaf','Elaborados ainda não enviados',fmtN(elabNaoEnv.length),`termo já disponível e o executivo não enviou${tEnv.length?` · média elaborado → enviado ${d1(media(tEnv))} d`:''}`)+
+    K(semTermo.length?'rose':'leaf','Aptas sem solicitação',fmtN(semTermo.length),'aptas / em andamento sem pedido de termo');
+  const lst=DADOS.filter(d=>d.t_sol&&['Solicitado','Elaborado'].includes(d.termo_status)).sort((a,b)=>(a.termo_status==='Solicitado'?0:1)-(b.termo_status==='Solicitado'?0:1)||a.t_sol.localeCompare(b.t_sol));
+  $('g-sol').innerHTML=lst.map(d=>`<tr><td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(segDe(d))}</td><td>${esc(d.t_sol_por||d.executivo||'–')}</td><td>${dBR(d.t_sol)}</td>
+    <td>${d.termo_status==='Solicitado'?`<span class="badge b-amber">Aguardando elaboração · ${diasEntre(d.t_sol,hoje)} d</span>`:`<span class="badge b-navy">Elaborado ${dBR(d.t_elab)} · não enviado há ${diasEntre(d.t_elab,hoje)} d</span>`}</td>
+    <td class="num">${brl(d.incremento)}</td><td>${d.termo_status==='Solicitado'?`<button class="btn btn-sm btn-sol" data-elab="${d.matricula}">Marcar termo elaborado</button>`:''}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="8">Nenhuma solicitação em aberto.</td></tr>';
+  document.querySelectorAll('#g-sol [data-elab]').forEach(b=>b.onclick=()=>setTermo(b.dataset.elab,'Elaborado'));
+}
+
 /* ---------- PAINEL DO GESTOR ---------- */
 const media=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
 const d1=v=>fmtN(Math.round(v*10)/10);
@@ -932,20 +953,7 @@ function renderGestor(){
   const pend=DADOS.filter(d=>d.etapa==='comunicar'&&d.entrou_rota), atr=pend.filter(d=>d.prazo_comunicado&&d.prazo_comunicado<hoje);
   const K=(c,l,v,h)=>`<div class="kpi ${c}"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="hint">${h}</div></div>`;
   const semTermo=[...ap,...fl].filter(d=>!d.termo_status);
-  const solPend=DADOS.filter(d=>d.termo_status==='Solicitado');
-  const tElab=DADOS.filter(d=>d.t_sol&&d.t_elab&&d.t_elab>=d.t_sol).map(d=>diasEntre(d.t_sol,d.t_elab));
-  const elabNaoEnv=DADOS.filter(d=>d.termo_status==='Elaborado');
-  const tEnv=DADOS.filter(d=>d.t_elab&&d.t_env&&d.t_env>=d.t_elab).map(d=>diasEntre(d.t_elab,d.t_env));
-  $('g-sol-kpis').innerHTML=
-    K('amber','Aguardando elaboração',fmtN(solPend.length),'solicitados pelos executivos, ainda sem termo elaborado')+
-    K('','Tempo médio: solicitação → elaborado',tElab.length?d1(media(tElab))+' dias':'–',`${fmtN(tElab.length)} termos medidos`)+
-    K(elabNaoEnv.length?'rose':'leaf','Elaborados ainda não enviados',fmtN(elabNaoEnv.length),`termo já disponível e o executivo não enviou${tEnv.length?` · média elaborado → enviado ${d1(media(tEnv))} d`:''}`)+
-    K(semTermo.length?'rose':'leaf','Aptas sem solicitação',fmtN(semTermo.length),'aptas / em andamento sem pedido de termo');
-  const lst=DADOS.filter(d=>d.t_sol&&['Solicitado','Elaborado'].includes(d.termo_status)).sort((a,b)=>(a.termo_status==='Solicitado'?0:1)-(b.termo_status==='Solicitado'?0:1)||a.t_sol.localeCompare(b.t_sol));
-  $('g-sol').innerHTML=lst.map(d=>`<tr><td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(segDe(d))}</td><td>${esc(d.t_sol_por||d.executivo||'–')}</td><td>${dBR(d.t_sol)}</td>
-    <td>${d.termo_status==='Solicitado'?`<span class="badge b-amber">Aguardando elaboração · ${diasEntre(d.t_sol,hoje)} d</span>`:`<span class="badge b-navy">Elaborado ${dBR(d.t_elab)} · não enviado há ${diasEntre(d.t_elab,hoje)} d</span>`}</td>
-    <td class="num">${brl(d.incremento)}</td><td>${d.termo_status==='Solicitado'?`<button class="btn btn-sm btn-sol" data-elab="${d.matricula}">Marcar termo elaborado</button>`:''}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="8">Nenhuma solicitação em aberto.</td></tr>';
-  document.querySelectorAll('#g-sol [data-elab]').forEach(b=>b.onclick=()=>setTermo(b.dataset.elab,'Elaborado'));
+  const solPend=DADOS.filter(d=>d.termo_status==='Solicitado'), tElab=DADOS.filter(d=>d.t_sol&&d.t_elab&&d.t_elab>=d.t_sol).map(d=>diasEntre(d.t_sol,d.t_elab));
   $('g-sub').textContent=`${fmtN(DADOS.length)} matrículas · SLA registrado desde ${dBR(SLA_INICIO)} · atualizado em ${dBR(hoje)}`; $('g-sla-ini').textContent=dBR(SLA_INICIO);
   $('g-kpis').innerHTML=
     K('leaf','Incremento mensal implementado',brlC(soma(imp,'incremento')),`${fmtN(imp.length)} matrículas com a tarifa em vigor (R$/mês)`)+
