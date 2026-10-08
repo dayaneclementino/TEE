@@ -352,7 +352,7 @@
         <div class="field"><label>Buscar matrícula / cliente</label><input id="seg-busca" placeholder="ex.: 100001364 ou ZONA SUL" style="padding:8px 12px;font-size:13px;min-width:260px;"></div>
       </div>
       <div class="callout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        <div>Informe a <b>data do comunicado</b> de cada matrícula. O sistema soma 30 dias para o envio de evidências e mostra em <b>"Apta a partir de"</b> a primeira leitura depois desse prazo.</div></div>
+        <div id="seg-callout"></div></div>
       <div class="tablewrap scroll" style="margin-top:12px;"><table><thead id="seg-head"></thead><tbody id="seg-body"></tbody></table></div>
     </div>
   </section>
@@ -418,6 +418,22 @@
       <div class="log" id="imp-log"></div>
       <div class="callout amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
         <div>Reimportar sobrescreve, nas colunas que vêm da planilha (como a data do comunicado), o que foi digitado na plataforma. A planilha é tratada como fonte da verdade.</div></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h2>Carteira Pública — lista de virada + base Cobrar</h2>
+      <p class="sub">No Público <b>não se informa data de comunicado</b>. Suba as duas planilhas juntas:
+        <b>1)</b> "Matrículas Pendentes de Virada" (NUM_LIGACAO, %, Potencial Incremento, <b>Pode Realizar a Virada?</b>, Esfera) — diz quem pode virar;
+        <b>2)</b> "Cobrar - GC - Público" (todas as abas) — cruza pela matrícula e traz o <b>valor entrante</b> = (Faturamento A&amp;E ÷ 2) × %.
+        "Sim" vira <b>Apta</b>; "Não" fica em <b>Não pode virar</b>; "Não, só mês que vem" fica <b>Aguardando liberação</b> (libera no mês seguinte).
+        Tipo de faturamento com "T.E.E." = já implementada.</p>
+      <div class="upload-box" id="up-box-pub">
+        <div class="form-row" style="margin-top:0">
+          <div class="field"><label>1) Lista de virada</label><input type="file" id="imp-pub-lista" accept=".xlsx,.xlsm,.xls"></div>
+          <div class="field"><label>2) Base Cobrar - GC - Público</label><input type="file" id="imp-pub-base" accept=".xlsx,.xlsm,.xls"></div>
+          <button class="btn btn-primary" id="btn-imp-pub">Importar Público</button>
+        </div>
+      </div>
+      <div class="log" id="imp-pub-log"></div>
     </div>
     <div class="card" style="margin-top:16px;">
       <h2>Rota de comunicados</h2>
@@ -487,6 +503,8 @@ const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agos
 const ETAPAS={
   comunicar:   {l:'A comunicar',      b:'b-rose',  c:'var(--rose)'},
   aguardando:  {l:'Aguardando prazo', b:'b-amber', c:'var(--amber)'},
+  liberacao:   {l:'Aguardando liberação', b:'b-amber', c:'#E3B866'},
+  nao_virar:   {l:'Não pode virar',   b:'b-gray',  c:'#A3B1BC'},
   sem_pct:     {l:'Prazo cumprido · sem % de TEE', b:'b-amber', c:'#D9A44A'},
   apta:        {l:'Apta',             b:'b-leaf',  c:'var(--leaf)'},
   fluxo:       {l:'Em andamento',     b:'b-navy',  c:'var(--navy-3)'},
@@ -494,7 +512,7 @@ const ETAPAS={
   fora:        {l:'Retirada / não implementar', b:'b-gray', c:'#8A9BA8'},
   sem_tee:     {l:'Sem TEE',          b:'b-gray',  c:'#B8C4CC'}
 };
-const ORDEM=['implementada','fluxo','apta','sem_pct','aguardando','comunicar','sem_tee','fora'];
+const ORDEM=['implementada','fluxo','apta','sem_pct','liberacao','aguardando','comunicar','nao_virar','sem_tee','fora'];
 /* Link do botão "← Página principal" (plataforma Grandes Clientes). Troque pelo endereço da sua plataforma. */
 const PLATAFORMA_URL='../vencidos-gc/';
 /* Cards fixos de segmento: aparecem sempre, mesmo sem planilha importada */
@@ -548,8 +566,22 @@ function regraApta(d0){
     const com=String(d.data_1a_notificacao).slice(0,10); d.data_apta=isoAdd(com,30);
     d.mes_entrada=(d.data_leitura?proxLeitura(d.data_leitura,d.data_apta):d.data_apta).slice(0,7)+'-01';
   }
+  const publico=segDe(d0)==='Públicos';
+  if(publico){ // Público: não usa comunicado — a lista de virada decide; valor entrante vem da base Cobrar
+    if(g.valor_entrante!=null) d.incremento=+g.valor_entrante;
+    if(g.pct_virada!=null) d.pct_aplicado=+g.pct_virada;
+    d.data_apta=null; d.mes_entrada=null;
+  }
   if(FASES_FORA.includes(d.fase)) d.etapa='fora';
-  else if(d.fase==='Implementada'||d0.etapa==='implementada') d.etapa='implementada';
+  else if(d.fase==='Implementada'||d0.etapa==='implementada'||d0.tarifa_implementada===true) d.etapa='implementada';
+  else if(publico && !FASES_FLUXO.includes(d.fase)){
+    const pv=norm(g.pode_virar);
+    if(pv.startsWith('sim')){ d.etapa=temPct(d)?'apta':'sem_pct'; d.data_apta=g.lista_em||null; d.mes_entrada=(d.prox_leitura||hoje).slice(0,7)+'-01'; d.lib_txt='liberada na lista de virada'; }
+    else if(/mes que vem|proximo mes/.test(pv)){ d.etapa='liberacao'; const [y,m]=hoje.split('-').map(Number); d.data_apta=m===12?`${y+1}-01-01`:`${y}-${String(m+1).padStart(2,'0')}-01`; d.mes_entrada=d.data_apta; d.lib_txt='pode virar só no mês que vem'; }
+    else if(pv.startsWith('nao')){ d.etapa='nao_virar'; d.lib_txt='lista de virada: não pode virar'; }
+    else if(norm(g.possibilidade)==='nao'){ d.etapa='sem_tee'; }
+    else { d.etapa='liberacao'; d.lib_txt='fora da lista de virada'; }
+  }
   else if(FASES_FLUXO.includes(d.fase)) d.etapa='fluxo';
   else if(d.data_1a_notificacao) d.etapa = hoje<d.data_apta ? 'aguardando' : (temPct(d) ? 'apta' : 'sem_pct');   // apta exige % de TEE na planilha
   else if(d0.etapa==='sem_tee' && !g.entrou_rota) d.etapa='sem_tee';
@@ -672,6 +704,8 @@ function aptaTxt(d){
   if(d.etapa==='sem_tee') return '<span class="mini">% de cobrança = 0</span>';
   if(d.etapa==='fora') return `<span class="mini">${esc(d.fase)}</span>`;
   if(d.etapa==='comunicar') return d.prazo_comunicado ? `<span class="${d.prazo_comunicado<hojeISO()?'urg-txt':'mini'}">comunicar até ${dBR(d.prazo_comunicado)}</span>` : '<span class="mini">informe o comunicado</span>';
+  if(d.etapa==='nao_virar'||d.etapa==='liberacao') return `${d.data_apta?`<b>${dBR(d.data_apta)}</b>`:''}<div class="mini">${esc(d.lib_txt||'')}</div>`;
+  if(segDe(d)==='Públicos'&&d.etapa==='apta') return `<b>${d.data_apta?dBR(d.data_apta):'Liberada'}</b><div class="mini">${esc(d.lib_txt||'')}</div>`;
   if(!d.data_apta) return '<span class="mini">informe o comunicado</span>';
   if(d.etapa==='sem_pct') return `<b>${dBR(d.data_apta)}</b><div class="soon-txt" style="font-size:11.5px">falta o % de TEE na planilha</div>`;
   return `<b>${dBR(d.data_apta)}</b><div class="mini">entra em ${mesLbl(d.mes_entrada)}</div>`;
@@ -684,7 +718,7 @@ const termoSel=d=>['apta','fluxo','implementada'].includes(d.etapa)
   ? `<select class="fase termo-${(d.termo_status||'').slice(0,3).toLowerCase()}" data-termo="${d.matricula}"><option value="">— termo —</option>${TERMOS.map(t=>`<option ${d.termo_status===t?'selected':''}>${t}</option>`).join('')}</select>${d.termo_data&&d.termo_status?`<div class="mini">${dBR(d.termo_data)}</div>`:''}`
   : '<span class="mini">–</span>';
 const leituraTxt=d=>d.prox_leitura?`${dBR(d.prox_leitura)}<div class="mini">${diasTxt(d)}</div>`:'–';
-const comunicadoInput=d=>`<input type="date" value="${d.data_1a_notificacao||''}" data-com="${d.matricula}">`;
+const comunicadoInput=d=>segDe(d)==='Públicos'?'<span class="mini">não se aplica (Público)</span>':`<input type="date" value="${d.data_1a_notificacao||''}" data-com="${d.matricula}">`;
 const faseSel=d=>`<select class="fase" data-fase="${d.matricula}"><option value="">— definir —</option>${FASES.map(f=>`<option ${d.fase===f?'selected':''}>${f}</option>`).join('')}</select>`;
 const tabs=(el,list,atual,fn)=>{ $(el).innerHTML=list.map(t=>`<button class="${t.k===atual?'on':''}" data-k="${t.k}">${t.l}<b>${t.n}</b></button>`).join(''); $(el).querySelectorAll('button').forEach(b=>b.onclick=()=>fn(b.dataset.k)); };
 
@@ -710,12 +744,21 @@ function renderSeg(){
   const minhas=base.filter(d=>!ve||(ve==='__sem'?!d.executivo:d.executivo===ve));
   $('seg-sub').textContent=`${minhas.length} matrículas${ve&&ve!=='__sem'?' de '+ve:''} · ${brl(soma(minhas,'incremento'))} de incremento`;
   const k=(l,e,cl,h)=>`<div class="kpi ${cl}"><div class="label">${l}</div><div class="value ${cl}">${cnt(minhas,e)}</div><div class="hint">${h}</div></div>`;
-  $('seg-kpis').innerHTML=
+  const pub=SEG==='Públicos', inc=e=>brl(soma(minhas.filter(d=>d.etapa===e),'incremento'));
+  $('seg-callout').innerHTML = pub
+    ? 'Carteira Pública: <b>não usa data de comunicado</b>. Quem pode virar vem da planilha <b>Matrículas Pendentes de Virada</b> e o valor entrante, da base <b>Cobrar - GC - Público</b> (Faturamento A&amp;E ÷ 2 × %). Importe as duas em <b>Importar planilha › Carteira Pública</b>.'
+    : 'Informe a <b>data do comunicado</b> de cada matrícula. A matrícula fica apta 30 dias depois do comunicado, desde que tenha % de TEE; "Entra em" mostra o mês da primeira leitura depois disso.';
+  if(pub){ $('seg-kpis').innerHTML=
+    k('Aptas a virar','apta','leaf',inc('apta')+' de valor entrante/mês')+
+    k('Aguardando liberação','liberacao','amber',inc('liberacao')+' · fora da lista ou só no mês que vem')+
+    k('Não pode virar','nao_virar','rose',inc('nao_virar')+' · lista de virada = Não')+
+    k('Implementadas','implementada','','T.E.E. já na fatura'); }
+  else $('seg-kpis').innerHTML=
     k('A comunicar','comunicar','rose','Informe a data do comunicado')+
     k('Aguardando prazo','aguardando','amber','Comunicadas, prazo de 30 dias em curso')+
     k('Aptas','apta','leaf',brl(soma(minhas.filter(d=>d.etapa==='apta'),'incremento'))+' de incremento')+
     k('Implementadas','implementada','','tarifa já em vigor');
-  const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','sem_pct','apta','fluxo','implementada','sem_tee','fora'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)}))];
+  const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','liberacao','sem_pct','apta','fluxo','implementada','nao_virar','sem_tee','fora'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)})).filter(t=>t.n||t.k===SEGTAB)];
   tabs('seg-tabs',T,SEGTAB,k=>{ SEGTAB=k; renderSeg(); });
   const q=$('seg-busca').value.trim().toLowerCase();
   SEG_ROWS=minhas.filter(d=>(SEGTAB==='todas'||d.etapa===SEGTAB)&&(!q||`${d.matricula} ${d.cliente}`.toLowerCase().includes(q)));
@@ -744,9 +787,9 @@ function renderExec(){
      <div class="kpi amber"><div class="label">A comunicar</div><div class="value amber">${cnt(DADOS,'comunicar')}</div><div class="hint">sem data de comunicado</div></div>
      <div class="kpi"><div class="label">Implementadas</div><div class="value">${cnt(DADOS,'implementada')}</div><div class="hint">de ${DADOS.length} matrículas</div></div>`;
   const T=[{k:'prioridades',l:'Prioridades',n:pr.length},{k:'aptas',l:'Aptas a virar',n:ap.length},{k:'comunicar',l:'A comunicar',n:cnt(DADOS,'comunicar')},
-    {k:'aguardando',l:'Aguardando prazo',n:cnt(DADOS,'aguardando')},{k:'sem_pct',l:'Sem % de TEE',n:cnt(DADOS,'sem_pct')},{k:'fluxo',l:'Em andamento (fase)',n:cnt(DADOS,'fluxo')},{k:'implementada',l:'Implementadas',n:cnt(DADOS,'implementada')},{k:'todas',l:'Todas',n:DADOS.length}];
+    {k:'aguardando',l:'Aguardando prazo',n:cnt(DADOS,'aguardando')},{k:'sem_pct',l:'Sem % de TEE',n:cnt(DADOS,'sem_pct')},{k:'liberacao',l:'Aguardando liberação (Público)',n:cnt(DADOS,'liberacao')},{k:'nao_virar',l:'Não pode virar',n:cnt(DADOS,'nao_virar')},{k:'fluxo',l:'Em andamento (fase)',n:cnt(DADOS,'fluxo')},{k:'implementada',l:'Implementadas',n:cnt(DADOS,'implementada')},{k:'todas',l:'Todas',n:DADOS.length}];
   tabs('exec-tabs',T,EXECTAB,k=>{ EXECTAB=k; SEL.clear(); renderExec(); });
-  const f={prioridades:d=>d.prioridade,aptas:d=>d.etapa==='apta',comunicar:d=>d.etapa==='comunicar',aguardando:d=>d.etapa==='aguardando',sem_pct:d=>d.etapa==='sem_pct',fluxo:d=>d.etapa==='fluxo',implementada:d=>d.etapa==='implementada',todas:()=>true}[EXECTAB];
+  const f={prioridades:d=>d.prioridade,aptas:d=>d.etapa==='apta',comunicar:d=>d.etapa==='comunicar',aguardando:d=>d.etapa==='aguardando',sem_pct:d=>d.etapa==='sem_pct',liberacao:d=>d.etapa==='liberacao',nao_virar:d=>d.etapa==='nao_virar',fluxo:d=>d.etapa==='fluxo',implementada:d=>d.etapa==='implementada',todas:()=>true}[EXECTAB];
   EXEC_ROWS=DADOS.filter(f).sort((a,b)=>(a.dias_leitura??9999)-(b.dias_leitura??9999)||a.matricula.localeCompare(b.matricula));
   $('exec-head').innerHTML='<tr><th><input type="checkbox" class="ck" id="sel-all"></th><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Executivo</th><th>Na rota desde</th><th>Próx. leitura</th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th>Termo</th><th></th></tr>';
   $('exec-body').innerHTML=EXEC_ROWS.length?EXEC_ROWS.map(d=>`<tr>
@@ -872,7 +915,7 @@ function renderGestor(){
   const gp={}; [...ap,...fl,...ag].forEach(d=>{ const k=d.mes_entrada?d.mes_entrada.slice(0,7):'sem'; (gp[k]=gp[k]||[]).push(d); }); let ac2=0;
   $('g-prev').innerHTML=Object.keys(gp).sort().map(k=>{ const v=soma(gp[k],'incremento'); ac2+=v; return `<tr><td><b>${k==='sem'?'Sem leitura cadastrada':mesLbl(k)}</b></td><td class="num">${fmtN(gp[k].length)}</td><td class="num">${brl(v)}</td><td class="num"><b>${brl(ac2)}</b></td></tr>`; }).join('')||'<tr class="empty-row"><td colspan="4">—</td></tr>';
   // onde está
-  const grupos=[['A comunicar',d=>d.etapa==='comunicar'],['Aguardando prazo (30 dias)',d=>d.etapa==='aguardando'],['Prazo cumprido · sem % de TEE',d=>d.etapa==='sem_pct'],['Apta',d=>d.etapa==='apta'],...FASES_FLUXO.map(f=>[f,d=>d.etapa==='fluxo'&&d.fase===f]),['Implementada',d=>d.etapa==='implementada'],['Tarifa retirada / Não implementar',d=>d.etapa==='fora']];
+  const grupos=[['A comunicar',d=>d.etapa==='comunicar'],['Aguardando prazo (30 dias)',d=>d.etapa==='aguardando'],['Prazo cumprido · sem % de TEE',d=>d.etapa==='sem_pct'],['Público · aguardando liberação',d=>d.etapa==='liberacao'],['Público · não pode virar',d=>d.etapa==='nao_virar'],['Apta',d=>d.etapa==='apta'],...FASES_FLUXO.map(f=>[f,d=>d.etapa==='fluxo'&&d.fase===f]),['Implementada',d=>d.etapa==='implementada'],['Tarifa retirada / Não implementar',d=>d.etapa==='fora']];
   const totI=soma(DADOS,'incremento')||1;
   $('g-onde').innerHTML=grupos.map(([l,f])=>{ const g=DADOS.filter(f), v=soma(g,'incremento'); return `<tr><td><b>${l}</b></td><td class="num">${fmtN(g.length)}</td><td class="num">${brl(v)}</td><td><div class="g-bar"><i style="width:${v/totI*100}%"></i></div></td></tr>`; }).join('');
   // termos
@@ -888,6 +931,78 @@ $('g-export').onclick=()=>{
     'Apta a partir de':dBR(d.data_apta),'DA do gerente':dBR(d.gest.dt_gerente),'Setor de cadastro':dBR(d.gest.dt_cadastro),'Setor de faturamento':dBR(d.gest.dt_faturamento),
     'Implementada em':dBR(d.gest.dt_implementada),'Termo':d.termo_status||'','Data do termo':dBR(d.termo_data),'Próxima leitura':dBR(d.prox_leitura),'Mês de entrada':mesLbl(d.mes_entrada)}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Painel do Gestor'); XLSX.writeFile(wb,`TEE_Painel_Gestor_${hojeISO()}.xlsx`);
+};
+
+/* ---------- IMPORTAR CARTEIRA PÚBLICA ---------- */
+function lerTabela(wb, testeCab){ // acha a aba e a linha de cabeçalho (a lista de virada começa na linha 2, coluna B)
+  for(const aba of wb.SheetNames){
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[aba],{header:1,raw:true,defval:null,blankrows:false});
+    for(let i=0;i<Math.min(10,aoa.length);i++){ const cab=(aoa[i]||[]).map(c=>norm(c)); if(testeCab(cab)) return {aba,cab,linhas:aoa.slice(i+1)}; }
+  }
+  return null;
+}
+const idxCab=(cab,...t)=>{ for(const f of t){ const i=cab.findIndex(f); if(i>=0) return i; } return -1; };
+$('btn-imp-pub').onclick=async()=>{
+  const fl=$('imp-pub-lista').files[0], fb=$('imp-pub-base').files[0], L=t=>{ const l=$('imp-pub-log'); l.textContent+=(l.textContent?'\n':'')+t; };
+  if(!fl&&!fb) return toast('Selecione a lista de virada e/ou a base Cobrar - GC - Público.',true);
+  if(!GEST_OK) return toast('Rode de novo o gestao_tee_painel.sql no Supabase (colunas do Público).',true);
+  const btn=$('btn-imp-pub'); btn.disabled=true; $('imp-pub-log').textContent='';
+  try{
+    const hoje=hojeISO(), matStr=v=>{ const s=String(v??'').trim().replace(/\.0+$/,''); return /^\d{6,}$/.test(s)?s:null; };
+    // 2) base Cobrar (todas as abas)
+    const base={};
+    if(fb){
+      const wb=XLSX.read(await fb.arrayBuffer(),{type:'array',cellDates:true,sheetRows:20000});
+      for(const aba of wb.SheetNames){
+        const aoa=XLSX.utils.sheet_to_json(wb.Sheets[aba],{header:1,raw:true,defval:null,blankrows:false}); if(!aoa.length) continue;
+        const cab=(aoa[0]||[]).map(c=>norm(c)); const iM=cab.findIndex(c=>c.startsWith('matricula')); if(iM<0){ L(`Base: aba "${aba}" ignorada`); continue; }
+        const I={cli:idxCab(cab,c=>c==='cliente',c=>c==='nome'), seg:idxCab(cab,c=>c==='segmento'), tipo:idxCab(cab,c=>c.startsWith('tipo de faturamento')),
+          pos:idxCab(cab,c=>c.startsWith('possibilidade')), fae:idxCab(cab,c=>c==='faturamento a & e',c=>c.startsWith('faturamento a')), onda:idxCab(cab,c=>c==='onda')};
+        let n=0; aoa.slice(1).forEach(l=>{ const m=matStr(l[iM]); if(!m) return; n++;
+          base[m]={cliente:I.cli>=0?String(l[I.cli]??'').trim()||null:null, tipo:I.tipo>=0?l[I.tipo]:null, possibilidade:I.pos>=0&&l[I.pos]!=null?String(l[I.pos]).trim():null,
+            fat_ae:I.fae>=0?num(l[I.fae]):null, onda:I.onda>=0?num(l[I.onda]):null}; });
+        L(`Base: aba "${aba}" — ${n} matrículas`);
+      }
+    }
+    // 1) lista de virada
+    const lista={};
+    if(fl){
+      const wb=XLSX.read(await fl.arrayBuffer(),{type:'array',cellDates:true,sheetRows:20000});
+      const t=lerTabela(wb,cab=>cab.some(c=>c==='num_ligacao'||c.startsWith('matricula'))&&cab.some(c=>c.startsWith('pode realizar')));
+      if(!t) throw new Error('Lista de virada: não encontrei as colunas NUM_LIGACAO e "Pode Realizar a Virada?".');
+      const c=t.cab, iM=idxCab(c,x=>x==='num_ligacao',x=>x.startsWith('matricula')), iP=idxCab(c,x=>x==='%',x=>x.startsWith('%')), iPot=idxCab(c,x=>x.startsWith('potrencial')||x.startsWith('potencial')),
+        iV=idxCab(c,x=>x.startsWith('pode realizar')), iE=idxCab(c,x=>x==='esfera'), iN=idxCab(c,x=>x==='nome',x=>x==='cliente'), iO=idxCab(c,x=>x==='onda'), iT=idxCab(c,x=>x.startsWith('tipo'));
+      t.linhas.forEach(l=>{ const m=matStr(l[iM]); if(!m) return; const v=l[iV]==null?null:String(l[iV]).trim();
+        let pv=null; const nv=norm(v); if(nv.startsWith('sim')) pv='Sim'; else if(/mes que vem|proximo mes/.test(nv)) pv='Não, só mês que vem'; else if(nv.startsWith('nao')) pv='Não';
+        lista[m]={pode_virar:pv, pct:iP>=0?num(l[iP]):null, potencial:iPot>=0?num(l[iPot]):null, esfera:iE>=0?l[iE]:null, nome:iN>=0?l[iN]:null, onda:iO>=0?num(l[iO]):null, tipo:iT>=0?l[iT]:null}; });
+      const cont={}; Object.values(lista).forEach(x=>cont[x.pode_virar||'(em branco)']=(cont[x.pode_virar||'(em branco)']||0)+1);
+      L(`Lista de virada (aba "${t.aba}"): ${Object.keys(lista).length} matrículas — `+Object.entries(cont).map(([k,v])=>`${k}: ${v}`).join(' · '));
+    }
+    // cruzamento
+    const mats=[...new Set([...Object.keys(base),...Object.keys(lista)])];
+    const regs=[], gest=[], impl=[]; let semBase=0, entr=0;
+    for(const m of mats){
+      const b=base[m]||{}, li=lista[m];
+      const implementada=teeNaFatura(b.tipo)||teeNaFatura(li&&li.tipo);
+      const onda=(li&&li.onda)||b.onda;
+      const r={matricula:m,grupo:'Públicos'}; const cli=b.cliente||(li&&li.nome); if(cli) r.cliente=String(cli).trim();
+      if(onda) r.onda=`${Math.round(onda)}° Onda`; if(b.fat_ae!=null) r.faturamento=b.fat_ae; if(li&&li.pct!=null) r.pct_cobranca=li.pct;
+      if(implementada){ r.tarifa_implementada=true; impl.push(m); }
+      regs.push(r);
+      const g={matricula:m}; if(b.fat_ae!=null) g.fat_ae=b.fat_ae; if(b.possibilidade) g.possibilidade=b.possibilidade;
+      if(li){ g.pode_virar=li.pode_virar; g.pct_virada=li.pct; g.esfera=li.esfera?String(li.esfera).trim():null; g.lista_em=hoje;
+        if(!fb||base[m]){ /* ok */ } else semBase++;
+        g.valor_entrante = (b.fat_ae!=null&&li.pct!=null) ? Math.round(b.fat_ae/2*li.pct*100)/100 : li.potencial; if(g.valor_entrante!=null) entr+=g.valor_entrante; }
+      gest.push(g);
+    }
+    for(let i=0;i<regs.length;i+=200){ const {error}=await sb.from('tee_matriculas').upsert(regs.slice(i,i+200),{onConflict:'matricula'}); if(error) throw new Error('tee_matriculas: '+error.message); }
+    for(let i=0;i<impl.length;i+=150){ await sb.from('tee_matriculas').update({fase:'Implementada'}).in('matricula',impl.slice(i,i+150)); }
+    for(let i=0;i<gest.length;i+=500){ const {error}=await sb.from('tee_gestao').upsert(gest.slice(i,i+500),{onConflict:'matricula'}); if(error) throw new Error('tee_gestao: '+error.message); }
+    if(fl) L(`Valor entrante da lista: R$ ${entr.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}/mês${semBase?` · ${semBase} matrícula(s) da lista sem dados na base (usado o Potencial Incremento da lista)`:''}`);
+    L(`${regs.length} matrículas do Público gravadas · ${impl.length} já implementadas (T.E.E. na fatura).`);
+    L('✔ Concluído.'); toast('Carteira Pública importada'); $('imp-pub-lista').value=''; $('imp-pub-base').value=''; await carregar();
+  }catch(e){ L('✖ Erro: '+(e.message||e)); toast('Erro: '+(e.message||e),true); }
+  btn.disabled=false;
 };
 
 /* ---------- IMPORTAR ROTA / COMUNICADOS ---------- */
