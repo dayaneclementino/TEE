@@ -402,10 +402,10 @@
       <button class="btn btn-ghost btn-sm" data-voltar>← Voltar</button>
       <div><div class="col-eyebrow" id="col-eyebrow">Indicativo executivo</div><h2>Coletas do Projeto TEE</h2><p class="sub" id="col-sub">Do alvo de matrículas à coleta executada, com os impedimentos encontrados em campo.</p></div>
       <div class="detail-right">
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer">Importar planilha de alvos/coletas<input type="file" id="col-file" accept=".xlsx,.xlsm,.xls" style="display:none"></label>
+        <button class="btn btn-ghost btn-sm" id="col-ir-imp">Atualizar planilha (Importar)</button>
       </div>
     </div>
-    <div id="col-vazio" class="card" style="display:none"><h2>Nenhuma planilha de coletas importada</h2><p class="sub">Clique em <b>Importar planilha de alvos/coletas</b> e escolha a planilha "Alvos - Coletas Projeto TEE" (abas Coletas - PROGRAMADAS, Base 2 onda, Base 3 onda e Reciclagem). Linhas coloridas na planilha ficam fora da rota.</p></div>
+    <div id="col-vazio" class="card" style="display:none"><h2>Nenhuma planilha de coletas importada</h2><p class="sub">Vá em <b>Importar planilha › Coletas do Projeto TEE</b> (botão no topo) e escolha a planilha "Alvos - Coletas Projeto TEE" (abas Coletas - PROGRAMADAS, Base 2 onda, Base 3 onda e Reciclagem). Linhas coloridas na planilha ficam fora da rota.</p></div>
     <div class="log" id="col-log"></div>
     <div id="col-conteudo" style="display:none">
       <div class="col-kpis" id="col-kpis"></div>
@@ -537,6 +537,15 @@
       <div class="log" id="imp-log"></div>
       <div class="callout amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
         <div>Reimportar sobrescreve, nas colunas que vêm da planilha (como a data do comunicado), o que foi digitado na plataforma. A planilha é tratada como fonte da verdade.</div></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h2>Coletas do Projeto TEE — planilha de alvos e coletas</h2>
+      <p class="sub">Planilha <b>"Alvos - Coletas Projeto TEE"</b> com as abas <b>Coletas - PROGRAMADAS</b>, <b>Base 2 onda</b>, <b>Base 3 onda</b> e <b>Reciclagem</b>. Alimenta o card <b>Coletas</b> (indicadores e sugestão de rota). Linhas coloridas na planilha ficam fora da rota. Cada importação substitui a anterior.</p>
+      <div class="upload-box" id="up-box-col">
+        <input type="file" id="col-file" accept=".xlsx,.xlsm,.xls">
+        <div class="form-row"><button class="btn btn-primary" id="btn-imp-col">Importar planilha de coletas</button></div>
+      </div>
+      <div class="log" id="col-imp-log"></div>
     </div>
     <div class="card" style="margin-top:16px;">
       <h2>Carteira Pública — lista de virada + base Cobrar</h2>
@@ -1224,6 +1233,9 @@ $('btn-imp-com').onclick=async()=>{
   try{
     const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,sheetRows:20000});
     const nk=k=>norm(k).replace(/[\[\]]/g,'').trim();
+    // trava: a planilha de Alvos/Coletas tem card próprio (Coletas) — não pode entrar na rota de comunicados
+    if(wb.SheetNames.some(n=>/coletas.*programad|base\s*[23]\s*onda|reciclagem/.test(norm(n))))
+      throw new Error('Esta é a planilha de Alvos/Coletas do Projeto TEE. Importe-a no quadro "Coletas do Projeto TEE", nesta mesma tela. Nada foi gravado.');
     let linhas=[];
     for(const aba of wb.SheetNames){ const ls=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:null,raw:true}); if(ls.some(r=>Object.keys(r).some(k=>nk(k).startsWith('matricula')))){ linhas=ls; L(`Aba "${aba}": ${ls.length} linhas`); break; } }
     if(!linhas.length) throw new Error('Não encontrei a coluna Matrícula.');
@@ -1243,6 +1255,9 @@ $('btn-imp-com').onclick=async()=>{
       if(!conhecidas.has(mat)){ conhecidas.add(mat); novas.push({matricula:mat,cliente:String(pk(r,k=>k==='cliente'||k==='nome')??'').trim()||null,grupo:grupoDaRota(pk(r,k=>k==='segmento'),pk(r,k=>k==='carteira'),pk(r,k=>k==='cliente'))}); }
       if(com) (comunic[com]=comunic[com]||[]).push(mat);
     }
+    { const u={}; gest.forEach(x=>{ u[x.matricula]=Object.assign(u[x.matricula]||{},x); }); gest.length=0; gest.push(...Object.values(u)); }
+    const temEnvio=linhas.some(r=>Object.keys(r).some(k=>/envio/.test(nk(k)))), temCom=Object.keys(comunic).length>0;
+    if(!temEnvio&&!temCom) throw new Error('A planilha não tem "Data de envio ao executivo" nem "Data do comunicado" — não parece uma planilha de rota de comunicados. Nada foi gravado.');
     L(`${gest.length} matrículas na planilha · ${novas.length} novas na plataforma · ${Object.values(comunic).flat().length} com data de comunicado`);
     if(semData) L(`${semData} sem data de envio — entrada na rota registrada como hoje (${dBR(hoje)}).`);
     for(let i=0;i<novas.length;i+=200){ const {error}=await sb.from('tee_matriculas').insert(novas.slice(i,i+200)); if(error) throw new Error('Criando matrículas novas: '+error.message); }
@@ -1329,8 +1344,11 @@ async function carregarColetas(){
     COL_OK=true;
   }catch(e){ COL=null; COL_OK=false; $('col-log').textContent='Coletas: rode o gestao_tee_painel.sql no Supabase ('+(e.message||e)+').'; }
 }
-$('col-file').onchange=async()=>{
-  const f=$('col-file').files[0]; if(!f) return; const L=t=>{ $('col-log').textContent+=($('col-log').textContent?'\n':'')+t; }; $('col-log').textContent='';
+$('col-file').onchange=()=>$('up-box-col').classList.toggle('has-file',!!$('col-file').files[0]);
+$('col-ir-imp').onclick=()=>go('imp');
+$('btn-imp-col').onclick=async()=>{
+  const f=$('col-file').files[0]; if(!f) return toast('Selecione a planilha de alvos/coletas.',true);
+  const lg=$('col-imp-log'), L=t=>{ lg.textContent+=(lg.textContent?'\n':'')+t; }; lg.textContent=''; $('btn-imp-col').disabled=true;
   try{
     L('Lendo '+f.name+'…');
     const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,cellStyles:true,sheetRows:5000});
@@ -1338,9 +1356,9 @@ $('col-file').onchange=async()=>{
     L(`Alvos: 2ª onda ${d.n2} · 3ª onda ${d.n3} · Reciclagem ${d.nr} · ${d.alvos.filter(a=>a.fora).length} linhas coloridas (fora da rota)`);
     L(`Coletas programadas: ${d.coletas.length} linhas${d.foraC?` · ${d.foraC} linhas coloridas desconsideradas`:''}${d.vazias?` · ${d.vazias} linhas vazias ignoradas`:''} · roteiros de ${dBR(d.roteiro_ini)} a ${dBR(d.roteiro_fim)}`);
     const {error}=await sb.from('tee_coletas_base').insert([{arquivo:f.name,posicao:d.posicao,dados:d}]); if(error) throw error;
-    L('✔ Planilha importada.'); toast('Planilha de coletas importada'); await carregarColetas(); renderColetas();
+    L('✔ Planilha importada — veja no card Coletas.'); toast('Planilha de coletas importada'); await carregarColetas(); renderColetas();
   }catch(e){ L('✖ Erro: '+(e.message||e)); toast('Erro: '+(e.message||e),true); }
-  $('col-file').value='';
+  $('col-file').value=''; $('up-box-col').classList.remove('has-file'); $('btn-imp-col').disabled=false;
 };
 
 /* ---------- indicadores ---------- */
