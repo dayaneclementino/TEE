@@ -299,9 +299,9 @@
   .col-bar{ display:grid; grid-template-columns:180px 1fr 110px; align-items:center; gap:14px; font-size:14px; color:var(--navy); }
   .col-bar .t{ height:22px; background:#E8EEF2; border-radius:5px; overflow:hidden; } .col-bar .t i{ display:block; height:100%; border-radius:5px; }
   .col-bar b{ text-align:right; } .col-bar small{ color:var(--text-mut); font-weight:500; }
-  .col-dest{ background:#FBF1DE; border-radius:10px; padding:14px 16px; margin:12px 0 14px; color:#6E4A0F; font-size:14px; } .col-dest b{ font-family:var(--font-display); font-size:22px; color:#6E4A0F; margin-right:4px; }
+  .col-dest{ background:var(--water-soft); border:1px solid var(--water-line); border-radius:10px; padding:14px 16px; margin:12px 0 14px; color:var(--navy-2); font-size:14px; } .col-dest b{ font-family:var(--font-display); font-size:22px; color:var(--navy); margin-right:4px; }
   .col-hbars{ display:flex; flex-direction:column; gap:10px; } .col-hbar{ display:grid; grid-template-columns:190px 1fr 36px; align-items:center; gap:12px; font-size:13.5px; color:var(--navy); }
-  .col-hbar .t{ height:16px; background:#E8EEF2; border-radius:4px; overflow:hidden; } .col-hbar .t i{ display:block; height:100%; background:#C0492E; border-radius:4px; } .col-hbar b{ text-align:right; }
+  .col-hbar .t{ height:16px; background:#E8EEF2; border-radius:4px; overflow:hidden; } .col-hbar .t i{ display:block; height:100%; background:#1C7EBE; border-radius:4px; } .col-hbar b{ text-align:right; }
   .col-leg{ display:flex; gap:16px; font-size:12.5px; font-weight:700; color:var(--navy); margin:10px 0; } .col-leg span::before{ content:''; display:inline-block; width:10px; height:10px; border-radius:2px; background:var(--c); margin-right:6px; vertical-align:-1px; }
   .col-mes{ display:flex; align-items:flex-end; gap:14px; height:230px; padding-top:22px; border-bottom:1px solid var(--border); }
   .col-col{ flex:1; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; position:relative; }
@@ -427,7 +427,7 @@
         </div>
         <div class="card" style="margin-top:16px">
           <h2>Resultado das coletas por mês do roteiro</h2>
-          <div class="col-leg"><span style="--c:#2C9A66">Executada</span><span style="--c:#C0492E">Impedimento</span><span style="--c:#9AA7B1">Sem resultado</span></div>
+          <div class="col-leg"><span style="--c:#0F4C81">Executada</span><span style="--c:#4F9BD0">Impedimento</span><span style="--c:#BFD9EC">Sem resultado</span></div>
           <div class="col-mes" id="col-mes"></div>
           <p class="g-note" id="col-mes-nota"></p>
         </div>
@@ -811,7 +811,7 @@ function renderHome(){
   { let st='<div>Planilha de coletas<b>não importada</b></div>';
     if(COL){ const C=COL.coletas, ex=C.filter(c=>c.res==='exec').length, im=C.filter(c=>c.res==='imp').length, alvo=new Set(COL.alvos.map(a=>a.onda+'|'+a.m)).size;
       st=`<div>Alvo<b>${fmtN(alvo)}</b></div><div>Programadas<b>${fmtN(C.length)}</b></div><div>Executadas<b>${fmtN(ex)}</b></div><div class="${im?'urg':''}">Impedimentos<b>${fmtN(im)}</b></div>`; }
-    h+=`<button class="mod-card" data-go="col" style="--c:#2C9A66;--cs:var(--leaf-soft)">
+    h+=`<button class="mod-card" data-go="col" style="--c:var(--water);--cs:var(--water-soft)">
     <div class="mod-icon">${svg('<path d="M9 2v4l-5 9a4 4 0 0 0 3.5 6h9a4 4 0 0 0 3.5-6l-5-9V2"/><path d="M8 2h8M6.5 14h11"/>')}</div>
     <h2>Coletas</h2>
     <p>Do alvo de matrículas à coleta executada: impedimentos por motivo, resultado por mês, equipes e superintendências — e sugestão de rota diária por SUP e proximidade.</p>
@@ -1384,11 +1384,11 @@ function renderColetas(){
   const K=(l,v,h,cor)=>`<div class="col-kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="h">${cor?`<i style="background:${cor}"></i>`:''}${h}</div></div>`;
   $('col-kpis').innerHTML=K('Matrículas alvo',fmtN(alvo),`2ª onda ${n2} · 3ª onda ${n3} · Reciclagem ${nr}`)+
     K('Coletas programadas',fmtN(C.length),`${pc(C.length,alvo)} do alvo`)+
-    K('Executadas',fmtN(ex.length),`<b>${pc(ex.length,C.length)} das programadas</b>`,'#2C9A66')+
-    K('Impedimentos',fmtN(im.length),`<b>${pc(im.length,C.length)} das programadas</b>`,'#C0492E')+
-    K('Sem resultado lançado',fmtN(se.length),recentes?`<b>${recentes} são roteiros de ${dBRc(ini7)} a ${dBRc(fim)}</b>`:'aguardando retorno da equipe','#9AA7B1');
+    K('Executadas',fmtN(ex.length),`<b>${pc(ex.length,C.length)} das programadas</b>`,'#0F4C81')+
+    K('Impedimentos',fmtN(im.length),`<b>${pc(im.length,C.length)} das programadas</b>`,'#4F9BD0')+
+    K('Sem resultado lançado',fmtN(se.length),recentes?`<b>${recentes} são roteiros de ${dBRc(ini7)} a ${dBRc(fim)}</b>`:'aguardando retorno da equipe','#BFD9EC');
   const bar=(l,v,cor,mostra)=>`<div class="col-bar"><span>${l}</span><div class="t"><i style="width:${alvo?Math.min(100,v/alvo*100):0}%;background:${cor}"></i></div><b>${fmtN(v)} <small>${mostra?pc(v,alvo):''}</small></b></div>`;
-  $('col-bars').innerHTML=bar('Matrículas alvo',alvo,'#215C7E',false)+bar('Coletas programadas',C.length,'#215C7E',true)+bar('Coletas executadas',ex.length,'#2C9A66',true);
+  $('col-bars').innerHTML=bar('Matrículas alvo',alvo,'#BFD9EC',false)+bar('Coletas programadas',C.length,'#4F9BD0',true)+bar('Coletas executadas',ex.length,'#0F4C81',true);
   const concl=ex.length+im.length; $('col-bars-nota').textContent=`Percentuais sobre o alvo de ${fmtN(alvo)}. Das visitas já concluídas (${fmtN(concl)}), ${pc(ex.length,concl)} resultaram em coleta.`;
   // ondas
   const linhaO=(nome,mats)=>{ const prog=mats.filter(m=>porMat[m]), exe=mats.filter(m=>resMat(m)==='exec'), imp=mats.filter(m=>porMat[m]&&porMat[m].some(c=>c.res==='imp'));
@@ -1408,7 +1408,7 @@ function renderColetas(){
   const gm={}; C.filter(c=>c.data).forEach(c=>{ const k=c.data.slice(0,7); (gm[k]=gm[k]||{exec:0,imp:0,sem:0})[c.res]++; });
   const ks=Object.keys(gm).sort(), mxm=Math.max(1,...ks.map(k=>gm[k].exec+gm[k].imp+gm[k].sem)), semData=C.filter(c=>!c.data).length;
   $('col-mes').innerHTML=ks.map(k=>{ const v=gm[k], t=v.exec+v.imp+v.sem, h=x=>x/mxm*100; const atual=fim&&k===fim.slice(0,7);
-    return `<div class="col-col"><b>${t}</b><div class="pilha" style="height:${h(t)}%">${v.sem?`<i style="flex:${v.sem};background:#9AA7B1" title="Sem resultado: ${v.sem}"></i>`:''}${v.imp?`<i style="flex:${v.imp};background:#C0492E" title="Impedimento: ${v.imp}"></i>`:''}${v.exec?`<i style="flex:${v.exec};background:#2C9A66" title="Executada: ${v.exec}"></i>`:''}</div><span>${MS[+k.slice(5,7)-1]}${atual?'*':''}</span></div>`; }).join('');
+    return `<div class="col-col"><b>${t}</b><div class="pilha" style="height:${h(t)}%">${v.sem?`<i style="flex:${v.sem};background:#BFD9EC" title="Sem resultado: ${v.sem}"></i>`:''}${v.imp?`<i style="flex:${v.imp};background:#4F9BD0" title="Impedimento: ${v.imp}"></i>`:''}${v.exec?`<i style="flex:${v.exec};background:#0F4C81" title="Executada: ${v.exec}"></i>`:''}</div><span>${MS[+k.slice(5,7)-1]}${atual?'*':''}</span></div>`; }).join('');
   const pior=ks.map(k=>({k,t:gm[k].exec+gm[k].imp+gm[k].sem,i:gm[k].imp})).sort((a,b)=>b.i-a.i)[0];
   $('col-mes-nota').textContent=(pior&&pior.i?`${MS[+pior.k.slice(5,7)-1]} concentrou ${pior.i} dos ${im.length} impedimentos (${pc(pior.i,pior.t)} das coletas do mês). `:'')+(fim?`${MS[+fim.slice(5,7)-1]}* vai até o dia ${fim.slice(8,10)}. `:'')+(semData?`${semData} linha(s) sem data de roteiro ficaram fora do gráfico.`:'');
   // equipe / sup
@@ -1421,7 +1421,7 @@ function renderColetas(){
   const T=[{k:'todos',l:'Todos',n:im.length},...COL_MOT.filter(m=>cm[m]).map(m=>({k:m,l:m,n:cm[m]}))];
   tabs('col-imp-tabs',T,COL_IMPTAB,k=>{ COL_IMPTAB=k; renderColetas(); });
   const ondaDe=m=>{ const a=A.find(x=>x.m===m); return a?a.onda:'Fora das abas'; };
-  $('col-imp-lista').innerHTML=im.filter(c=>COL_IMPTAB==='todos'||c.motivo===COL_IMPTAB).sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(c=>`<tr><td><b>${esc(c.m)}</b></td><td><div class="cli" title="${esc(c.cli)}">${esc(c.cli)}</div></td><td>${esc(ondaDe(c.m))}</td><td>${esc(c.sup)}</td><td>${esc(c.bairro)}</td><td>${dBR(c.data)}</td><td>${esc(c.equipe)}</td><td><span class="badge ${c.motivo==='Cliente impediu / sem acesso'?'b-amber':c.motivo==='Local abandonado'?'b-gray':'b-rose'}">${esc(c.motivo)}</span></td><td class="mini col-wrap" style="min-width:200px;max-width:300px">${esc(c.coleta)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="9">Nenhum impedimento.</td></tr>';
+  $('col-imp-lista').innerHTML=im.filter(c=>COL_IMPTAB==='todos'||c.motivo===COL_IMPTAB).sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(c=>`<tr><td><b>${esc(c.m)}</b></td><td><div class="cli" title="${esc(c.cli)}">${esc(c.cli)}</div></td><td>${esc(ondaDe(c.m))}</td><td>${esc(c.sup)}</td><td>${esc(c.bairro)}</td><td>${dBR(c.data)}</td><td>${esc(c.equipe)}</td><td><span class="badge ${c.motivo==='Cliente impediu / sem acesso'?'b-water':c.motivo==='Local abandonado'?'b-gray':'b-navy'}">${esc(c.motivo)}</span></td><td class="mini col-wrap" style="min-width:200px;max-width:300px">${esc(c.coleta)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="9">Nenhum impedimento.</td></tr>';
   renderRotaPool(); renderRotasSalvas();
 }
 
