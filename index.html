@@ -270,6 +270,8 @@
   .detail-head .sub{ margin:2px 0 0; }
   .detail-right{ margin-left:auto; display:flex; gap:12px; align-items:flex-end; }
   .detail-right select{ padding:8px 12px; font-size:13px; min-width:200px; }
+  .chips-filter.sub{ width:100%; box-sizing:border-box; margin-top:-6px; padding:10px 12px; background:#F4F8FB; border:1px solid var(--border); border-radius:12px; }
+  .chips-filter.sub::before{ content:'Fase:'; font-size:12px; font-weight:700; color:var(--text-mut); align-self:center; margin-right:4px; }
   .chips-filter{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
   .chips-filter button{ border:1px solid var(--border); background:#fff; color:var(--navy); border-radius:100px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
   .chips-filter button b{ margin-left:6px; color:var(--text-mut); }
@@ -327,6 +329,7 @@
     <div class="kpi-row" id="exec-kpis"></div>
     <div class="card" style="margin-top:16px;">
       <div class="chips-filter" id="exec-tabs"></div>
+      <div class="chips-filter sub" id="exec-fases" style="display:none"></div>
       <div class="bulk" id="exec-bulk">
         <span id="bulk-n">0 selecionadas</span>
         <input id="bulk-exec" list="lista-exec" placeholder="Atribuir ao executivo…">
@@ -376,7 +379,7 @@
     <div class="g-kpis" id="g-kpis"></div>
     <div class="card" style="margin-top:16px;">
       <h2>SLA por etapa do fluxo</h2>
-      <p class="sub">Tempo médio (dias corridos) entre uma etapa e a seguinte. Conta só o que foi registrado a partir de <b id="g-sla-ini"></b>. "Paradas agora" = matrículas que estão nessa etapa hoje.</p>
+      <p class="sub">Tempo médio (dias corridos) entre uma etapa e a seguinte. Conta só o que foi registrado a partir de <b id="g-sla-ini"></b>. "Paradas agora" = matrículas que estão hoje na etapa de origem (ex.: Apta → DA do gerente = as aptas a virar).</p>
       <div class="tablewrap"><table><thead><tr><th>Etapa</th><th class="num">Concluídas</th><th class="num">Tempo médio</th><th class="num">Mínimo</th><th class="num">Máximo</th><th class="num">Paradas agora</th><th class="num">Parada mais antiga</th></tr></thead><tbody id="g-sla"></tbody></table></div>
     </div>
     <div class="g-two">
@@ -507,7 +510,7 @@ const SLA_INICIO = '2026-10-06';                                  // o SLA conta
 
 const $ = id => document.getElementById(id);
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let DADOS=[], GEST={}, GEST_OK=true, CFG={janela_prioridade_dias:7}, VIEW='home', SEG=null, SEGTAB='todas', EXECTAB='prioridades', EDITANDO=null;
+let DADOS=[], GEST={}, GEST_OK=true, CFG={janela_prioridade_dias:7}, VIEW='home', SEG=null, SEGTAB='todas', EXECTAB='prioridades', EXECFASE='', EDITANDO=null;
 const SEL=new Set();
 
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -817,10 +820,16 @@ function renderExec(){
      <div class="kpi"><div class="label">Implementadas</div><div class="value">${cnt(DADOS,'implementada')}</div><div class="hint">de ${DADOS.length} matrículas</div></div>`;
   const T=[{k:'prioridades',l:'Prioridades',n:pr.length},{k:'aptas',l:'Aptas a virar',n:ap.length},{k:'comunicar',l:'A comunicar',n:cnt(DADOS,'comunicar')},
     {k:'aguardando',l:'Aguardando prazo',n:cnt(DADOS,'aguardando')},{k:'sem_pct',l:'Sem % de TEE',n:cnt(DADOS,'sem_pct')},{k:'liberacao',l:'Aguardando liberação (Público)',n:cnt(DADOS,'liberacao')},{k:'nao_virar',l:'Não pode virar',n:cnt(DADOS,'nao_virar')},{k:'fluxo',l:'Em andamento (fase)',n:cnt(DADOS,'fluxo')},{k:'implementada',l:'Implementadas',n:cnt(DADOS,'implementada')},{k:'todas',l:'Todas',n:DADOS.length}];
-  tabs('exec-tabs',T,EXECTAB,k=>{ EXECTAB=k; SEL.clear(); renderExec(); });
-  const f={prioridades:d=>d.prioridade,aptas:d=>d.etapa==='apta',comunicar:d=>d.etapa==='comunicar',aguardando:d=>d.etapa==='aguardando',sem_pct:d=>d.etapa==='sem_pct',liberacao:d=>d.etapa==='liberacao',nao_virar:d=>d.etapa==='nao_virar',fluxo:d=>d.etapa==='fluxo',implementada:d=>d.etapa==='implementada',todas:()=>true}[EXECTAB];
+  tabs('exec-tabs',T,EXECTAB,k=>{ EXECTAB=k; EXECFASE=''; SEL.clear(); renderExec(); });
+  // Em andamento: filtro por fase (para mudar a fase em lote)
+  const fl=DADOS.filter(d=>d.etapa==='fluxo');
+  if(EXECTAB==='fluxo'){
+    $('exec-fases').style.display='flex';
+    tabs('exec-fases',[{k:'',l:'Todas as fases',n:fl.length},...FASES_FLUXO.map(f=>({k:f,l:f,n:fl.filter(d=>d.fase===f).length}))],EXECFASE,k=>{ EXECFASE=k; SEL.clear(); renderExec(); });
+  } else $('exec-fases').style.display='none';
+  const f={prioridades:d=>d.prioridade,aptas:d=>d.etapa==='apta',comunicar:d=>d.etapa==='comunicar',aguardando:d=>d.etapa==='aguardando',sem_pct:d=>d.etapa==='sem_pct',liberacao:d=>d.etapa==='liberacao',nao_virar:d=>d.etapa==='nao_virar',fluxo:d=>d.etapa==='fluxo'&&(!EXECFASE||d.fase===EXECFASE),implementada:d=>d.etapa==='implementada',todas:()=>true}[EXECTAB];
   EXEC_ROWS=DADOS.filter(f).sort((a,b)=>(a.dias_leitura??9999)-(b.dias_leitura??9999)||a.matricula.localeCompare(b.matricula));
-  $('exec-head').innerHTML='<tr><th><input type="checkbox" class="ck" id="sel-all"></th><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Executivo</th><th>Na rota desde</th><th>Próx. leitura</th><th class="num">% real</th><th class="num">% cobrada<div class="mini">limite 30%</div></th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th>Termo</th><th></th></tr>';
+  $('exec-head').innerHTML='<tr><th><input type="checkbox" class="ck" id="sel-all" title="Selecionar todas as matrículas deste filtro" '+(EXEC_ROWS.length&&EXEC_ROWS.every(d=>SEL.has(d.matricula))?'checked':'')+'></th><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Executivo</th><th>Na rota desde</th><th>Próx. leitura</th><th class="num">% real</th><th class="num">% cobrada<div class="mini">limite 30%</div></th><th class="num">Incremento</th><th>Data do comunicado</th><th>Apta a partir de</th><th>Etapa</th><th>Fase</th><th>Termo</th><th></th></tr>';
   $('exec-body').innerHTML=EXEC_ROWS.length?EXEC_ROWS.map(d=>`<tr>
     <td><input type="checkbox" class="ck" data-sel="${d.matricula}" ${SEL.has(d.matricula)?'checked':''}></td>
     <td><b>${esc(d.matricula)}</b></td><td><div class="cli" title="${esc(d.cliente)}">${esc(d.cliente)}</div></td><td>${esc(segDe(d))}</td>
@@ -942,8 +951,9 @@ function tempoComunicar(){ // entrou na rota -> data do comunicado (a partir do 
 }
 const ETAPAS_SLA=[
   {l:'Entrou na rota → Comunicado', ini:d=>d.entrou_rota, fim:d=>d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10), agora:d=>d.etapa==='comunicar'&&d.entrou_rota},
-  {l:'Comunicado → Apta (defesa de 30 dias)', ini:d=>d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10), fim:d=>d.data_apta&&d.data_apta<=hojeISO()?d.data_apta:null, agora:d=>d.etapa==='aguardando'},
-  {l:'Apta → DA do gerente', ini:d=>d.data_apta, fim:d=>d.gest.dt_gerente, agora:d=>d.etapa==='apta'||(d.etapa==='fluxo'&&d.fase==='Aguardando agenda')},
+  {l:'Comunicado → Apta (defesa de 30 dias)', ini:d=>d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10), fim:d=>d.data_apta&&d.data_apta<=hojeISO()?d.data_apta:null, agora:d=>d.etapa==='aguardando', alerta:30},
+  {l:'Apta → DA do gerente', ini:d=>d.data_apta, fim:d=>d.gest.dt_gerente, agora:d=>d.etapa==='apta', desde:d=>d.data_apta},
+  {l:'Aguardando agenda → DA do gerente', ini:d=>d.gest.dt_agenda, fim:d=>d.gest.dt_agenda&&d.gest.dt_gerente, agora:d=>d.etapa==='fluxo'&&d.fase==='Aguardando agenda'},
   {l:'DA do gerente → Setor de cadastro', ini:d=>d.gest.dt_gerente, fim:d=>d.gest.dt_cadastro, agora:d=>d.fase==='DA do gerente'},
   {l:'Setor de cadastro → Setor de faturamento', ini:d=>d.gest.dt_cadastro, fim:d=>d.gest.dt_faturamento, agora:d=>d.fase==='Setor de cadastro'},
   {l:'Setor de faturamento → Implementada', ini:d=>d.gest.dt_faturamento, fim:d=>d.gest.dt_implementada, agora:d=>d.fase==='Setor de faturamento'},
@@ -968,8 +978,8 @@ function renderGestor(){
   // SLA
   $('g-sla').innerHTML=ETAPAS_SLA.map(e=>{
     const feitos=DADOS.map(d=>{ const a=e.ini(d), b=e.fim(d); return a&&b&&b>=SLA_INICIO&&b>=a?diasEntre(a,b):null; }).filter(v=>v!=null);
-    const paradas=DADOS.filter(e.agora), ida=paradas.map(d=>{ const a=e.l.startsWith('Apta')?d.data_apta:(d.fase_desde||e.ini(d)); return a?diasEntre(a,hoje):null; }).filter(v=>v!=null);
-    return `<tr${e.total?' class="total"':''}><td><b>${e.l}</b></td><td class="num">${fmtN(feitos.length)}</td><td class="num"><b>${feitos.length?d1(media(feitos))+' d':'–'}</b></td><td class="num">${feitos.length?Math.min(...feitos)+' d':'–'}</td><td class="num">${feitos.length?Math.max(...feitos)+' d':'–'}</td><td class="num">${e.total?'':fmtN(paradas.length)}</td><td class="num">${ida.length?`<span class="${Math.max(...ida)>15?'urg-txt':''}">${Math.max(...ida)} d</span>`:'–'}</td></tr>`; }).join('');
+    const paradas=DADOS.filter(e.agora), ida=paradas.map(d=>{ const a=e.desde?e.desde(d):(d.fase_desde||e.ini(d)); return a?diasEntre(a,hoje):null; }).filter(v=>v!=null);
+    return `<tr${e.total?' class="total"':''}><td><b>${e.l}</b></td><td class="num">${fmtN(feitos.length)}</td><td class="num"><b>${feitos.length?d1(media(feitos))+' d':'–'}</b></td><td class="num">${feitos.length?Math.min(...feitos)+' d':'–'}</td><td class="num">${feitos.length?Math.max(...feitos)+' d':'–'}</td><td class="num">${e.total?'':fmtN(paradas.length)}</td><td class="num">${ida.length?`<span class="${Math.max(...ida)>(e.alerta||15)?'urg-txt':''}">${Math.max(...ida)} d</span>`:'–'}</td></tr>`; }).join('');
   // incremento mensal implementado
   const gi={}; imp.forEach(d=>{ const k=d.gest.dt_implementada?d.gest.dt_implementada.slice(0,7):'antes'; (gi[k]=gi[k]||[]).push(d); });
   let acc=0; const ks=Object.keys(gi).sort((a,b)=>a==='antes'?-1:b==='antes'?1:a.localeCompare(b));
