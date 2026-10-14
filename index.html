@@ -310,11 +310,19 @@
   #col-mes-nota{ margin-top:30px; }
   td.col-wrap{ white-space:normal !important; line-height:1.4; }
   .col-acts a.btn{ text-decoration:none; }
+  .tl{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px 12px; font-size:12px; }
+  .tl div{ display:flex; flex-direction:column; padding:6px 8px; border-radius:8px; background:#F4F7FA; color:var(--text-mut); } .tl div.ok{ background:var(--water-soft); color:var(--navy); }
+  .tl i{ display:none; } .tl span{ font-weight:700; font-size:11.5px; }
+  .alt-tag{ color:var(--water); font-weight:600; cursor:help; margin-top:2px; }
   .col-ck{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--navy); margin-bottom:8px; }
   .col-pool{ font-size:12.5px; color:var(--text-mut); margin:12px 0 4px; line-height:2.1; } .col-chip{ display:inline-block; background:#F1F5F8; border:1px solid var(--border); border-radius:100px; padding:2px 10px; cursor:pointer; color:var(--navy); margin-right:4px; } .col-chip:hover{ border-color:var(--water); }
   .col-dia{ border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:14px; background:#FBFDFE; }
   .col-dia-h{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:8px; } .col-dia-h b{ font-family:var(--font-display); color:var(--navy); }
   .col-acts{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; } .col-acts input[type=date]{ padding:6px 8px; font-size:12.5px; border:1px solid var(--border); border-radius:8px; }
+  .mf-etapas{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 8px; }
+  .mf-et{ border:1px solid var(--border); background:#fff; border-radius:12px; padding:8px 12px; cursor:pointer; font-size:12.5px; color:var(--navy); min-width:132px; }
+  .mf-et b{ display:block; font-family:var(--font-display); font-size:18px; } .mf-et small{ color:var(--text-mut); } .mf-et .atr{ color:var(--rose); font-weight:700; }
+  .mf-et.on{ border-color:var(--navy); box-shadow:0 0 0 2px var(--water-soft); background:var(--water-soft); }
   .g-note{ font-size:12px; color:var(--text-mut); margin-top:8px; line-height:1.5; }
   .g-bar{ height:8px; background:#EEF3F6; border-radius:8px; overflow:hidden; min-width:80px; } .g-bar i{ display:block; height:100%; background:var(--water); }
   .urg-txt{ color:var(--rose); font-weight:700; } .soon-txt{ color:var(--amber); font-weight:700; }
@@ -436,11 +444,11 @@
       <div class="g-two">
         <div class="card" style="margin-top:16px">
           <h2>Por equipe</h2>
-          <div class="tablewrap"><table><thead><tr><th>Equipe</th><th class="num">Program.</th><th class="num">Exec.</th><th class="num">Imped.</th><th class="num">S/ result.</th><th class="num">% exec.</th></tr></thead><tbody id="col-equipe"></tbody></table></div>
+          <div class="tablewrap"><table><thead><tr><th>Equipe</th><th class="num">OSs abertas</th><th class="num">OSs executadas</th><th class="num">OSs impedidas</th><th class="num">% exec.</th></tr></thead><tbody id="col-equipe"></tbody></table></div>
         </div>
         <div class="card" style="margin-top:16px">
           <h2>Por superintendência</h2>
-          <div class="tablewrap"><table><thead><tr><th>Superintendência</th><th class="num">Program.</th><th class="num">Exec.</th><th class="num">Imped.</th><th class="num">S/ result.</th><th class="num">% exec.</th></tr></thead><tbody id="col-sup"></tbody></table></div>
+          <div class="tablewrap"><table><thead><tr><th>Superintendência</th><th class="num">OSs abertas</th><th class="num">OSs executadas</th><th class="num">OSs impedidas</th><th class="num">% exec.</th></tr></thead><tbody id="col-sup"></tbody></table></div>
         </div>
       </div>
 
@@ -460,7 +468,7 @@
           <div class="field"><label>Dias</label><input type="number" id="rt-dias" value="1" min="1" max="10" style="max-width:90px"></div>
           <div class="field"><label>1º dia da rota</label><input type="date" id="rt-data"></div>
           <div class="field"><label>Ondas</label><select id="rt-onda"><option value="">Todas</option><option>2ª onda</option><option>3ª onda</option><option>Reciclagem 3ª onda</option></select></div>
-          <label class="col-ck"><input type="checkbox" id="rt-reag"> incluir reagendamentos (cliente impediu)</label>
+          <label class="col-ck"><input type="checkbox" id="rt-reag" checked> incluir pelo menos 1 retorno por dia — impedimento por cliente impediu / sem acesso (o mais antigo, se estiver perto)</label>
           <button class="btn btn-primary" id="rt-sugerir">Sugerir rota</button>
         </div>
         <div class="col-pool" id="rt-pool"></div>
@@ -485,8 +493,32 @@
     <div class="g-kpis" id="g-kpis"></div>
     <div class="card" style="margin-top:16px;">
       <h2>SLA por etapa do fluxo</h2>
-      <p class="sub">Tempo médio (dias corridos) entre uma etapa e a seguinte. Conta só o que foi registrado a partir de <b id="g-sla-ini"></b>. "Paradas agora" = matrículas que estão hoje na etapa de origem (ex.: Apta → DA do gerente = as aptas a virar).</p>
-      <div class="tablewrap"><table><thead><tr><th>Etapa</th><th class="num">Concluídas</th><th class="num">Tempo médio</th><th class="num">Mínimo</th><th class="num">Máximo</th><th class="num">Paradas agora</th><th class="num">Parada mais antiga</th></tr></thead><tbody id="g-sla"></tbody></table></div>
+      <p class="sub">Do campo à tarifa implementada: prazo de cada etapa, tempo médio real (registrado a partir de <b id="g-sla-ini"></b>), quantas estão paradas hoje e quantas já estão atrasadas. Nas etapas depois da apta, matrícula com prioridade tem de concluir <b>antes da leitura</b> em que deveria entrar — passou da leitura sem implementar conta como atraso.</p>
+      <div class="tablewrap"><table><thead><tr><th>Etapa</th><th class="num">Prazo</th><th class="num">Concluídas</th><th class="num">Tempo médio</th><th class="num">Dentro do prazo</th><th class="num">Máximo</th><th class="num">Paradas agora</th><th class="num">Atrasadas agora</th><th class="num">Parada mais antiga</th></tr></thead><tbody id="g-sla"></tbody></table></div>
+      <div class="callout" id="g-fat" style="margin-top:12px"></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head"><div><h2>Mapa do fluxo — onde está parada cada matrícula</h2>
+        <p class="sub">Cada matrícula na etapa em que está hoje, há quantos dias e o prazo esperado da etapa. Use para achar gargalos e atrasos até a implementação. Clique numa etapa para filtrar.</p></div>
+        <button class="btn btn-ghost btn-sm" id="mf-xls">Baixar mapa (Excel)</button></div>
+      <div class="mf-etapas" id="mf-etapas"></div>
+      <div class="form-row" style="margin:4px 0 10px"><label class="col-ck"><input type="checkbox" id="mf-atr"> só atrasadas</label>
+        <div class="field"><label>Buscar</label><input id="mf-q" placeholder="matrícula / cliente / executivo" style="min-width:240px"></div></div>
+      <div class="tablewrap scroll"><table><thead><tr><th>Matrícula</th><th>Cliente</th><th>Segmento</th><th>Executivo</th><th>Coleta</th><th>Entrou na plataforma</th><th>Etapa atual</th><th>Desde</th><th class="num">Dias na etapa</th><th class="num">Prazo</th><th>Situação</th><th class="num">Incremento</th></tr></thead><tbody id="mf-body"></tbody></table></div>
+      <p class="g-note" id="mf-nota"></p>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head"><div><h2>Mudanças vindas das planilhas</h2><p class="sub">O que as planilhas estão alterando nas matrículas (últimos 30 dias) e quantas matrículas entraram na plataforma já com atraso — por exemplo, pendentes de comunicado na planilha mas que só chegaram agora ao executivo. Detalhe completo em Importar planilha › Histórico das importações.</p></div></div>
+      <div class="g-two" style="gap:16px">
+        <div class="tablewrap"><table><thead><tr><th>O que mudou</th><th class="num">Vezes</th><th class="num">Matrículas</th><th>Última</th></tr></thead><tbody id="mud-campos"></tbody></table></div>
+        <div class="tablewrap"><table><thead><tr><th>Entraram na plataforma</th><th class="num">Matrículas</th><th class="num">Já com coleta há + de 5 d</th><th class="num">Média de dias coleta → plataforma</th></tr></thead><tbody id="mud-entradas"></tbody></table></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head"><div><h2>Laudos do laboratório</h2>
+        <p class="sub">Depois da coleta executada, o laboratório tem 30 dias para o laudo. O laudo é considerado entregue no dia em que o <b>% de TEE aparece pela primeira vez</b> na planilha importada. Medição a partir de agora.</p></div></div>
+      <div class="g-kpis" id="ld-kpis" style="grid-template-columns:repeat(4,1fr);margin:6px 0 14px"></div>
+      <div class="tablewrap scroll"><table><thead><tr><th>Matrícula</th><th>Cliente</th><th>Superintendência</th><th>Coleta executada</th><th class="num">Dias desde a coleta</th><th>Situação</th><th>Laudo (%)</th></tr></thead><tbody id="ld-body"></tbody></table></div>
     </div>
     <div class="g-two">
       <div class="card" style="margin-top:16px;">
@@ -504,8 +536,8 @@
       <div class="card" style="margin-top:16px;">
         <h2>Onde está cada matrícula</h2>
         <p class="sub">Etapa / fase atual, quantidade e incremento mensal.</p>
-        <div class="tablewrap"><table><thead><tr><th>Etapa / fase</th><th class="num">Matrículas</th><th class="num">% cobrada</th><th class="num">Incremento</th><th style="width:26%"></th></tr></thead><tbody id="g-onde"></tbody></table></div>
-        <p class="g-note">% cobrada = percentual que entra na fatura, limitado a 30% (média ponderada pelo faturamento das matrículas com percentual informado).</p>
+        <div class="tablewrap"><table><thead><tr><th>Etapa / fase</th><th class="num">Matrículas</th><th class="num">Incremento</th><th style="width:30%"></th></tr></thead><tbody id="g-onde"></tbody></table></div>
+        <p class="g-note">O total é o <b>valor cheio</b> do projeto e <b>não soma</b> Tarifa retirada / Não implementar: esse valor aparece em negativo porque deixa de entrar para a empresa.</p>
       </div>
       <div class="card" style="margin-top:16px;">
         <h2>Termos de adesão</h2>
@@ -579,6 +611,19 @@
         <button class="btn btn-ghost btn-sm" id="btn-cfg">Salvar parâmetros</button>
       </div>
     </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head"><div><h2>Histórico das importações</h2><p class="sub">Tudo o que cada planilha mudou: matrículas que entraram na rota e campos alterados (antes → depois), com data e arquivo. Fases, comunicado, tarifa e termo tratados na plataforma não aparecem aqui porque a planilha não os altera.</p></div>
+        <button class="btn btn-ghost btn-sm" id="log-xls">Baixar histórico (Excel)</button></div>
+      <div class="form-row" style="margin:6px 0 10px">
+        <div class="field"><label>De</label><input type="date" id="log-de"></div>
+        <div class="field"><label>Até</label><input type="date" id="log-ate"></div>
+        <div class="field"><label>Tipo</label><select id="log-tipo"><option value="">Tudo</option><option value="nova">Matrículas novas</option><option value="alteracao">Alterações</option></select></div>
+        <div class="field"><label>Origem</label><select id="log-origem"><option value="">Todas</option><option>A Cobrar</option><option>Público</option><option>Rota de comunicados</option></select></div>
+        <div class="field"><label>Matrícula / cliente</label><input id="log-q" placeholder="buscar…" style="min-width:200px"></div>
+      </div>
+      <div class="g-kpis" id="log-kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px"></div>
+      <div class="tablewrap scroll"><table><thead><tr><th>Data</th><th>Origem</th><th>Matrícula</th><th>Cliente</th><th>O que mudou</th><th>Antes</th><th>Depois</th><th>Arquivo</th></tr></thead><tbody id="log-body"></tbody></table></div>
+    </div>
   </section>
 
   <footer class="note" id="rodape">Incremento = (faturamento ÷ 2) × percentual aplicado (máx. 30%). Apta a partir de = comunicado + 30 dias (data máxima de evidências).</footer>
@@ -600,6 +645,8 @@
       <div class="field"><label>Entrou na rota em</label><input type="date" id="e-rota"></div>
       <div class="field"><label>Prazo do comunicado</label><input type="date" id="e-prazo"></div>
       <div class="field full"><label>Observação</label><textarea id="e-obs" rows="3"></textarea></div>
+      <div class="field full"><label>Linha do tempo do fluxo</label><div id="e-tl" class="tl"></div></div>
+      <div class="field full"><label>Histórico das importações desta matrícula</label><div id="e-hist" class="mini" style="line-height:1.6;max-height:140px;overflow:auto"></div></div>
     </div>
     <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-ghost" id="e-cancel">Cancelar</button>
@@ -614,10 +661,10 @@
 const SUPABASE_URL      = 'https://metstknnhexflqmpgzof.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Wi0PmbWO7oPtoqUv1sRMPw_7A8Hgtx4';
 /* Fases que o coordenador pode atribuir (edite a lista à vontade) */
-const FASES = ['A comunicar','Comunicado','Aguardando evidências','Apta à implementação','Aguardando agenda','DA do gerente','Setor de cadastro','Setor de faturamento','Implementada','Tarifa retirada','Não implementar'];
+const FASES = ['A comunicar','Comunicado','Aguardando evidências','Apta à implementação','Aguardando agenda','DA solicitado','DA do gerente','Setor de cadastro','Setor de faturamento','Implementada','Tarifa retirada','Não implementar'];
 const FASES_FORA  = ['Tarifa retirada','Não implementar'];                                   // saem das aptas/prioridades
-const FASES_FLUXO = ['Aguardando agenda','DA do gerente','Setor de cadastro','Setor de faturamento']; // saem de "apta" e ficam na fase indicada
-const FASE_COL = {'Aguardando agenda':'dt_agenda','DA do gerente':'dt_gerente','Setor de cadastro':'dt_cadastro','Setor de faturamento':'dt_faturamento','Implementada':'dt_implementada','Tarifa retirada':'dt_encerrada','Não implementar':'dt_encerrada'};
+const FASES_FLUXO = ['Aguardando agenda','DA solicitado','DA do gerente','Setor de cadastro','Setor de faturamento']; // saem de "apta" e ficam na fase indicada
+const FASE_COL = {'Aguardando agenda':'dt_agenda','DA solicitado':'dt_da_solicitado','DA do gerente':'dt_gerente','Setor de cadastro':'dt_cadastro','Setor de faturamento':'dt_faturamento','Implementada':'dt_implementada','Tarifa retirada':'dt_encerrada','Não implementar':'dt_encerrada'};
 const TERMOS = ['Solicitado','Elaborado','Enviado','Assinado','Recusa de assinatura'];   // termo não é fase: vale para todas as aptas
 const TERMO_COL = {'Solicitado':'termo_solicitado_em','Elaborado':'termo_elaborado_em','Enviado':'termo_enviado_em','Assinado':'termo_assinado_em','Recusa de assinatura':'termo_assinado_em'};
 const SLA_INICIO = '2026-10-06';                                  // o SLA conta a partir desta data
@@ -733,13 +780,13 @@ async function carregar(manual){
   let todos=[],from=0;
   while(true){
     const {data,error}=await sb.from('tee_calculo').select('*').order('matricula').range(from,from+999);
-    if(error){ $('loading').style.display='none'; toast('Erro ao carregar: '+error.message+' — rode o tee_supabase.sql (v2) no Supabase.',true); render(); return; }
+    if(error){ $('loading').style.display='none'; toast(/fetch|network|Failed/i.test(error.message)?'Não foi possível conectar ao Supabase (Failed to fetch). Verifique se o projeto do Supabase está ativo (não pausado) e se a internet/rede da empresa não está bloqueando supabase.co. Depois clique em Atualizar dados.':'Erro ao carregar: '+error.message+' — rode o tee_supabase.sql (v2) no Supabase.',true); render(); return; }
     todos=todos.concat(data); if(data.length<1000) break; from+=1000;
   }
   GEST={};
   try{ let off=0; while(true){ const {data,error}=await sb.from('tee_gestao').select('*').range(off,off+999); if(error) throw error; data.forEach(g=>GEST[String(g.matricula)]=g); if(data.length<1000) break; off+=1000; } GEST_OK=true; }
   catch(e){ GEST_OK=false; toast('Painel do Gestor: rode o arquivo gestao_tee_painel.sql no Supabase ('+(e.message||e)+')',true); }
-  await carregarColetas();
+  await carregarColetas(); await carregarLog();
   DADOS=todos.map(regraApta); $('loading').style.display='none';
   if(DADOS.length) $('f-ref').value=DADOS[0].data_referencia;
   $('sem-base').style.display='none';
@@ -754,7 +801,7 @@ $('btn-cfg').onclick=async()=>{
 
 function render(){
   $('hero-meta').innerHTML=DADOS.length?`<span class="chip">Data de referência <b>${dBR(DADOS[0].data_referencia)}</b></span><span class="chip">Matrículas <b>${DADOS.length}</b></span><span class="chip">Aptas <b>${cnt(DADOS,'apta')}</b></span>`:'';
-  if(VIEW==='home') renderHome(); if(VIEW==='exec') renderExec(); if(VIEW==='seg') renderSeg(); if(VIEW==='gestor') renderGestor(); if(VIEW==='col') renderColetas();
+  if(VIEW==='home') renderHome(); if(VIEW==='exec') renderExec(); if(VIEW==='seg') renderSeg(); if(VIEW==='gestor') renderGestor(); if(VIEW==='col') renderColetas(); if(VIEW==='imp') renderLog();
 }
 
 /* ---------- HOME ---------- */
@@ -840,7 +887,9 @@ const pctCobr=d=>{ const r=pctReal(d); const a=d.pct_aplicado!=null&&+d.pct_apli
 const fatPeso=d=>{ const f=+d.faturamento||(d.gest&&+d.gest.fat_ae)||0; return f>0?f:1; };
 const mediaPct=(g,fn)=>{ let n=0,dv=0; g.forEach(d=>{ const v=fn(d); if(v!=null){ const w=fatPeso(d); n+=v*w; dv+=w; } }); return dv?n/dv:null; };
 const fP=v=>v==null?'<span class="mini">–</span>':(v*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
-const pctCols=d=>{ const r=pctReal(d), c=pctCobr(d); return `<td class="num">${fP(r)}${r!=null&&r>0.30?'<div class="mini">acima do teto</div>':''}</td><td class="num"><b>${fP(c)}</b></td>`; };
+const pctCols=d=>{ const r=pctReal(d), c=pctCobr(d); const lg=ILOG.find(l=>l.matricula===String(d.matricula)&&l.tipo==='alteracao'&&/%/.test(l.campo||''));
+  const info=[r!=null&&r>0.30?'acima do teto':'', d.gest&&d.gest.laudo_em?`laudo ${dBR(d.gest.laudo_em)}`:'', lg?`% alterado ${dBR(lg.data)}`:''].filter(Boolean).join(' · ');
+  return `<td class="num">${fP(r)}${info?`<div class="mini" title="${lg?esc(lg.campo+': '+lg.valor_anterior+' → '+lg.valor_novo):''}">${info}</div>`:''}</td><td class="num"><b>${fP(c)}</b></td>`; };
 
 /* ---------- COMPONENTES ---------- */
 function diasTxt(d){
@@ -864,7 +913,9 @@ function aptaTxt(d){
 const etapaBadge=d=>d.etapa==='fluxo'
   ? `<span class="badge ${ETAPAS.fluxo.b}">${esc(d.fase)}</span>${d.fase_desde?`<div class="mini">há ${diasEntre(d.fase_desde,hojeISO())} d</div>`:''}`
   : `<span class="badge ${ETAPAS[d.etapa].b}">${ETAPAS[d.etapa].l}</span>`;
-const rotaTxt=d=>d.entrou_rota?`<b>${dBR(d.entrou_rota)}</b><div class="mini">há ${diasEntre(d.entrou_rota,hojeISO())} d</div>`:'<span class="mini">–</span>';
+const rotaTxt=d=>{ const n=d.entrou_rota?diasEntre(d.entrou_rota,hojeISO()):null, alt=ultimaAlt(d.matricula);
+  const altTxt=alt?`<div class="mini alt-tag" title="${esc(ILOG.filter(l=>l.matricula===String(d.matricula)&&l.tipo==='alteracao'&&l.data===alt.data).map(l=>l.campo+': '+l.valor_anterior+' → '+l.valor_novo).join('\n'))}">✎ alterada pela planilha em ${dBR(alt.data)}</div>`:'';
+  return (d.entrou_rota?`<b>${dBR(d.entrou_rota)}</b>${n!=null&&n<=15?' <span class="badge b-water">nova</span>':''}<div class="mini">há ${n} d</div>`:'<span class="mini">–</span>')+altTxt; };
 const termoSel=d=>{
   const st=d.termo_status||'';
   const btn=!st?`<button class="btn btn-sm btn-sol" data-soltermo="${d.matricula}">Solicitar termo de adesão</button>`:'';
@@ -989,6 +1040,59 @@ async function setComunicado(mat,val){
   const n=DADOS.find(x=>x.matricula===mat);
   toast(val&&n&&n.data_apta?`${mat}: apta a partir de ${dBR(n.data_apta)} (entra em ${mesLbl(n.mes_entrada)})`:'Comunicado removido');
 }
+/* ---------- HISTÓRICO DAS IMPORTAÇÕES ---------- */
+let ILOG=[], ILOG_OK=true;
+const CAMPO_NOME={faturamento:'Faturamento',pct_cobranca:'% de cobrança',negociacao:'% negociação',ciclo:'Ciclo',data_leitura:'Data de leitura',
+  data_1a_notificacao:'Data do comunicado',prazo_comunicado:'Prazo do comunicado',pode_virar:'Pode virar (lista)',pct_virada:'% da lista de virada',valor_entrante:'Valor entrante'};
+const fmtV=(campo,v)=>{ if(v==null||v==='') return ''; if(/data|prazo/.test(campo)) return dBR(String(v).slice(0,10)); if(/pct|negociacao/.test(campo)) return (+v*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
+  if(/faturamento|valor/.test(campo)) return (+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); return String(v); };
+const igual=(campo,a,b)=>{ if((a==null||a==='')&&(b==null||b==='')) return true; if(a==null||a===''||b==null||b==='') return false;
+  if(/data|prazo/.test(campo)) return String(a).slice(0,10)===String(b).slice(0,10); const na=+a, nb=+b; if(isFinite(na)&&isFinite(nb)) return Math.abs(na-nb)<0.005; return String(a).trim()===String(b).trim(); };
+// compara o que vai ser gravado com o que está na plataforma e devolve as linhas do histórico
+function diffImport(origem,arquivo,rowsMat,rowsGest,novasMats){
+  const hoje=hojeISO(), out=[], porMat={}; DADOS.forEach(d=>porMat[String(d.matricula)]=d);
+  (novasMats||[]).forEach(m=>out.push({data:hoje,arquivo,origem,matricula:String(m),tipo:'nova',campo:'Matrícula nova na rota',valor_anterior:null,valor_novo:hoje}));
+  const novaSet=new Set((novasMats||[]).map(String));
+  const cmp=(rows,atual)=>(rows||[]).forEach(r=>{ const m=String(r.matricula); if(novaSet.has(m)) return; const a=atual(m); if(!a) return;
+    Object.keys(r).forEach(k=>{ if(!CAMPO_NOME[k]) return; if(!igual(k,a[k],r[k])) out.push({data:hoje,arquivo,origem,matricula:m,tipo:'alteracao',campo:CAMPO_NOME[k],valor_anterior:fmtV(k,a[k])||'(vazio)',valor_novo:fmtV(k,r[k])||'(vazio)'}); }); });
+  cmp(rowsMat,m=>porMat[m]); cmp(rowsGest,m=>GEST[m]||(porMat[m]?{}:null));
+  return out;
+}
+async function gravarLog(linhas){
+  if(!linhas.length||!ILOG_OK) return 0;
+  for(let i=0;i<linhas.length;i+=500){ const {error}=await sb.from('tee_import_log').insert(linhas.slice(i,i+500)); if(error){ toast('Importação feita, mas o histórico não foi gravado: rode o supabase_historico_importacoes.sql ('+error.message+')',true); return 0; } }
+  return linhas.length;
+}
+let LOG_ROWS=[];
+function renderLog(){
+  if(!$('log-body')) return;
+  if(!ILOG_OK){ $('log-body').innerHTML='<tr class="empty-row"><td colspan="8">Rode o supabase_historico_importacoes.sql no Supabase para ativar o histórico.</td></tr>'; $('log-kpis').innerHTML=''; return; }
+  const de=$('log-de').value, ate=$('log-ate').value, tp=$('log-tipo').value, og=$('log-origem').value, q=norm($('log-q').value);
+  const cli=m=>{ const d=DADOS.find(x=>String(x.matricula)===m); return d?d.cliente||'':''; };
+  LOG_ROWS=ILOG.filter(l=>(!de||l.data>=de)&&(!ate||l.data<=ate)&&(!tp||l.tipo===tp)&&(!og||l.origem===og)&&(!q||norm(l.matricula+' '+cli(l.matricula)).includes(q)));
+  const nov=LOG_ROWS.filter(l=>l.tipo==='nova'), alt=LOG_ROWS.filter(l=>l.tipo==='alteracao');
+  const K=(l,v,h)=>`<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="hint">${h}</div></div>`;
+  $('log-kpis').innerHTML=K('Matrículas novas na rota',fmtN(nov.length),nov.length?`última entrada em ${dBR(nov[0].data)}`:'no período')+
+    K('Campos alterados',fmtN(alt.length),`em ${fmtN(new Set(alt.map(l=>l.matricula)).size)} matrículas`)+
+    K('Importações',fmtN(new Set(LOG_ROWS.map(l=>String(l.importado_em||l.data).slice(0,16)+l.arquivo)).size),'com alguma mudança no período');
+  $('log-body').innerHTML=LOG_ROWS.slice(0,1500).map(l=>`<tr><td><b>${dBR(l.data)}</b><div class="mini">${l.importado_em?new Date(l.importado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''}</div></td><td>${esc(l.origem||'')}</td><td><b>${esc(l.matricula)}</b></td><td><div class="cli" title="${esc(cli(l.matricula))}">${esc(cli(l.matricula))}</div></td>
+    <td>${l.tipo==='nova'?'<span class="badge b-water">Nova na rota</span>':esc(l.campo)}</td><td class="mini">${esc(l.valor_anterior||'')}</td><td><b>${esc(l.tipo==='nova'?'':l.valor_novo||'')}</b></td><td class="mini col-wrap" style="max-width:200px">${esc(l.arquivo||'')}</td></tr>`).join('')
+    +(LOG_ROWS.length>1500?`<tr class="empty-row"><td colspan="8">Mostrando 1.500 de ${fmtN(LOG_ROWS.length)} — use os filtros ou baixe o Excel.</td></tr>`:'')
+    ||'<tr class="empty-row"><td colspan="8">Nenhuma mudança registrada no período.</td></tr>';
+}
+['log-de','log-ate','log-tipo','log-origem'].forEach(id=>$(id).onchange=renderLog); $('log-q').oninput=renderLog;
+$('log-xls').onclick=()=>{ if(!LOG_ROWS.length) return toast('Nada para baixar com esses filtros.',true);
+  const cli=m=>{ const d=DADOS.find(x=>String(x.matricula)===m); return d?d.cliente||'':''; };
+  const rows=LOG_ROWS.map(l=>({'Data':dBR(l.data),'Hora':l.importado_em?new Date(l.importado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'','Origem':l.origem,'Matrícula':l.matricula,'Cliente':cli(l.matricula),
+    'Tipo':l.tipo==='nova'?'Nova na rota':'Alteração','O que mudou':l.tipo==='nova'?'Matrícula nova':l.campo,'Antes':l.valor_anterior||'','Depois':l.tipo==='nova'?'':l.valor_novo||'','Arquivo':l.arquivo||''}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Histórico'); XLSX.writeFile(wb,`TEE_historico_importacoes_${hojeISO()}.xlsx`); };
+
+async function carregarLog(){
+  try{ let all=[],off=0; while(true){ const {data,error}=await sb.from('tee_import_log').select('*').order('id',{ascending:false}).range(off,off+999); if(error) throw error; all=all.concat(data); if(data.length<1000||all.length>=20000) break; off+=1000; }
+    ILOG=all; ILOG_OK=true; }catch(e){ ILOG=[]; ILOG_OK=false; }
+}
+const ultimaAlt=m=>ILOG.find(l=>l.matricula===String(m)&&l.tipo==='alteracao');
+
 // upsert seguro: linhas com colunas diferentes vão em lotes separados (senão a coluna ausente seria gravada como vazia)
 async function upsertSeguro(tabela,rows,tam,onProg){
   const grupos={}; rows.forEach(r=>{ const k=Object.keys(r).sort().join('|'); (grupos[k]=grupos[k]||[]).push(r); });
@@ -1034,6 +1138,11 @@ function abrirModal(mat){
   $('m-titulo').textContent=`Matrícula ${d.matricula}`; $('m-sub').textContent=d.cliente||'';
   $('e-notif-data').value=d.data_1a_notificacao||''; $('e-exec').value=d.executivo||'';
   $('e-neg').value=d.negociacao!=null?+(d.negociacao*100).toFixed(2):''; $('e-dtermo').value=d.termo_data||''; $('e-termo').value=d.termo_status||''; $('e-rota').value=d.entrou_rota||''; $('e-prazo').value=d.prazo_comunicado||''; $('e-obs').value=d.observacao||'';
+  { const g=d.gest||{}, ce=coletaExec(mat), passos=[['Coleta executada',ce],['Entrou na plataforma (rota)',d.entrou_rota],['Laudo (% na planilha)',g.laudo_em],['Comunicado',d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10)],['Apta (30 dias)',d.data_apta&&d.data_apta<=hojeISO()?d.data_apta:null],
+      ['Termo solicitado',g.termo_solicitado_em],['Termo elaborado',g.termo_elaborado_em],['Aguardando agenda',g.dt_agenda],['DA solicitado',g.dt_da_solicitado],['DA emitido (gerente)',g.dt_gerente],['Setor de cadastro',g.dt_cadastro],['Setor de faturamento',g.dt_faturamento],['Implementada',g.dt_implementada],['Retirada / não implementar',g.dt_encerrada]];
+    let ant=null; $('e-tl').innerHTML=passos.map(([l,dt])=>{ const h=dt?`<b>${dBR(dt)}</b>${ant&&dt>=ant?` <span class="mini">+${diasEntre(ant,dt)} d</span>`:''}`:'<span class="mini">—</span>'; if(dt) ant=dt; return `<div class="${dt?'ok':''}"><i></i><span>${l}</span>${h}</div>`; }).join(''); }
+  const hl=ILOG.filter(l=>l.matricula===String(mat));
+  $('e-hist').innerHTML=hl.length?hl.map(l=>`<div><b>${dBR(l.data)}</b> · ${esc(l.origem||'')} · ${l.tipo==='nova'?'entrou na rota':`${esc(l.campo)}: ${esc(l.valor_anterior)} → <b>${esc(l.valor_novo)}</b>`}</div>`).join(''):'Nenhuma mudança registrada por importação.';
   $('modal').style.display='flex';
 }
 const fechar=()=>{ $('modal').style.display='none'; EDITANDO=null; };
@@ -1076,20 +1185,103 @@ function renderTermos(){
 /* ---------- PAINEL DO GESTOR ---------- */
 const media=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
 const d1=v=>fmtN(Math.round(v*10)/10);
+const pc_=(a,b)=>b?Math.round(a/b*100)+'%':'–';
 function tempoComunicar(){ // entrou na rota -> data do comunicado (a partir do início do SLA)
   const v=DADOS.filter(d=>d.entrou_rota&&d.entrou_rota>=SLA_INICIO&&d.data_1a_notificacao).map(d=>diasEntre(d.entrou_rota,String(d.data_1a_notificacao).slice(0,10))).filter(v=>v>=0);
   return {n:v.length, media:media(v)};
 }
+// prazos (dias) de cada etapa — ajuste aqui. Etapas marcadas com leitura:true: matrícula apta com prioridade
+// tem de concluir antes da leitura em que deveria entrar; passou da leitura sem implementar = atraso.
 const ETAPAS_SLA=[
-  {l:'Entrou na rota → Comunicado', ini:d=>d.entrou_rota, fim:d=>d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10), agora:d=>d.etapa==='comunicar'&&d.entrou_rota},
-  {l:'Comunicado → Apta (defesa de 30 dias)', ini:d=>d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10), fim:d=>d.data_apta&&d.data_apta<=hojeISO()?d.data_apta:null, agora:d=>d.etapa==='aguardando', alerta:30},
-  {l:'Apta → DA do gerente', ini:d=>d.data_apta, fim:d=>d.gest.dt_gerente, agora:d=>d.etapa==='apta', desde:d=>d.data_apta},
-  {l:'Aguardando agenda → DA do gerente', ini:d=>d.gest.dt_agenda, fim:d=>d.gest.dt_agenda&&d.gest.dt_gerente, agora:d=>d.etapa==='fluxo'&&d.fase==='Aguardando agenda'},
-  {l:'DA do gerente → Setor de cadastro', ini:d=>d.gest.dt_gerente, fim:d=>d.gest.dt_cadastro, agora:d=>d.fase==='DA do gerente'},
-  {l:'Setor de cadastro → Setor de faturamento', ini:d=>d.gest.dt_cadastro, fim:d=>d.gest.dt_faturamento, agora:d=>d.fase==='Setor de cadastro'},
-  {l:'Setor de faturamento → Implementada', ini:d=>d.gest.dt_faturamento, fim:d=>d.gest.dt_implementada, agora:d=>d.fase==='Setor de faturamento'},
-  {l:'Total: entrou na rota → Implementada', ini:d=>d.entrou_rota, fim:d=>d.gest.dt_implementada, agora:()=>false, total:true}
+  {k:'coleta_emissao', l:'Coleta → Emissão do comunicado (entrada na plataforma)', prazo:5, ini:d=>coletaExec(d.matricula), fim:d=>d.entrou_rota, agora:d=>false},
+  {k:'emissao_com', l:'Entrada na plataforma → Comunicado entregue', prazo:5, ini:d=>d.entrou_rota, fim:d=>d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10), agora:d=>d.etapa==='comunicar'&&!!d.entrou_rota},
+  {k:'laudo', l:'Coleta executada → Laudo (% na planilha)', prazo:30, ini:d=>coletaExec(d.matricula), fim:d=>d.gest.laudo_em, agora:d=>!!coletaExec(d.matricula)&&!pctReal(d)&&!['implementada','fora'].includes(d.etapa), desde:d=>coletaExec(d.matricula)},
+  {k:'defesa', l:'Comunicado → Apta (defesa de 30 dias)', prazo:30, ini:d=>d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10), fim:d=>d.data_apta&&d.data_apta<=hojeISO()?d.data_apta:null, agora:d=>d.etapa==='aguardando'},
+  {k:'apta_da', l:'Apta → Solicitação do DA', prazo:5, leitura:true, ini:d=>d.data_apta, fim:d=>d.gest.dt_da_solicitado||d.gest.dt_gerente, agora:d=>d.etapa==='apta', desde:d=>d.data_apta},
+  {k:'agenda', l:'Aguardando agenda (shoppings) → DA', prazo:15, leitura:true, ini:d=>d.gest.dt_agenda, fim:d=>d.gest.dt_agenda&&(d.gest.dt_da_solicitado||d.gest.dt_gerente), agora:d=>d.etapa==='fluxo'&&d.fase==='Aguardando agenda'},
+  {k:'da', l:'Solicitação do DA → DA emitido pelo gerente', prazo:5, leitura:true, ini:d=>d.gest.dt_da_solicitado, fim:d=>d.gest.dt_gerente, agora:d=>d.fase==='DA solicitado'},
+  {k:'cad', l:'DA emitido → Setor de cadastro', prazo:5, leitura:true, ini:d=>d.gest.dt_gerente, fim:d=>d.gest.dt_cadastro, agora:d=>d.fase==='DA do gerente'},
+  {k:'fat', l:'Setor de cadastro → Setor de faturamento', prazo:5, leitura:true, ini:d=>d.gest.dt_cadastro, fim:d=>d.gest.dt_faturamento, agora:d=>d.fase==='Setor de cadastro'},
+  {k:'impl', l:'Setor de faturamento → Implementada', prazo:5, leitura:true, ini:d=>d.gest.dt_faturamento, fim:d=>d.gest.dt_implementada, agora:d=>d.fase==='Setor de faturamento'},
+  {k:'total', l:'Total: coleta → Implementada', ini:d=>coletaExec(d.matricula)||d.entrou_rota, fim:d=>d.gest.dt_implementada, agora:()=>false, total:true}
 ];
+// leitura em que a matrícula apta deveria entrar (1ª leitura a partir do dia em que ficou apta)
+const leituraAlvo=d=>d.data_leitura&&d.data_apta?proxLeitura(d.data_leitura,d.data_apta):null;
+function atrasoEtapa(d,desde,prazo,usaLeitura){
+  const hoje=hojeISO(), dias=desde?diasEntre(desde,hoje):null, la=usaLeitura?leituraAlvo(d):null;
+  const porPrazo=dias!=null&&prazo!=null&&dias>prazo, porLeitura=!!(la&&hoje>la);
+  return {dias, atrasada:porPrazo||porLeitura, porLeitura, la, excesso:porPrazo?dias-prazo:0};
+}
+/* ---------- LAUDO / COLETA ---------- */
+function coletaExec(m){ if(!COL) return null; const l=COL.coletas.filter(c=>c.m===String(m)&&c.res==='exec'&&c.data).map(c=>c.data).sort(); return l.length?l[l.length-1]:null; }
+const LAUDO_PRAZO=30;
+/* ---------- MAPA DO FLUXO: prazo esperado de cada etapa (dias) — ajuste aqui ---------- */
+const MF_PRAZO={ 'A comunicar':5, 'Aguardando laudo':30, 'Aguardando prazo (30 dias)':30, 'Sem % de TEE (prazo cumprido)':0, 'Apta → solicitar DA':5,
+  'Aguardando agenda':15, 'DA solicitado':5, 'DA do gerente':5, 'Setor de cadastro':5, 'Setor de faturamento':5, 'Público · aguardando liberação':30 };
+const MF_LEITURA=new Set(['Apta → solicitar DA','Aguardando agenda','DA solicitado','DA do gerente','Setor de cadastro','Setor de faturamento']);
+function etapaFluxo(d){ // devolve {etapa, desde, prazo} da etapa em que a matrícula está parada
+  const hoje=hojeISO(), ce=coletaExec(d.matricula);
+  if(['implementada','fora','sem_tee','nao_virar'].includes(d.etapa)) return null;
+  if(d.etapa==='fluxo') return {etapa:d.fase, desde:d.fase_desde||null};
+  if(d.etapa==='apta') return {etapa:'Apta → solicitar DA', desde:d.data_apta};
+  if(d.etapa==='sem_pct') return {etapa:'Sem % de TEE (prazo cumprido)', desde:d.data_apta};
+  if(d.etapa==='liberacao') return {etapa:'Público · aguardando liberação', desde:d.gest.lista_em||null};
+  if(ce&&!pctReal(d)) return {etapa:'Aguardando laudo', desde:ce};
+  if(d.etapa==='aguardando') return {etapa:'Aguardando prazo (30 dias)', desde:d.data_1a_notificacao&&String(d.data_1a_notificacao).slice(0,10)};
+  if(d.etapa==='comunicar') return {etapa:'A comunicar', desde:d.entrou_rota||null, prazoData:d.prazo_comunicado};
+  return null;
+}
+let MF_SEL='', MF_ROWS=[];
+function renderMapa(){
+  const hoje=hojeISO(), L=[];
+  DADOS.forEach(d=>{ const e=etapaFluxo(d); if(!e) return;
+    const lim=MF_PRAZO[e.etapa]; const a=atrasoEtapa(d,e.desde,lim,MF_LEITURA.has(e.etapa));
+    const ce=coletaExec(d.matricula), antes=ce&&d.entrou_rota&&d.entrou_rota>=ce?diasEntre(ce,d.entrou_rota):null;
+    L.push({d,etapa:e.etapa,desde:e.desde,dias:a.dias,lim,atrasada:a.atrasada,porLeitura:a.porLeitura,la:a.la,excesso:a.excesso,ce,antes}); });
+  const ordem=Object.keys(MF_PRAZO); const g={}; L.forEach(x=>{ (g[x.etapa]=g[x.etapa]||[]).push(x); });
+  $('mf-etapas').innerHTML=`<div class="mf-et ${MF_SEL?'':'on'}" data-mf="">Todas<b>${fmtN(L.length)}</b><small><span class="atr">${fmtN(L.filter(x=>x.atrasada).length)} atrasadas</span></small></div>`+
+    ordem.filter(k=>g[k]).map(k=>`<div class="mf-et ${MF_SEL===k?'on':''}" data-mf="${esc(k)}">${esc(k)}<b>${fmtN(g[k].length)}</b><small>${g[k].filter(x=>x.atrasada).length?`<span class="atr">${g[k].filter(x=>x.atrasada).length} atrasadas</span>`:'no prazo'} · prazo ${MF_PRAZO[k]} d</small></div>`).join('');
+  document.querySelectorAll('#mf-etapas [data-mf]').forEach(c=>c.onclick=()=>{ MF_SEL=c.dataset.mf; renderMapa(); });
+  const q=norm($('mf-q').value), so=$('mf-atr').checked;
+  MF_ROWS=L.filter(x=>(!MF_SEL||x.etapa===MF_SEL)&&(!so||x.atrasada)&&(!q||norm(`${x.d.matricula} ${x.d.cliente} ${x.d.executivo||''}`).includes(q)))
+    .sort((a,b)=>(b.atrasada-a.atrasada)||((b.dias??-1)-(a.dias??-1)));
+  $('mf-body').innerHTML=MF_ROWS.slice(0,800).map(x=>`<tr><td><b>${esc(x.d.matricula)}</b></td><td><div class="cli" title="${esc(x.d.cliente)}">${esc(x.d.cliente)}</div></td><td>${esc(segDe(x.d))}</td><td>${esc(x.d.executivo||'–')}</td>
+    <td>${x.ce?dBR(x.ce):'<span class="mini">–</span>'}</td><td>${x.d.entrou_rota?`${dBR(x.d.entrou_rota)}${x.antes!=null&&x.antes>5?`<div class="mini urg-txt" title="Tempo entre a coleta e a entrada na plataforma — o executivo só soube da matrícula ao entrar na plataforma">${x.antes} d antes da plataforma</div>`:''}`:'<span class="mini">–</span>'}</td>
+    <td>${esc(x.etapa)}</td><td>${x.desde?dBR(x.desde):'<span class="mini">sem data</span>'}</td><td class="num"><b>${x.dias??'–'}</b></td><td class="num">${x.lim!=null?x.lim+' d':'–'}</td>
+    <td>${x.atrasada?`<span class="badge b-rose">Atrasada${x.excesso?' '+x.excesso+' d':''}</span>${x.porLeitura?`<div class="mini urg-txt">perdeu a leitura de ${dBR(x.la)}</div>`:''}`:x.desde?`<span class="badge b-leaf">No prazo</span>${x.la&&MF_LEITURA.has(x.etapa)?`<div class="mini">leitura alvo ${dBR(x.la)}</div>`:''}`:'<span class="badge b-gray">sem data de início</span>'}</td><td class="num">${brl(x.d.incremento)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="12">Nenhuma matrícula neste filtro.</td></tr>';
+  const semData=L.filter(x=>!x.desde).length;
+  $('mf-nota').textContent=`Prazos usados: ${ordem.map(k=>k+' '+MF_PRAZO[k]+' d').join(' · ')} (depois da apta: matrícula também fica atrasada se passar da leitura em que deveria entrar). "X d antes da plataforma" = tempo entre a coleta e a entrada na plataforma, quando o executivo ainda não sabia da matrícula — esse atraso não é dele.${semData?` ${semData} matrícula(s) sem data de início da etapa — passam a contar quando a fase for registrada na plataforma.`:''}`;
+}
+$('mf-atr').onchange=renderMapa; $('mf-q').oninput=renderMapa;
+$('mf-xls').onclick=()=>{ if(!MF_ROWS.length) return toast('Nada para baixar.',true);
+  const rows=MF_ROWS.map(x=>({'Matrícula':x.d.matricula,'Cliente':x.d.cliente,'Segmento':segDe(x.d),'Executivo':x.d.executivo||'','Etapa atual':x.etapa,'Desde':dBR(x.desde),'Dias na etapa':x.dias??'','Prazo (dias)':x.lim??'','Situação':x.atrasada?'Atrasada':x.desde?'No prazo':'Sem data','Incremento (R$/mês)':+x.d.incremento||0,
+    'Leitura alvo':dBR(x.la),'Perdeu a leitura':x.porLeitura?'Sim':'','Dias entre coleta e entrada na plataforma':x.antes??'','Entrou na rota':dBR(x.d.entrou_rota),'DA solicitado':dBR(x.d.gest.dt_da_solicitado),'Coleta executada':dBR(coletaExec(x.d.matricula)),'Laudo (% na planilha)':dBR(x.d.gest.laudo_em),'Comunicado':dBR(x.d.data_1a_notificacao),'Apta':dBR(x.d.data_apta),'DA do gerente':dBR(x.d.gest.dt_gerente),'Cadastro':dBR(x.d.gest.dt_cadastro),'Faturamento':dBR(x.d.gest.dt_faturamento)}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Mapa do fluxo'); XLSX.writeFile(wb,`TEE_mapa_fluxo_${hojeISO()}.xlsx`); };
+function renderMudancas(){
+  const hoje=hojeISO(), ini=isoAdd(hoje,-30), alt=ILOG.filter(l=>l.tipo==='alteracao'&&l.data>=ini), g={};
+  alt.forEach(l=>{ const o=g[l.campo]=g[l.campo]||{n:0,m:new Set(),ult:''}; o.n++; o.m.add(l.matricula); if(l.data>o.ult) o.ult=l.data; });
+  $('mud-campos').innerHTML=Object.entries(g).sort((a,b)=>b[1].n-a[1].n).map(([k,o])=>`<tr><td><b>${esc(k)}</b></td><td class="num">${fmtN(o.n)}</td><td class="num">${fmtN(o.m.size)}</td><td>${dBR(o.ult)}</td></tr>`).join('')||'<tr class="empty-row"><td colspan="4">Nenhuma alteração registrada nos últimos 30 dias.</td></tr>';
+  const nov=ILOG.filter(l=>l.tipo==='nova'), gm={};
+  nov.forEach(l=>{ const k=l.data.slice(0,7); const o=gm[k]=gm[k]||{n:0,atr:0,dias:[]}; o.n++; const ce=coletaExec(l.matricula); if(ce&&l.data>=ce){ const x=diasEntre(ce,l.data); o.dias.push(x); if(x>5) o.atr++; } });
+  $('mud-entradas').innerHTML=Object.keys(gm).sort().reverse().map(k=>{ const o=gm[k]; return `<tr><td><b>${mesLbl(k)}</b></td><td class="num">${fmtN(o.n)}</td><td class="num">${o.atr?`<span class="urg-txt">${fmtN(o.atr)}</span>`:'0'}</td><td class="num">${o.dias.length?d1(media(o.dias))+' d':'–'}</td></tr>`; }).join('')||'<tr class="empty-row"><td colspan="4">Nenhuma entrada registrada ainda.</td></tr>';
+}
+function renderLaudos(){
+  const hoje=hojeISO();
+  if(!COL){ $('ld-kpis').innerHTML=''; $('ld-body').innerHTML='<tr class="empty-row"><td colspan="7">Importe a planilha de coletas para acompanhar os laudos.</td></tr>'; return; }
+  const exec=[...new Set(COL.coletas.filter(c=>c.res==='exec').map(c=>c.m))].map(m=>{ const d=DADOS.find(x=>String(x.matricula)===m); const ce=coletaExec(m); const c=COL.coletas.find(x=>x.m===m)||{};
+    return {m, d, ce, cli:(d&&d.cliente)||c.cli, sup:c.sup, pct:d?pctReal(d):null, laudo:d&&d.gest.laudo_em}; }).filter(x=>x.ce&&x.d&&!['fora','sem_tee'].includes(x.d.etapa));
+  const pend=exec.filter(x=>!x.pct), feitos=exec.filter(x=>x.laudo&&x.ce&&x.laudo>=SLA_INICIO&&x.laudo>=x.ce), tempos=feitos.map(x=>diasEntre(x.ce,x.laudo));
+  const atr=pend.filter(x=>diasEntre(x.ce,hoje)>LAUDO_PRAZO);
+  const K=(c,l,v,h)=>`<div class="kpi ${c}"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="hint">${h}</div></div>`;
+  $('ld-kpis').innerHTML=K('','Tempo médio do laboratório',tempos.length?d1(media(tempos))+' dias':'–',tempos.length?`da coleta ao laudo · ${tempos.length} laudos medidos · ${tempos.filter(t=>t<=LAUDO_PRAZO).length} dentro de 30 dias`:'começa a medir quando o % aparecer numa próxima planilha')+
+    K('amber','Aguardando laudo',fmtN(pend.length),'coleta executada e ainda sem % na planilha')+
+    K(atr.length?'rose':'leaf','Laudos atrasados',fmtN(atr.length),`mais de ${LAUDO_PRAZO} dias desde a coleta`)+
+    K('leaf','Com laudo (%)',fmtN(exec.length-pend.length),`de ${fmtN(exec.length)} coletas executadas`);
+  $('ld-body').innerHTML=pend.sort((a,b)=>a.ce.localeCompare(b.ce)).map(x=>{ const dd=diasEntre(x.ce,hoje);
+    return `<tr><td><b>${esc(x.m)}</b></td><td><div class="cli" title="${esc(x.cli)}">${esc(x.cli||'')}</div></td><td>${esc(x.sup||'')}</td><td>${dBR(x.ce)}</td><td class="num"><b>${dd}</b></td><td>${dd>LAUDO_PRAZO?`<span class="badge b-rose">Atrasado ${dd-LAUDO_PRAZO} d</span>`:`<span class="badge b-water">Prazo até ${dBR(isoAdd(x.ce,LAUDO_PRAZO))}</span>`}</td><td class="mini">aguardando</td></tr>`; }).join('')
+    ||'<tr class="empty-row"><td colspan="7">Nenhum laudo pendente.</td></tr>';
+}
+
 function renderGestor(){
   const hoje=hojeISO(), imp=DADOS.filter(d=>d.etapa==='implementada'), ap=DADOS.filter(d=>d.etapa==='apta'), fl=DADOS.filter(d=>d.etapa==='fluxo'), ag=DADOS.filter(d=>d.etapa==='aguardando');
   const tc=tempoComunicar(), rota=DADOS.filter(d=>d.entrou_rota&&d.entrou_rota>=SLA_INICIO);
@@ -1109,8 +1301,18 @@ function renderGestor(){
   // SLA
   $('g-sla').innerHTML=ETAPAS_SLA.map(e=>{
     const feitos=DADOS.map(d=>{ const a=e.ini(d), b=e.fim(d); return a&&b&&b>=SLA_INICIO&&b>=a?diasEntre(a,b):null; }).filter(v=>v!=null);
-    const paradas=DADOS.filter(e.agora), ida=paradas.map(d=>{ const a=e.desde?e.desde(d):(d.fase_desde||e.ini(d)); return a?diasEntre(a,hoje):null; }).filter(v=>v!=null);
-    return `<tr${e.total?' class="total"':''}><td><b>${e.l}</b></td><td class="num">${fmtN(feitos.length)}</td><td class="num"><b>${feitos.length?d1(media(feitos))+' d':'–'}</b></td><td class="num">${feitos.length?Math.min(...feitos)+' d':'–'}</td><td class="num">${feitos.length?Math.max(...feitos)+' d':'–'}</td><td class="num">${e.total?'':fmtN(paradas.length)}</td><td class="num">${ida.length?`<span class="${Math.max(...ida)>(e.alerta||15)?'urg-txt':''}">${Math.max(...ida)} d</span>`:'–'}</td></tr>`; }).join('');
+    const paradas=DADOS.filter(e.agora).map(d=>({d,...atrasoEtapa(d,e.desde?e.desde(d):(d.fase_desde||e.ini(d)),e.prazo,e.leitura)}));
+    const ida=paradas.map(x=>x.dias).filter(v=>v!=null), atr=paradas.filter(x=>x.atrasada), noPr=e.prazo!=null?feitos.filter(v=>v<=e.prazo).length:null;
+    return `<tr${e.total?' class="total"':''}><td><b>${e.l}</b>${e.leitura?'<div class="mini">prioridade: concluir antes da leitura</div>':''}</td><td class="num">${e.prazo!=null?e.prazo+' d':'–'}</td><td class="num">${fmtN(feitos.length)}</td><td class="num"><b>${feitos.length?d1(media(feitos))+' d':'–'}</b></td>
+      <td class="num">${noPr!=null&&feitos.length?pc_(noPr,feitos.length):'–'}</td><td class="num">${feitos.length?Math.max(...feitos)+' d':'–'}</td><td class="num">${e.total?'':fmtN(paradas.length)}</td>
+      <td class="num">${e.total?'':atr.length?`<span class="urg-txt">${fmtN(atr.length)}</span>${atr.some(x=>x.porLeitura)?`<div class="mini">${atr.filter(x=>x.porLeitura).length} perderam a leitura</div>`:''}`:'0'}</td><td class="num">${ida.length?`<span class="${atr.length?'urg-txt':''}">${Math.max(...ida)} d</span>`:'–'}</td></tr>`; }).join('');
+  // fluxo do faturamento: quanto tempo leva e com quantos dias de antecedência pedir
+  { const tf=DADOS.filter(d=>d.gest.dt_faturamento&&d.gest.dt_implementada&&d.gest.dt_implementada>=d.gest.dt_faturamento).map(d=>diasEntre(d.gest.dt_faturamento,d.gest.dt_implementada)).sort((a,b)=>a-b);
+    const ta=DADOS.filter(d=>d.data_apta&&d.gest.dt_implementada&&d.gest.dt_implementada>=SLA_INICIO&&d.gest.dt_implementada>=d.data_apta).map(d=>diasEntre(d.data_apta,d.gest.dt_implementada)).sort((a,b)=>a-b);
+    const p80=a=>a.length?a[Math.min(a.length-1,Math.ceil(a.length*0.8)-1)]:null;
+    $('g-fat').innerHTML=tf.length
+      ? `Fluxo do faturamento: leva em média <b>${d1(media(tf))} dias</b> (80% em até ${p80(tf)} d, ${tf.length} medidos). <b>Envie ao Setor de faturamento pelo menos ${p80(tf)} dias antes da leitura.</b>`+(ta.length?` Da apta à implementação: média de <b>${d1(media(ta))} dias</b> — para pegar a leitura, o DA deve ser solicitado com pelo menos ${p80(ta)} dias de antecedência.`:'')
+      : 'Fluxo do faturamento: o indicador de quanto tempo o faturamento leva (e com quantos dias de antecedência pedir) aparece quando as primeiras matrículas passarem de "Setor de faturamento" para "Implementada".'; }
   // incremento mensal implementado
   const gi={}; imp.forEach(d=>{ const k=d.gest.dt_implementada?d.gest.dt_implementada.slice(0,7):'antes'; (gi[k]=gi[k]||[]).push(d); });
   let acc=0; const ks=Object.keys(gi).sort((a,b)=>a==='antes'?-1:b==='antes'?1:a.localeCompare(b));
@@ -1120,11 +1322,12 @@ function renderGestor(){
   $('g-prev').innerHTML=Object.keys(gp).sort().map(k=>{ const v=soma(gp[k],'incremento'); ac2+=v; return `<tr><td><b>${k==='sem'?'Sem leitura cadastrada':mesLbl(k)}</b></td><td class="num">${fmtN(gp[k].length)}</td><td class="num">${brl(v)}</td><td class="num"><b>${brl(ac2)}</b></td></tr>`; }).join('')||'<tr class="empty-row"><td colspan="4">—</td></tr>';
   // onde está
   const grupos=[['A comunicar',d=>d.etapa==='comunicar'],['Aguardando prazo (30 dias)',d=>d.etapa==='aguardando'],['Prazo cumprido · sem % de TEE',d=>d.etapa==='sem_pct'],['Público · aguardando liberação',d=>d.etapa==='liberacao'],['Público · não pode virar',d=>d.etapa==='nao_virar'],['Apta',d=>d.etapa==='apta'],...FASES_FLUXO.map(f=>[f,d=>d.etapa==='fluxo'&&d.fase===f]),['Implementada',d=>d.etapa==='implementada'],['Tarifa retirada / Não implementar',d=>d.etapa==='fora']];
-  const totI=soma(DADOS,'incremento')||1;
+  const validos=DADOS.filter(d=>d.etapa!=='fora'), totI=soma(validos,'incremento')||1;
   // % real (medido na planilha) e % cobrada (limite de 30%), média ponderada pelo faturamento
-  const linhaOnde=(l,g,cls)=>{ const v=soma(g,'incremento'), cob=mediaPct(g,pctCobr);
-    return `<tr${cls?` class="${cls}"`:''}><td><b>${l}</b></td><td class="num">${fmtN(g.length)}</td><td class="num"><b>${fP(cob)}</b></td><td class="num">${brl(v)}</td><td>${cls?'':`<div class="g-bar"><i style="width:${v/totI*100}%"></i></div>`}</td></tr>`; };
-  $('g-onde').innerHTML=grupos.map(([l,f])=>linhaOnde(l,DADOS.filter(f))).join('')+linhaOnde('Total',DADOS,'total');
+  const linhaOnde=(l,g,cls,neg)=>{ const v=soma(g,'incremento');
+    return `<tr${cls?` class="${cls}"`:''}><td><b>${l}</b>${neg?'<div class="mini">não entra no total</div>':''}</td><td class="num">${fmtN(g.length)}</td><td class="num">${neg&&v?`<span class="urg-txt">− ${brl(v)}</span>`:brl(v)}</td><td>${cls||neg?'':`<div class="g-bar"><i style="width:${v/totI*100}%"></i></div>`}</td></tr>`; };
+  $('g-onde').innerHTML=grupos.map(([l,f])=>linhaOnde(l,DADOS.filter(f),'',l.startsWith('Tarifa retirada'))).join('')+linhaOnde('Total (valor cheio, sem retiradas)',validos,'total');
+  renderMapa(); renderLaudos(); renderMudancas();
   // termos
   const base=[...ap,...fl,...imp]; const tl=[['Sem termo registrado',d=>!d.termo_status],...TERMOS.map(t=>[t,d=>d.termo_status===t])];
   $('g-termo').innerHTML=tl.map(([l,f])=>{ const g=base.filter(f); return `<tr><td><b>${l}</b></td><td class="num">${fmtN(g.length)}</td><td class="num">${brl(soma(g,'incremento'))}</td></tr>`; }).join('');
@@ -1211,11 +1414,16 @@ $('btn-imp-pub').onclick=async()=>{
         g.valor_entrante = (b.fat_ae!=null&&li.pct!=null) ? Math.round(b.fat_ae/2*li.pct*100)/100 : li.potencial; if(g.valor_entrante!=null) entr+=g.valor_entrante; }
       gest.push(g);
     }
+    const novasPub=mats.filter(m=>!jaExiste.has(m));
+    gest.forEach(g=>{ if(novasPub.includes(g.matricula)&&!(GEST[g.matricula]&&GEST[g.matricula].entrou_rota)){ g.entrou_rota=hoje; g.origem=(fl||fb).name; } });
+    const logPub=diffImport('Público',(fl||fb).name,regs,gest,novasPub);
+    gest.forEach(g=>{ if(g.pct_virada>0&&jaExiste.has(g.matricula)){ const d=DADOS.find(x=>String(x.matricula)===g.matricula); if(d&&!pctReal(d)&&!(GEST[g.matricula]&&GEST[g.matricula].laudo_em)){ g.laudo_em=hoje; g.laudo_pct=g.pct_virada; } } });
     await upsertSeguro('tee_matriculas',regs,200);
     for(let i=0;i<impl.length;i+=150){ await sb.from('tee_matriculas').update({fase:'Implementada'}).in('matricula',impl.slice(i,i+150)); }
     await upsertSeguro('tee_gestao',gest,500);
     if(fl) L(`Valor entrante da lista: R$ ${entr.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}/mês${semBase?` · ${semBase} matrícula(s) da lista sem dados na base (usado o Potencial Incremento da lista)`:''}`);
     L(`${mats.filter(m=>!jaExiste.has(m)).length} matrículas novas no Público${impl.length?` (${impl.length} já com T.E.E. na fatura)`:''} · existentes: atualizados só faturamento e % — fases e tarifa implementada ficam como estão na plataforma.`);
+    { const n=await gravarLog(logPub); const alt=logPub.filter(x=>x.tipo==='alteracao'); if(n) L(`Histórico: ${logPub.length-alt.length} novas e ${alt.length} campo(s) alterado(s).`); }
     L('✔ Concluído.'); toast('Carteira Pública importada'); $('imp-pub-lista').value=''; $('imp-pub-base').value=''; await carregar();
   }catch(e){ L('✖ Erro: '+(e.message||e)); toast('Erro: '+(e.message||e),true); }
   btn.disabled=false;
@@ -1268,6 +1476,8 @@ $('btn-imp-com').onclick=async()=>{
     if(!temEnvio&&!temCom) throw new Error('A planilha não tem "Data de envio ao executivo" nem "Data do comunicado" — não parece uma planilha de rota de comunicados. Nada foi gravado.');
     L(`${gest.length} matrículas na planilha · ${novas.length} novas na plataforma · ${Object.values(comunic).flat().length} com data de comunicado`);
     if(semData) L(`${semData} sem data de envio — entrada na rota registrada como hoje (${dBR(hoje)}).`);
+    const comRows=Object.entries(comunic).flatMap(([data,ms])=>ms.map(m=>({matricula:m,data_1a_notificacao:data})));
+    const logRota=diffImport('Rota de comunicados',f.name,comRows,gest.map(g=>({matricula:g.matricula,prazo_comunicado:g.prazo_comunicado})).filter(g=>g.prazo_comunicado),novas.map(n=>n.matricula));
     for(let i=0;i<novas.length;i+=200){ const {error}=await sb.from('tee_matriculas').insert(novas.slice(i,i+200)); if(error) throw new Error('Criando matrículas novas: '+error.message); }
     if(novas.length){ const pg={}; novas.forEach(n=>pg[n.grupo]=(pg[n.grupo]||0)+1); L('Novas por segmento: '+Object.entries(pg).map(([k,v])=>`${k} ${v}`).join(' · ')); }
     await upsertSeguro('tee_gestao',gest,500);
@@ -1278,6 +1488,7 @@ $('btn-imp-com').onclick=async()=>{
         if(semFase.length) await sb.from('tee_matriculas').update({fase:'Comunicado'}).in('matricula',semFase);
         await registrarFase(part,'Comunicado',data); }
     }
+    { const n=await gravarLog(logRota); const alt=logRota.filter(x=>x.tipo==='alteracao'); if(n) L(`Histórico: ${logRota.length-alt.length} novas e ${alt.length} campo(s) alterado(s).`); }
     L('✔ Concluído.'); toast('Rota de comunicados importada'); $('imp-com-file').value=''; await carregar();
   }catch(e){ L('✖ Erro: '+(e.message||e)); toast('Erro: '+(e.message||e),true); }
   btn.disabled=false;
@@ -1422,7 +1633,7 @@ function renderColetas(){
   // equipe / sup
   const tabela=(el,campo)=>{ const g={}; C.forEach(c=>{ const k=c[campo]||'Não informada'; (g[k]=g[k]||[]).push(c); });
     const L=Object.entries(g).sort((a,b)=>b[1].length-a[1].length), lin=(k,l,tot)=>{ const e=l.filter(c=>c.res==='exec').length, i=l.filter(c=>c.res==='imp').length, s=l.filter(c=>c.res==='sem').length;
-      return `<tr${tot?' class="total"':''}><td>${esc(k)}</td><td class="num">${l.length}</td><td class="num">${e}</td><td class="num">${i}</td><td class="num">${s}</td><td class="num">${l.length>=5||tot?pc(e,l.length):'—'}</td></tr>`; };
+      return `<tr${tot?' class="total"':''}><td>${esc(k)}</td><td class="num">${l.length}</td><td class="num">${e}</td><td class="num">${i}</td><td class="num">${l.length>=5||tot?pc(e,l.length):'—'}</td></tr>`; };
     $(el).innerHTML=L.map(([k,l])=>lin(k,l)).join('')+lin('Total',C,true); };
   tabela('col-equipe','equipe'); tabela('col-sup','sup');
   // lista impedimentos
@@ -1434,24 +1645,37 @@ function renderColetas(){
 }
 
 /* ---------- SUGESTÃO DE ROTA ---------- */
-function rotaPool(){
-  const {A,porMat,rotaSet}=colResumo(); const onda=$('rt-onda').value, reag=$('rt-reag').checked;
+function rotaPool(){ // alvos sem coleta programada (fora das linhas coloridas e das rotas salvas)
+  const {A,porMat,rotaSet}=colResumo(); const onda=$('rt-onda').value;
   const vistos=new Set(), pool=[];
   A.slice().sort((a,b)=>b.fat-a.fat).forEach(a=>{
-    if(vistos.has(a.m)||a.fora||rotaSet.has(a.m)) return; if(onda&&a.onda!==onda) return;
-    const cs=porMat[a.m];
-    if(cs){ const reagendar=reag&&cs.every(c=>c.res==='imp'&&c.motivo==='Cliente impediu / sem acesso'); if(!reagendar) return; vistos.add(a.m); pool.push({...a,reag:true}); return; }
+    if(vistos.has(a.m)||a.fora||rotaSet.has(a.m)||porMat[a.m]) return; if(onda&&a.onda!==onda) return;
     vistos.add(a.m); pool.push(a); });
   return pool;
 }
+function impPool(){ // impedimentos para retorno: último resultado da matrícula = impedimento; do mais antigo para o mais recente
+  if(!COL) return [];
+  const {A,porMat}=colResumo(); const ultRota={}; COL_ROTAS.forEach(r=>{ const m=String(r.matricula); if(!ultRota[m]||r.data_rota>ultRota[m]) ultRota[m]=r.data_rota; });
+  const out=[];
+  Object.entries(porMat).forEach(([m,cs])=>{
+    if(cs.some(c=>c.res==='exec'||c.res==='sem')) return;
+    const ult=cs.filter(c=>c.data).sort((a,b)=>b.data.localeCompare(a.data))[0]||cs[0];
+    if(ult.motivo!=='Cliente impediu / sem acesso') return;   // retorno só quando o cliente impediu / sem acesso
+    if(ultRota[m]&&(!ult.data||ultRota[m]>=ult.data)) return;           // já voltou para a rota depois do impedimento
+    const a=A.find(x=>x.m===m&&!x.fora); if(A.some(x=>x.m===m&&x.fora)) return;
+    const base=a||{m,onda:'Fora das abas',cli:ult.cli,sup:ult.sup,bairro:ult.bairro,cidade:ult.cidade,end:ult.end,cep:ult.cep,fat:ult.fat||0};
+    out.push({...base, retorno:true, impData:ult.data||'', impMotivo:ult.motivo, impTxt:ult.coleta});
+  });
+  return out.sort((a,b)=>(a.impData||'9').localeCompare(b.impData||'9'));
+}
 function renderRotaPool(){
-  const sel=$('rt-sup'), atual=sel.value; const pool=rotaPool();
+  const sel=$('rt-sup'), atual=sel.value; const pool=rotaPool(), imps=impPool();
   const g={}; pool.forEach(a=>{ (g[a.sup]=g[a.sup]||[]).push(a); });
   const L=Object.entries(g).sort((a,b)=>b[1].length-a[1].length);
   sel.innerHTML=L.map(([s,l])=>`<option value="${esc(s)}">${esc(s)} (${l.length})</option>`).join('')||'<option value="">— sem pendentes —</option>';
   if([...sel.options].some(o=>o.value===atual)) sel.value=atual;
   if(!$('rt-data').value){ let d=hojeISO(); d=isoAdd(d,1); const w=new Date(d+'T12:00:00').getDay(); if(w===6) d=isoAdd(d,2); if(w===0) d=isoAdd(d,1); $('rt-data').value=d; }
-  $('rt-pool').innerHTML=`<b>Pendentes para rota:</b> ${fmtN(pool.length)} matrículas · `+L.map(([s,l])=>`<span class="col-chip" data-sup="${esc(s)}">${esc(s)} <b>${l.length}</b> · ${brlC(l.reduce((t,a)=>t+(+a.fat||0),0))}</span>`).join(' ');
+  $('rt-pool').innerHTML=`<b>Retornos pendentes (cliente impediu / sem acesso):</b> ${fmtN(imps.length)}${imps.length?` (mais antigo de ${dBR(imps[0].impData)})`:''}<br><b>Pendentes para rota:</b> ${fmtN(pool.length)} matrículas · `+L.map(([s,l])=>`<span class="col-chip" data-sup="${esc(s)}">${esc(s)} <b>${l.length}</b> · ${brlC(l.reduce((t,a)=>t+(+a.fat||0),0))}</span>`).join(' ');
   document.querySelectorAll('#rt-pool [data-sup]').forEach(c=>c.onclick=()=>{ $('rt-sup').value=c.dataset.sup; });
 }
 ['rt-onda','rt-reag'].forEach(id=>$(id).onchange=renderRotaPool);
@@ -1460,7 +1684,7 @@ function distRota(a,b){
   let d = (a.bairro&&b.bairro&&norm(a.bairro)===norm(b.bairro)) ? 0 : (a.cep&&b.cep ? Math.min(3,Math.abs(+a.cep.slice(0,5)-+b.cep.slice(0,5))/150)+0.25 : 2.5);
   if(a.sup!==b.sup) d+=2; return d;
 }
-function montarDia(pool,n,sup){
+function montarDia(pool,n,sup,imps){
   const cand=pool.filter(a=>a.sup===sup); if(!cand.length) return [];
   const anc=cand.slice().sort((a,b)=>b.fat-a.fat)[0]; const rota=[{...anc,motivo:'Maior faturamento da SUP'}]; const usado=new Set([anc.m]);
   const maxF=Math.max(1,...cand.map(a=>a.fat||0));
@@ -1472,6 +1696,14 @@ function montarDia(pool,n,sup){
     const mot = norm(a.bairro)===norm(perto.bairro)&&a.bairro ? `Mesmo bairro (${a.bairro})` : a.sup!==sup ? `Outra SUP mais próxima (${a.sup})` : (a.cep&&perto.cep?`CEP próximo de ${perto.m}`:'Mesma SUP');
     rota.push({...a,motivo:mot}); usado.add(a.m);
   }
+  // retorno de impedimento: o mais antigo que estiver perto de alguma parada (mesmo bairro ou CEP próximo, mesma SUP)
+  if(imps&&imps.length&&rota.length){
+    const perto=imps.filter(x=>!usado.has(x.m)&&x.sup===sup&&Math.min(...rota.map(r=>distRota(r,x)))<=0.95);
+    const esc_=perto[0]; // lista já vem do mais antigo para o mais recente
+    if(esc_){ const ref=rota.reduce((p,r)=>distRota(r,esc_)<distRota(p,esc_)?r:p,rota[0]);
+      const item={...esc_,motivo:`Retorno de impedimento de ${dBR(esc_.impData)} (${esc_.impMotivo||'impedimento'}) · perto de ${ref.m}`};
+      if(rota.length>=n&&rota.length>1){ rota.pop(); } rota.push(item); usado.add(esc_.m); }
+  }
   // ordem das paradas: vizinho mais próximo partindo da âncora
   const ord=[rota[0]], rest=rota.slice(1); while(rest.length){ const u=ord[ord.length-1]; let bi=0; rest.forEach((x,i)=>{ if(distRota(u,x)<distRota(u,rest[bi])) bi=i; }); ord.push(rest.splice(bi,1)[0]); }
   return ord;
@@ -1479,17 +1711,17 @@ function montarDia(pool,n,sup){
 const proxDiaUtil=iso=>{ let d=isoAdd(iso,1); for(;;){ const w=new Date(d+'T12:00:00').getDay(); if(w!==0&&w!==6) return d; d=isoAdd(d,1); } };
 $('rt-sugerir').onclick=()=>{
   const sup=$('rt-sup').value, n=Math.max(1,+$('rt-n').value||6), dias=Math.max(1,+$('rt-dias').value||1); if(!sup) return toast('Nenhuma matrícula pendente para rota.',true);
-  let pool=rotaPool(), data=$('rt-data').value||hojeISO(); RT_SUG=[];
-  for(let i=0;i<dias;i++){ const r=montarDia(pool,n,sup); if(!r.length) break; RT_SUG.push({data,sup,paradas:r}); const us=new Set(r.map(x=>x.m)); pool=pool.filter(a=>!us.has(a.m)); data=proxDiaUtil(data); }
+  let pool=rotaPool(), imps=$('rt-reag').checked?impPool():[], data=$('rt-data').value||hojeISO(); RT_SUG=[];
+  for(let i=0;i<dias;i++){ const r=montarDia(pool,n,sup,imps); if(!r.length) break; const temRet=r.some(x=>x.retorno); RT_SUG.push({data,sup,paradas:r,semRetorno:$('rt-reag').checked&&!temRet}); const us=new Set(r.map(x=>x.m)); pool=pool.filter(a=>!us.has(a.m)); imps=imps.filter(a=>!us.has(a.m)); data=proxDiaUtil(data); }
   renderSugestao();
 };
 function renderSugestao(){
   $('rt-res').innerHTML=RT_SUG.map((d,di)=>{ const tot=d.paradas.reduce((s,a)=>s+(+a.fat||0),0), tee=d.paradas.reduce((s,a)=>s+(+a.tee30||0),0);
     const maps='https://www.google.com/maps/dir/'+d.paradas.map(a=>encodeURIComponent(endMaps(a))).join('/');
-    return `<div class="col-dia"><div class="col-dia-h"><div><b>Dia ${di+1} · ${dBR(d.data)}</b> <span class="mini">${esc(d.sup)} · ${d.paradas.length} matrículas · faturamento 6m ${brlC(tot)}${tee?` · T.E.E. 30% ${brlC(tee)}/mês`:''}</span></div>
+    return `<div class="col-dia"><div class="col-dia-h"><div><b>Dia ${di+1} · ${dBR(d.data)}</b> <span class="mini">${esc(d.sup)} · ${d.paradas.length} matrículas · faturamento 6m ${brlC(tot)}${tee?` · T.E.E. 30% ${brlC(tee)}/mês`:''}${d.semRetorno?' · sem impedimento perto desta rota':''}</span></div>
       <div class="col-acts"><input type="date" value="${d.data}" data-rtdata="${di}"><a class="btn btn-ghost btn-sm" href="${maps}" target="_blank" rel="noopener">Abrir no Google Maps</a><button class="btn btn-ghost btn-sm" data-rtcopiar="${di}">Copiar lista</button><button class="btn btn-primary btn-sm" data-rtsalvar="${di}">Salvar rota</button></div></div>
       <div class="tablewrap"><table><thead><tr><th>#</th><th>Matrícula</th><th>Cliente</th><th>Onda</th><th>Bairro</th><th>Endereço</th><th class="num">Fat. 6 meses</th><th>Por que entrou</th><th></th></tr></thead><tbody>`+
-      d.paradas.map((a,i)=>`<tr><td><b>${i+1}</b></td><td><b>${esc(a.m)}</b>${a.reag?' <span class="badge b-amber">reagendar</span>':''}</td><td><div class="cli" title="${esc(a.cli)}">${esc(a.cli)}</div></td><td>${esc(a.onda)}</td><td>${esc(a.bairro)}</td><td class="mini col-wrap" style="min-width:230px;max-width:300px">${esc(a.end)}</td><td class="num">${brl(a.fat)}</td><td class="mini col-wrap" style="min-width:150px">${esc(a.motivo)}</td><td><button class="btn btn-ghost btn-sm" data-rttroca="${di}|${i}" title="Trocar por outra próxima">Trocar</button></td></tr>`).join('')+'</tbody></table></div></div>'; }).join('');
+      d.paradas.map((a,i)=>`<tr><td><b>${i+1}</b></td><td><b>${esc(a.m)}</b>${a.retorno?` <span class="badge b-navy" title="${esc(a.impTxt||'')}">retorno</span>`:''}</td><td><div class="cli" title="${esc(a.cli)}">${esc(a.cli)}</div></td><td>${esc(a.onda)}</td><td>${esc(a.bairro)}</td><td class="mini col-wrap" style="min-width:230px;max-width:300px">${esc(a.end)}</td><td class="num">${brl(a.fat)}</td><td class="mini col-wrap" style="min-width:150px">${esc(a.motivo)}</td><td><button class="btn btn-ghost btn-sm" data-rttroca="${di}|${i}" title="Trocar por outra próxima">Trocar</button></td></tr>`).join('')+'</tbody></table></div></div>'; }).join('');
   document.querySelectorAll('[data-rtdata]').forEach(i=>i.onchange=()=>{ RT_SUG[+i.dataset.rtdata].data=i.value; });
   document.querySelectorAll('[data-rttroca]').forEach(b=>b.onclick=()=>{ const [di,i]=b.dataset.rttroca.split('|').map(Number); trocarParada(di,i); });
   document.querySelectorAll('[data-rtcopiar]').forEach(b=>b.onclick=()=>{ const d=RT_SUG[+b.dataset.rtcopiar];
@@ -1606,10 +1838,16 @@ $('btn-imp').onclick=async()=>{
     logImp(`${nNovas} matrículas novas · ${[...mapa.keys()].length-nNovas} já existentes (atualizados só %, ciclo/leitura e faturamento)`);
     const novas=lote.map(r=>String(r.matricula)).filter(m=>!conhecidas.has(m)&&!(GEST[m]&&GEST[m].entrou_rota));
     logImp(`${lote.length} matrículas válidas. Enviando…`);
+    const logAC=diffImport('A Cobrar',f.name,lote,null,[...mapa.keys()].filter(m=>!conhecidas.has(String(m))));
+    // laudo: % apareceu pela 1ª vez para uma matrícula que já existia sem %
+    const laudos=lote.filter(r=>conhecidas.has(String(r.matricula))&&(+r.pct_cobranca>0||+r.negociacao>0)).filter(r=>{ const d=DADOS.find(x=>String(x.matricula)===String(r.matricula)); return d&&!pctReal(d)&&!(GEST[String(r.matricula)]&&GEST[String(r.matricula)].laudo_em); })
+      .map(r=>({matricula:String(r.matricula),laudo_em:hojeISO(),laudo_pct:+r.pct_cobranca||+r.negociacao}));
     await upsertSeguro('tee_matriculas',lote,200,(f,t)=>{ $('imp-prog').firstElementChild.style.width=Math.round(f/t*100)+'%'; });
     logImp(`  enviadas ${lote.length}`);
     for(let i=0;i<impl.length;i+=150){ const {error}=await sb.from('tee_matriculas').update({fase:'Implementada'}).in('matricula',impl.slice(i,i+150)); if(error) throw error; }
     if(novas.length && GEST_OK){ for(let i=0;i<novas.length;i+=500){ await sb.from('tee_gestao').upsert(novas.slice(i,i+500).map(m=>({matricula:m,entrou_rota:hojeISO(),origem:f.name})),{onConflict:'matricula'}); } logImp(`${novas.length} matrículas novas — entraram na rota em ${dBR(hojeISO())}.`); }
+    if(laudos.length&&GEST_OK){ try{ await upsertSeguro('tee_gestao',laudos,500); logImp(`Laudos: ${laudos.length} matrícula(s) receberam % hoje — laudo registrado em ${dBR(hojeISO())}.`); }catch(e){ logImp('Laudo não registrado: rode o supabase_laudo_tee.sql ('+e.message+')'); } }
+    { const n=await gravarLog(logAC); const alt=logAC.filter(x=>x.tipo==='alteracao'); if(n) logImp(`Histórico: ${logAC.length-alt.length} matrículas novas e ${alt.length} campo(s) alterado(s) em ${new Set(alt.map(x=>x.matricula)).size} matrícula(s) — veja em "Histórico das importações".`); }
     logImp(`✔ Concluído${impl.length?` (${impl.length} matrículas novas já entram como implementadas)`:''}.`); toast('Importação concluída'); await carregar();
   }catch(e){ logImp('✖ Erro: '+(e.message||e)); toast('Erro na importação: '+(e.message||e),true); }
   btn.disabled=false;
