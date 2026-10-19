@@ -639,7 +639,7 @@
     <h2 id="m-titulo">Editar matrícula</h2>
     <p class="sub" id="m-sub" style="margin-bottom:14px;"></p>
     <div class="grid2">
-      <div class="field"><label>Data do comunicado</label><input type="date" id="e-notif-data"></div>
+      <div class="field"><label>Data do comunicado <span class="mini">(vem da planilha)</span></label><input type="date" id="e-notif-data" disabled title="Preenchida automaticamente pela planilha (e-mail enviado com o GEAM em cópia)"></div>
       <div class="field"><label>Executivo</label><input id="e-exec" list="lista-exec" placeholder="Nome do executivo"></div>
       <div class="field"><label>Negociação (%)</label><input type="number" step="0.01" id="e-neg" placeholder="ex.: 30"></div>
       <div class="field"><label>Termo de adesão</label><select id="e-termo"><option value="">— sem registro —</option><option>Solicitado</option><option>Elaborado</option><option>Enviado</option><option>Assinado</option><option>Recusa de assinatura</option></select></div>
@@ -679,7 +679,7 @@ const SEL=new Set();
 
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const ETAPAS={
-  comunicar:   {l:'A comunicar',      b:'b-rose',  c:'var(--rose)'},
+  comunicar:   {l:'Pendente de comunicado',b:'b-rose',  c:'var(--rose)'},
   aguardando:  {l:'Aguardando prazo', b:'b-amber', c:'var(--amber)'},
   liberacao:   {l:'Aguardando liberação', b:'b-amber', c:'#E3B866'},
   nao_virar:   {l:'Não pode virar',   b:'b-gray',  c:'#A3B1BC'},
@@ -910,10 +910,10 @@ function aptaTxt(d){
   if(d.etapa==='implementada') return '<span class="mini">já implementada</span>';
   if(d.etapa==='sem_tee') return '<span class="mini">% de cobrança = 0</span>';
   if(d.etapa==='fora') return `<span class="mini">${esc(d.fase)}</span>`;
-  if(d.etapa==='comunicar') return d.prazo_comunicado ? `<span class="${d.prazo_comunicado<hojeISO()?'urg-txt':'mini'}">comunicar até ${dBR(d.prazo_comunicado)}</span>` : '<span class="mini">informe o comunicado</span>';
+  if(d.etapa==='comunicar') return d.prazo_comunicado ? `<span class="${d.prazo_comunicado<hojeISO()?'urg-txt':'mini'}">comunicar até ${dBR(d.prazo_comunicado)}</span>` : '<span class="mini">aguardando o e-mail de comunicado</span>';
   if(d.etapa==='nao_virar'||d.etapa==='liberacao') return `${d.data_apta?`<b>${dBR(d.data_apta)}</b>`:''}<div class="mini">${esc(d.lib_txt||'')}</div>`;
   if(segDe(d)==='Públicos'&&d.etapa==='apta') return `<b>${d.data_apta?dBR(d.data_apta):'Liberada'}</b><div class="mini">${esc(d.lib_txt||'')}</div>`;
-  if(!d.data_apta) return '<span class="mini">informe o comunicado</span>';
+  if(!d.data_apta) return '<span class="mini">após o comunicado</span>';
   if(d.etapa==='sem_pct') return `<b>${dBR(d.data_apta)}</b><div class="soon-txt" style="font-size:11.5px">aguardando laudo — % ainda "-" na planilha</div>`;
   return `<b>${dBR(d.data_apta)}</b><div class="mini">entra em ${mesLbl(d.mes_entrada)}</div>`;
 }
@@ -932,13 +932,15 @@ const termoSel=d=>{
   return `${btn}${btn?'<div style="height:4px"></div>':''}${sel}${info?`<div class="mini">${info}</div>`:''}${espera}`;
 };
 const leituraTxt=d=>d.prox_leitura?`${dBR(d.prox_leitura)}<div class="mini">${diasTxt(d)}</div>`:'–';
-const comunicadoInput=d=>segDe(d)==='Públicos'?'<span class="mini">não se aplica (Público)</span>':`<input type="date" value="${d.data_1a_notificacao||''}" data-com="${d.matricula}">`;
+// data do comunicado vem da planilha (e-mail enviado com o GEAM em cópia) — o executivo não preenche
+const comunicadoInput=d=>segDe(d)==='Públicos'?'<span class="mini">não se aplica (Público)</span>'
+  : d.data_1a_notificacao ? `<b>${dBR(String(d.data_1a_notificacao).slice(0,10))}</b><div class="mini">e-mail enviado · planilha</div>`
+  : `<span class="badge b-rose">Pendente de comunicado</span>${d.entrou_rota?`<div class="mini">na rota há ${diasEntre(d.entrou_rota,hojeISO())} d</div>`:''}`;
 const faseSel=d=>`<select class="fase" data-fase="${d.matricula}"><option value="">— definir —</option>${FASES.map(f=>`<option ${d.fase===f?'selected':''}>${f}</option>`).join('')}</select>`;
 const tabs=(el,list,atual,fn)=>{ $(el).innerHTML=list.map(t=>`<button class="${t.k===atual?'on':''}" data-k="${t.k}">${t.l}<b>${t.n}</b></button>`).join(''); $(el).querySelectorAll('button').forEach(b=>b.onclick=()=>fn(b.dataset.k)); };
 
 function ligarLinhas(tbodyId){
   const tb=$(tbodyId);
-  tb.querySelectorAll('[data-com]').forEach(i=>i.onchange=()=>setComunicado(i.dataset.com,i.value));
   tb.querySelectorAll('[data-fase]').forEach(s=>s.onchange=()=>setFase([s.dataset.fase],s.value));
   tb.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>abrirModal(b.dataset.edit));
   tb.querySelectorAll('[data-termo]').forEach(s=>s.onchange=()=>setTermo(s.dataset.termo,s.value));
@@ -962,17 +964,21 @@ function renderSeg(){
   const pub=SEG==='Públicos', inc=e=>brl(soma(minhas.filter(d=>d.etapa===e),'incremento'));
   $('seg-callout').innerHTML = pub
     ? 'Carteira Pública: <b>não usa data de comunicado</b>. Quem pode virar vem da planilha <b>Matrículas Pendentes de Virada</b> e o valor entrante, da base <b>Cobrar - GC - Público</b> (Faturamento A&amp;E ÷ 2 × %). Importe as duas em <b>Importar planilha › Carteira Pública</b>.'
-    : 'Informe a <b>data do comunicado</b> de cada matrícula. A matrícula fica apta 30 dias depois do comunicado, desde que tenha % de TEE; "Entra em" mostra o mês da primeira leitura depois disso.';
+    : 'A <b>data do comunicado vem da planilha</b>: quando o executivo envia o e-mail com o GEAM em cópia, a data do envio é registrada na planilha e entra na plataforma na importação — <b>não precisa preencher</b>. Use este card para <b>solicitar o termo de adesão</b>, ver as matrículas <b>pendentes de comunicado</b> e saber <b>em que fase do fluxo</b> está cada matrícula. A matrícula fica apta 30 dias depois do comunicado, desde que tenha % de TEE.';
   if(pub){ $('seg-kpis').innerHTML=
     k('Aptas a virar','apta','leaf',inc('apta')+' de valor entrante/mês')+
     k('Aguardando liberação','liberacao','amber',inc('liberacao')+' · fora da lista ou só no mês que vem')+
     k('Não pode virar','nao_virar','rose',inc('nao_virar')+' · lista de virada = Não')+
     k('Implementadas','implementada','','T.E.E. já na fatura'); }
-  else $('seg-kpis').innerHTML=
-    k('A comunicar','comunicar','rose','Informe a data do comunicado')+
+  else { const tp=minhas.filter(d=>d.termo_status==='Solicitado'||d.termo_status==='Elaborado'||d.termo_status==='Enviado').length, ta=minhas.filter(d=>d.termo_status==='Assinado').length;
+    $('seg-kpis').innerHTML=
+    k('Pendentes de comunicado','comunicar','rose','e-mail ainda não registrado na planilha')+
     k('Aguardando prazo','aguardando','amber','Comunicadas, prazo de 30 dias em curso')+
     k('Aptas','apta','leaf',brl(soma(minhas.filter(d=>d.etapa==='apta'),'incremento'))+' de incremento')+
-    k('Implementadas','implementada','','tarifa já em vigor');
+    k('No fluxo de implantação','fluxo','','agenda, DA, cadastro e faturamento')+
+    `<div class="kpi"><div class="label">Termo de adesão</div><div class="value">${tp}</div><div class="hint">em andamento (solicitado, elaborado ou enviado) · ${ta} assinado${ta===1?'':'s'}</div></div>`+
+    k('Implementadas','implementada','','tarifa já em vigor'); }
+  $('seg-kpis').style.gridTemplateColumns = pub ? '' : 'repeat(3,1fr)';
   const T=[{k:'todas',l:'Todas',n:minhas.length},...['comunicar','aguardando','liberacao','sem_pct','apta','fluxo','implementada','nao_virar','sem_tee','fora'].map(e=>({k:e,l:ETAPAS[e].l,n:cnt(minhas,e)})).filter(t=>t.n||t.k===SEGTAB)];
   tabs('seg-tabs',T,SEGTAB,k=>{ SEGTAB=k; renderSeg(); });
   const q=$('seg-busca').value.trim().toLowerCase();
@@ -1156,7 +1162,7 @@ const fechar=()=>{ $('modal').style.display='none'; EDITANDO=null; };
 $('e-cancel').onclick=fechar; $('modal').onclick=e=>{ if(e.target===$('modal')) fechar(); };
 $('e-save').onclick=async()=>{
   const n=$('e-neg').value, nd=$('e-notif-data').value;
-  const upd={data_1a_notificacao:nd||null,notificacao_entregue:!!nd,executivo:$('e-exec').value.trim()||null,
+  const upd={executivo:$('e-exec').value.trim()||null,
     negociacao:n===''?null:Math.min(parseFloat(n)/100,10),data_termo:$('e-dtermo').value||null,termo_gerado:!!$('e-dtermo').value,observacao:$('e-obs').value||null};
   const {error}=await sb.from('tee_matriculas').update(upd).eq('matricula',EDITANDO);
   if(error) return toast(error.message,true);
@@ -1834,7 +1840,7 @@ $('btn-imp').onclick=async()=>{
         const ng=num(pick(r,'negociacao')), ci=pick(r,'ciclo');
         const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:$('imp-grupo').value,onda,
           ciclo:ci==null?null:String(ci).trim(),faturamento:fat,pct_cobranca:pc,negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null,
-          data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao','data danotificacao')),
+          data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao','data danotificacao','data do comunicado','data comunicado','data de envio do comunicado','data envio comunicado','data do envio do comunicado','data envio do comunicado','data do e-mail','data do email','data de envio do e-mail','data envio e-mail','data envio email')),
           notificacao_entregue:sim(pick(r,'notificacao entregue')),max_data_evidencias:dt(pick(r,'max data: envio de evidencias')),
           tarifa_implementada:sim(pick(r,'tarifa implementada'))||teeNaFatura(pick(r,'tipo de faturamento','faturamento'))};
         if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
@@ -1853,11 +1859,14 @@ $('btn-imp').onclick=async()=>{
     // atualiza só percentuais, ciclo/data de leitura e faturamento — fases, comunicado, tarifa implementada,
     // executivo e termo são tratados na plataforma e nunca são alterados pela importação.
     const conhecidas=new Set(DADOS.map(d=>String(d.matricula)));
-    const PERMITIDOS=['matricula','faturamento','pct_cobranca','negociacao','ciclo','data_leitura'];
+    // data do comunicado: a planilha PREVALECE (registrada pelo e-mail com o GEAM em cópia)
+    const PERMITIDOS=['matricula','faturamento','pct_cobranca','negociacao','ciclo','data_leitura','data_1a_notificacao','notificacao_entregue','max_data_evidencias'];
     const lote=[...mapa.values()].map(r=>{ if(!conhecidas.has(String(r.matricula))) return r; const o={}; PERMITIDOS.forEach(k=>{ if(r[k]!=null&&r[k]!=='') o[k]=r[k]; }); return o; }).filter(r=>Object.keys(r).length>1);
     lote.forEach(r=>{ if(r.tarifa_implementada&&!conhecidas.has(String(r.matricula))) impl.push(r.matricula); });
     const nNovas=[...mapa.keys()].filter(m=>!conhecidas.has(String(m))).length;
-    logImp(`${nNovas} matrículas novas · ${[...mapa.keys()].length-nNovas} já existentes (atualizados só %, ciclo/leitura e faturamento)`);
+    logImp(`${nNovas} matrículas novas · ${[...mapa.keys()].length-nNovas} já existentes (atualizados só %, ciclo/leitura, faturamento e data do comunicado)`);
+    // comunicados que chegaram (ou mudaram) pela planilha em matrículas existentes
+    const comNovos=lote.filter(r=>r.data_1a_notificacao&&conhecidas.has(String(r.matricula))).filter(r=>{ const d=DADOS.find(x=>String(x.matricula)===String(r.matricula)); return d&&String(d.data_1a_notificacao||'').slice(0,10)!==r.data_1a_notificacao; });
     const novas=lote.map(r=>String(r.matricula)).filter(m=>!conhecidas.has(m)&&!(GEST[m]&&GEST[m].entrou_rota));
     logImp(`${lote.length} matrículas válidas. Enviando…`);
     const logAC=diffImport('A Cobrar',f.name,lote,null,[...mapa.keys()].filter(m=>!conhecidas.has(String(m))));
@@ -1867,6 +1876,12 @@ $('btn-imp').onclick=async()=>{
     await upsertSeguro('tee_matriculas',lote,200,(f,t)=>{ $('imp-prog').firstElementChild.style.width=Math.round(f/t*100)+'%'; });
     logImp(`  enviadas ${lote.length}`);
     for(let i=0;i<impl.length;i+=150){ const {error}=await sb.from('tee_matriculas').update({fase:'Implementada'}).in('matricula',impl.slice(i,i+150)); if(error) throw error; }
+    if(comNovos.length){
+      const semFase=comNovos.map(r=>String(r.matricula)).filter(m=>{ const d=DADOS.find(x=>String(x.matricula)===m); return !d.fase||d.fase==='A comunicar'; });
+      for(let i=0;i<semFase.length;i+=150){ await sb.from('tee_matriculas').update({fase:'Comunicado'}).in('matricula',semFase.slice(i,i+150)); }
+      const porData={}; comNovos.forEach(r=>(porData[r.data_1a_notificacao]=porData[r.data_1a_notificacao]||[]).push(String(r.matricula)));
+      for(const [dta,ms] of Object.entries(porData)) await registrarFase(ms,'Comunicado',dta);
+      logImp(`Comunicados pela planilha: ${comNovos.length} matrícula(s) com data de comunicado nova ou alterada.`); }
     if(novas.length && GEST_OK){ for(let i=0;i<novas.length;i+=500){ await sb.from('tee_gestao').upsert(novas.slice(i,i+500).map(m=>({matricula:m,entrou_rota:hojeISO(),origem:f.name})),{onConflict:'matricula'}); } logImp(`${novas.length} matrículas novas — entraram na rota em ${dBR(hojeISO())}.`); }
     if(laudos.length&&GEST_OK){ try{ await upsertSeguro('tee_gestao',laudos,500); logImp(`Laudos: ${laudos.length} matrícula(s) receberam % hoje — laudo registrado em ${dBR(hojeISO())}.`); }catch(e){ logImp('Laudo não registrado: rode o supabase_laudo_tee.sql ('+e.message+')'); } }
     { const n=await gravarLog(logAC); const alt=logAC.filter(x=>x.tipo==='alteracao'); if(n) logImp(`Histórico: ${logAC.length-alt.length} matrículas novas e ${alt.length} campo(s) alterado(s) em ${new Set(alt.map(x=>x.matricula)).size} matrícula(s) — veja em "Histórico das importações".`); }
