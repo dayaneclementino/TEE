@@ -315,6 +315,8 @@
   .tl i{ display:none; } .tl span{ font-weight:700; font-size:11.5px; }
   .alt-tag{ color:var(--water); font-weight:600; cursor:help; margin-top:2px; }
   .col-ck{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--navy); margin-bottom:8px; }
+  .col-urg{ background:#FFF4E5; border:1px solid #F2C98A; border-radius:12px; padding:10px 14px; margin-bottom:8px; color:#7A4B00; line-height:1.6; } .col-urg .mini{ color:#7A4B00; margin-top:4px; }
+  .b-urg{ background:#FDE7C8; color:#8A4B00; }
   .col-pool{ font-size:12.5px; color:var(--text-mut); margin:12px 0 4px; line-height:2.1; } .col-chip{ display:inline-block; background:#F1F5F8; border:1px solid var(--border); border-radius:100px; padding:2px 10px; cursor:pointer; color:var(--navy); margin-right:4px; } .col-chip:hover{ border-color:var(--water); }
   .col-dia{ border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:14px; background:#FBFDFE; }
   .col-dia-h{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:8px; } .col-dia-h b{ font-family:var(--font-display); color:var(--navy); }
@@ -413,7 +415,7 @@
         <button class="btn btn-ghost btn-sm" id="col-ir-imp">Atualizar planilha (Importar)</button>
       </div>
     </div>
-    <div id="col-vazio" class="card" style="display:none"><h2>Nenhuma planilha de coletas importada</h2><p class="sub">Vá em <b>Importar planilha › Coletas do Projeto TEE</b> (botão no topo) e escolha a planilha "Alvos - Coletas Projeto TEE" (abas Coletas - PROGRAMADAS, Base 2 onda, Base 3 onda e Reciclagem). Linhas coloridas na planilha ficam fora da rota.</p></div>
+    <div id="col-vazio" class="card" style="display:none"><h2>Nenhuma planilha de coletas importada</h2><p class="sub">Vá em <b>Importar planilha › Coletas do Projeto TEE</b> (botão no topo) e escolha a planilha "Alvos - Coletas Projeto TEE" (abas Coletas - PROGRAMADAS, Base 2 onda, Base 3 onda, Recoletas e Matriculas Herdadas). Linhas coloridas na planilha ficam fora da rota.</p></div>
     <div class="log" id="col-log"></div>
     <div id="col-conteudo" style="display:none">
       <div class="col-kpis" id="col-kpis"></div>
@@ -461,13 +463,13 @@
       <!-- SUGESTÃO DE ROTA -->
       <div class="card col-rota-card" style="margin-top:16px">
         <div class="card-head"><div><h2>Sugestão de rota</h2>
-          <p class="sub">Começa pela matrícula de <b>maior faturamento</b> da superintendência e completa com as mais próximas (mesmo bairro, depois CEP mais próximo). Só entram alvos sem coleta programada, fora das linhas coloridas e fora das rotas já salvas. A ordem das paradas segue a proximidade.</p></div></div>
+          <p class="sub"><b>Matrículas herdadas da CEDAE</b> (aba Matriculas Herdadas) entram <b>primeiro</b>, com urgência. Depois, começa pela matrícula de <b>maior faturamento</b> da superintendência e completa com as mais próximas (mesmo bairro, depois CEP mais próximo). Só entram alvos sem coleta programada, fora das linhas coloridas e fora das rotas já salvas. A ordem das paradas segue a proximidade.</p></div></div>
         <div class="form-row" style="margin-top:6px">
           <div class="field"><label>Superintendência</label><select id="rt-sup"></select></div>
           <div class="field"><label>Matrículas por dia</label><input type="number" id="rt-n" value="6" min="1" max="15" style="max-width:110px"></div>
           <div class="field"><label>Dias</label><input type="number" id="rt-dias" value="1" min="1" max="10" style="max-width:90px"></div>
           <div class="field"><label>1º dia da rota</label><input type="date" id="rt-data"></div>
-          <div class="field"><label>Ondas</label><select id="rt-onda"><option value="">Todas</option><option>2ª onda</option><option>3ª onda</option><option>Reciclagem 3ª onda</option></select></div>
+          <div class="field"><label>Ondas</label><select id="rt-onda"><option value="">Todas</option><option>2ª onda</option><option>3ª onda</option><option>Reciclagem 3ª onda</option><option>Recoleta</option><option value="Herdadas CEDAE">Herdadas CEDAE (urgente)</option></select></div>
           <label class="col-ck"><input type="checkbox" id="rt-reag" checked> incluir pelo menos 1 retorno por dia — impedimento por cliente impediu / sem acesso (o mais antigo, se estiver perto)</label>
           <button class="btn btn-primary" id="rt-sugerir">Sugerir rota</button>
         </div>
@@ -572,7 +574,7 @@
     </div>
     <div class="card" style="margin-top:16px;">
       <h2>Coletas do Projeto TEE — planilha de alvos e coletas</h2>
-      <p class="sub">Planilha <b>"Alvos - Coletas Projeto TEE"</b> com as abas <b>Coletas - PROGRAMADAS</b>, <b>Base 2 onda</b>, <b>Base 3 onda</b> e <b>Reciclagem</b>. Alimenta o card <b>Coletas</b> (indicadores e sugestão de rota). Linhas coloridas na planilha ficam fora da rota. Cada importação substitui a anterior.</p>
+      <p class="sub">Planilha <b>"Alvos - Coletas Projeto TEE"</b> com as abas <b>Coletas - PROGRAMADAS</b>, <b>Base 2 onda</b>, <b>Base 3 onda</b>, <b>Recoletas</b> e <b>Matriculas Herdadas</b> (TEE herdado da CEDAE com reclamação — entram com urgência na rota). Alimenta o card <b>Coletas</b> (indicadores e sugestão de rota). Linhas coloridas na planilha ficam fora da rota. Cada importação substitui a anterior.</p>
       <div class="upload-box" id="up-box-col">
         <input type="file" id="col-file" accept=".xlsx,.xlsm,.xls">
         <div class="form-row"><button class="btn btn-primary" id="btn-imp-col">Importar planilha de coletas</button></div>
@@ -1526,6 +1528,7 @@ function endMaps(a){ // endereço limpo para o Google Maps
 }
 
 /* ---------- leitura da planilha ---------- */
+const ONDA_HERD='Herdadas CEDAE';
 function lerColetas(wb, arquivo){
   const colorida=(ws,R,ncol)=>{ for(let C=0;C<ncol;C++){ const c=ws[XLSX.utils.encode_cell({r:R,c:C})]; if(c&&c.s&&c.s.patternType==='solid') return true; } return false; };
   const ler=(nome)=>{ const ws=wb.Sheets[nome]; if(!ws||!ws['!ref']) return null; const rg=XLSX.utils.decode_range(ws['!ref']);
@@ -1537,15 +1540,19 @@ function lerColetas(wb, arquivo){
   const g=(o,...ks)=>{ for(const k of ks){ if(o[k]!=null&&o[k]!=='') return o[k]; } return null; };
   const mat=v=>{ const s=String(v??'').trim().replace(/\.0+$/,''); return /^\d{6,}$/.test(s)?s:null; };
   const alvos=[];
-  const addAlvo=(aba,onda)=>{ const t=aba&&ler(aba); if(!t) return 0; let n=0;
+  const addAlvo=(aba,onda,extra)=>{ const t=aba&&ler(aba); if(!t) return 0; let n=0;
     t.linhas.forEach(o=>{ const m=mat(g(o,'matricula','num_ligacao')); if(!m) return; n++;
       const end=g(o,'endereco'); const cli=g(o,'cliente')||String(g(o,'concat')||'').replace(/^\d+-/,'');
       alvos.push({m, onda, cli:cli?String(cli).trim():'', sup:supNome(g(o,'superintendencia')), bairro:titulo(g(o,'bairro')||bairroDoEnd(end)||''), cidade:titulo(g(o,'cidade')||cidadeDoEnd(end)||''),
         end:end?String(end).trim():'', cep:cepDe(end), fat:num(g(o,'fat.6 meses','media de faturamento'))||0, tee30:num(g(o,'t.e.e. (30%)','t.e.e - 30%'))||null,
-        seg:g(o,'segmento')||'', curva:g(o,'curva')||'', fora:o.__fora}); });
+        seg:g(o,'segmento')||'', curva:g(o,'curva')||'', fora:o.__fora, ...(extra?extra(o):{})}); });
     return n; };
   const n2=addAlvo(achar(/base\s*2/),'2ª onda'), n3=addAlvo(achar(/base\s*3/),'3ª onda'), nr=addAlvo(achar(/reciclagem/),'Reciclagem 3ª onda');
-  const abaC=achar(/coleta/); const tc=abaC&&ler(abaC); if(!tc) throw new Error('Não encontrei a aba "Coletas - PROGRAMADAS".');
+  // Herdadas: TEE herdado da CEDAE com reclamação do cliente -> coleta com urgência
+  const nh=addAlvo(achar(/herdad/),ONDA_HERD,()=>({urgente:true}));
+  // Recoletas (ex.: 1ª onda após 6 meses): só entram quando a aba tiver matrículas; contam só coletas depois da coleta anterior
+  const nrc=addAlvo(achar(/recolet/),'Recoleta',o=>({recoleta:true, coleta_anterior:dt(g(o,'data coleta anterior'))}));
+  const abaC=achar(/programad/)||achar(/^coletas/); const tc=abaC&&ler(abaC); if(!tc) throw new Error('Não encontrei a aba "Coletas - PROGRAMADAS".');
   const coletas=[]; let foraC=0, vazias=0;
   tc.linhas.forEach(o=>{ const m=mat(g(o,'matricula')); if(!m) return;
     if(o.__fora){ foraC++; return; }
@@ -1556,7 +1563,7 @@ function lerColetas(wb, arquivo){
       cli:String(g(o,'cliente')||'').trim(), sup:supNome(g(o,'superintendencia')), bairro:titulo(g(o,'bairro')||bairroDoEnd(end)||''), cidade:titulo(g(o,'cidade')||cidadeDoEnd(end)||''),
       end:end?String(end).trim():'', cep:cepDe(end), fat:num(g(o,'fat.6 meses'))||0}); });
   const datas=coletas.map(c=>c.data).filter(Boolean).sort();
-  return {arquivo, posicao:hojeISO(), roteiro_ini:datas[0]||null, roteiro_fim:datas[datas.length-1]||null, alvos, coletas, n2, n3, nr, foraC, vazias};
+  return {arquivo, posicao:hojeISO(), roteiro_ini:datas[0]||null, roteiro_fim:datas[datas.length-1]||null, alvos, coletas, n2, n3, nr, nh, nrc, foraC, vazias};
 }
 
 /* ---------- carga / importação ---------- */
@@ -1577,7 +1584,9 @@ $('btn-imp-col').onclick=async()=>{
     L('Lendo '+f.name+'…');
     const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,cellStyles:true,sheetRows:5000});
     const d=lerColetas(wb,f.name);
-    L(`Alvos: 2ª onda ${d.n2} · 3ª onda ${d.n3} · Reciclagem ${d.nr} · ${d.alvos.filter(a=>a.fora).length} linhas coloridas (fora da rota)`);
+    L(`Alvos: 2ª onda ${d.n2} · 3ª onda ${d.n3}${d.nr?` · Reciclagem ${d.nr}`:''} · ${d.alvos.filter(a=>a.fora).length} linhas coloridas (fora da rota)`);
+    L(`Matrículas herdadas da CEDAE (urgente): ${d.nh||0}${d.nh?' — entram primeiro na sugestão de rota':''}`);
+    L(`Recoletas: ${d.nrc||0}${d.nrc?'':' (aba vazia — a 1ª onda não entra na rota agora)'}`);
     L(`Coletas programadas: ${d.coletas.length} linhas${d.foraC?` · ${d.foraC} linhas coloridas desconsideradas`:''}${d.vazias?` · ${d.vazias} linhas vazias ignoradas`:''} · roteiros de ${dBR(d.roteiro_ini)} a ${dBR(d.roteiro_fim)}`);
     const {error}=await sb.from('tee_coletas_base').insert([{arquivo:f.name,posicao:d.posicao,dados:d}]); if(error) throw error;
     L('✔ Planilha importada — veja no card Coletas.'); toast('Planilha de coletas importada'); await carregarColetas(); renderColetas();
@@ -1601,12 +1610,12 @@ function renderColetas(){
   const ex=C.filter(c=>c.res==='exec'), im=C.filter(c=>c.res==='imp'), se=C.filter(c=>c.res==='sem');
   const alvoMats=new Set(A.map(a=>a.m)), nAlvo=new Set(A.filter(a=>a.onda!=='x').map(a=>a.onda+'|'+a.m)).size;
   const porOnda=o=>[...new Set(A.filter(a=>a.onda===o).map(a=>a.m))];
-  const n2=porOnda('2ª onda').length, n3=porOnda('3ª onda').length, nr=porOnda('Reciclagem 3ª onda').length, alvo=n2+n3+nr;
+  const n2=porOnda('2ª onda').length, n3=porOnda('3ª onda').length, nr=porOnda('Reciclagem 3ª onda').length, nh=porOnda(ONDA_HERD).length, nrc=porOnda('Recoleta').length, alvo=n2+n3+nr+nh+nrc;
   const fim=COL.roteiro_fim, ini7=fim?isoAdd(fim,-6):null, recentes=se.filter(c=>c.data&&c.data>=ini7).length;
   $('col-eyebrow').textContent=`Indicativo executivo · posição da planilha em ${dBR(COL.posicao)}`;
   $('col-sub').textContent=`Do alvo de matrículas à coleta executada, com os impedimentos encontrados em campo. Roteiros de ${dBR(COL.roteiro_ini)} a ${dBR(fim)} · ${COL.arquivo||''}`;
   const K=(l,v,h,cor)=>`<div class="col-kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="h">${cor?`<i style="background:${cor}"></i>`:''}${h}</div></div>`;
-  $('col-kpis').innerHTML=K('Matrículas alvo',fmtN(alvo),`2ª onda ${n2} · 3ª onda ${n3} · Reciclagem ${nr}`)+
+  $('col-kpis').innerHTML=K('Matrículas alvo',fmtN(alvo),`2ª onda ${n2} · 3ª onda ${n3}${nr?` · Reciclagem ${nr}`:''}${nh?` · <b>Herdadas ${nh}</b>`:''}${nrc?` · Recoleta ${nrc}`:''}`)+
     K('Coletas programadas',fmtN(C.length),`${pc(C.length,alvo)} do alvo`)+
     K('Executadas',fmtN(ex.length),`<b>${pc(ex.length,C.length)} das programadas</b>`,'#0F4C81')+
     K('Impedimentos',fmtN(im.length),`<b>${pc(im.length,C.length)} das programadas</b>`,'#4F9BD0')+
@@ -1619,7 +1628,7 @@ function renderColetas(){
     const pend=A.filter(a=>a.onda===nome&&!a.fora&&!porMat[a.m]&&!rotaSet.has(a.m)); const pm=new Set(pend.map(a=>a.m)).size;
     return `<tr><td>${nome}</td><td class="num">${fmtN(mats.length)}</td><td class="num">${fmtN(prog.length)}</td><td class="num">${fmtN(exe.length)}</td><td class="num">${fmtN(imp.length)}</td><td class="num">${fmtN(pm)}</td><td class="num"><b>${pc(exe.length,mats.length)}</b></td></tr>`; };
   const foraAlvo=[...new Set(C.map(c=>c.m))].filter(m=>!alvoMats.has(m));
-  $('col-ondas').innerHTML=linhaO('2ª onda',porOnda('2ª onda'))+linhaO('3ª onda',porOnda('3ª onda'))+linhaO('Reciclagem 3ª onda',porOnda('Reciclagem 3ª onda'))+
+  $('col-ondas').innerHTML=linhaO('2ª onda',porOnda('2ª onda'))+linhaO('3ª onda',porOnda('3ª onda'))+(nr?linhaO('Reciclagem 3ª onda',porOnda('Reciclagem 3ª onda')):'')+(nh?linhaO(ONDA_HERD,porOnda(ONDA_HERD)).replace('<td>'+ONDA_HERD+'</td>','<td>'+ONDA_HERD+' <span class="badge b-urg">urgente</span></td>'):'')+(nrc?linhaO('Recoleta',porOnda('Recoleta')):'')+
     `<tr><td>Fora das abas de alvo</td><td class="num">—</td><td class="num">${fmtN(foraAlvo.length)}</td><td class="num">${fmtN(foraAlvo.filter(m=>resMat(m)==='exec').length)}</td><td class="num">${fmtN(foraAlvo.filter(m=>porMat[m].some(c=>c.res==='imp')).length)}</td><td class="num">—</td><td class="num">—</td></tr>`;
   // impedimentos
   const cm={}; im.forEach(c=>cm[c.motivo]=(cm[c.motivo]||0)+1); const mx=Math.max(1,...Object.values(cm));
@@ -1653,8 +1662,10 @@ function renderColetas(){
 function rotaPool(){ // alvos sem coleta programada (fora das linhas coloridas e das rotas salvas)
   const {A,porMat,rotaSet}=colResumo(); const onda=$('rt-onda').value;
   const vistos=new Set(), pool=[];
-  A.slice().sort((a,b)=>b.fat-a.fat).forEach(a=>{
-    if(vistos.has(a.m)||a.fora||rotaSet.has(a.m)||porMat[a.m]) return; if(onda&&a.onda!==onda) return;
+  A.slice().sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0)||b.fat-a.fat).forEach(a=>{
+    if(vistos.has(a.m)||a.fora||rotaSet.has(a.m)) return;
+    if(a.recoleta ? (porMat[a.m]||[]).some(c=>!a.coleta_anterior||!c.data||c.data>a.coleta_anterior) : porMat[a.m]) return;
+    if(onda&&a.onda!==onda&&!a.urgente) return;   // herdadas (urgentes) entram com qualquer filtro de onda
     vistos.add(a.m); pool.push(a); });
   return pool;
 }
@@ -1680,8 +1691,11 @@ function renderRotaPool(){
   sel.innerHTML=L.map(([s,l])=>`<option value="${esc(s)}">${esc(s)} (${l.length})</option>`).join('')||'<option value="">— sem pendentes —</option>';
   if([...sel.options].some(o=>o.value===atual)) sel.value=atual;
   if(!$('rt-data').value){ let d=hojeISO(); d=isoAdd(d,1); const w=new Date(d+'T12:00:00').getDay(); if(w===6) d=isoAdd(d,2); if(w===0) d=isoAdd(d,1); $('rt-data').value=d; }
-  $('rt-pool').innerHTML=`<b>Retornos pendentes (cliente impediu / sem acesso):</b> ${fmtN(imps.length)}${imps.length?` (mais antigo de ${dBR(imps[0].impData)})`:''}<br><b>Pendentes para rota:</b> ${fmtN(pool.length)} matrículas · `+L.map(([s,l])=>`<span class="col-chip" data-sup="${esc(s)}">${esc(s)} <b>${l.length}</b> · ${brlC(l.reduce((t,a)=>t+(+a.fat||0),0))}</span>`).join(' ');
-  document.querySelectorAll('#rt-pool [data-sup]').forEach(c=>c.onclick=()=>{ $('rt-sup').value=c.dataset.sup; });
+  const urg=pool.filter(a=>a.urgente), gu={}; urg.forEach(a=>gu[a.sup]=(gu[a.sup]||0)+1);
+  if(urg.length && !$('rt-sup').dataset.mexeu){ const s1=Object.keys(gu).sort((a,b)=>gu[b]-gu[a])[0]; if([...sel.options].some(o=>o.value===s1)) sel.value=s1; }
+  $('rt-pool').innerHTML=(urg.length?`<div class="col-urg"><b>⚠ ${urg.length} matrícula${urg.length>1?'s':''} herdada${urg.length>1?'s':''} da CEDAE com reclamação — coleta com urgência.</b> Entram primeiro na rota da superintendência: ${Object.entries(gu).map(([s,n])=>`<span class="col-chip" data-sup="${esc(s)}">${esc(s)} <b>${n}</b></span>`).join(' ')}<div class="mini">${urg.map(a=>`${esc(a.m)} · ${esc(a.cli)} · ${esc(a.bairro)}`).join('<br>')}</div></div>`:'')+`<b>Retornos pendentes (cliente impediu / sem acesso):</b> ${fmtN(imps.length)}${imps.length?` (mais antigo de ${dBR(imps[0].impData)})`:''}<br><b>Pendentes para rota:</b> ${fmtN(pool.length)} matrículas · `+L.map(([s,l])=>`<span class="col-chip" data-sup="${esc(s)}">${esc(s)} <b>${l.length}</b> · ${brlC(l.reduce((t,a)=>t+(+a.fat||0),0))}</span>`).join(' ');
+  document.querySelectorAll('#rt-pool [data-sup]').forEach(c=>c.onclick=()=>{ $('rt-sup').value=c.dataset.sup; $('rt-sup').dataset.mexeu='1'; });
+  $('rt-sup').onchange=()=>{ $('rt-sup').dataset.mexeu='1'; };
 }
 ['rt-onda','rt-reag'].forEach(id=>$(id).onchange=renderRotaPool);
 // distância aproximada: mesmo bairro = 0; senão pela diferença de CEP (5 dígitos); outra SUP pesa mais
@@ -1691,7 +1705,10 @@ function distRota(a,b){
 }
 function montarDia(pool,n,sup,imps){
   const cand=pool.filter(a=>a.sup===sup); if(!cand.length) return [];
-  const anc=cand.slice().sort((a,b)=>b.fat-a.fat)[0]; const rota=[{...anc,motivo:'Maior faturamento da SUP'}]; const usado=new Set([anc.m]);
+  const urg=cand.filter(a=>a.urgente).slice(0,n);   // herdadas da CEDAE: urgência, entram antes de tudo
+  const anc=urg[0]||cand.slice().sort((a,b)=>b.fat-a.fat)[0];
+  const rota=urg.length ? urg.map(a=>({...a,motivo:'URGENTE · TEE herdado da CEDAE com reclamação do cliente'})) : [{...anc,motivo:'Maior faturamento da SUP'}];
+  const usado=new Set(rota.map(a=>a.m));
   const maxF=Math.max(1,...cand.map(a=>a.fat||0));
   while(rota.length<n){
     let src=pool.filter(a=>!usado.has(a.m)&&a.sup===sup); if(!src.length) src=pool.filter(a=>!usado.has(a.m)); if(!src.length) break;
@@ -1726,7 +1743,7 @@ function renderSugestao(){
     return `<div class="col-dia"><div class="col-dia-h"><div><b>Dia ${di+1} · ${dBR(d.data)}</b> <span class="mini">${esc(d.sup)} · ${d.paradas.length} matrículas · faturamento 6m ${brlC(tot)}${tee?` · T.E.E. 30% ${brlC(tee)}/mês`:''}${d.semRetorno?' · sem impedimento perto desta rota':''}</span></div>
       <div class="col-acts"><input type="date" value="${d.data}" data-rtdata="${di}"><a class="btn btn-ghost btn-sm" href="${maps}" target="_blank" rel="noopener">Abrir no Google Maps</a><button class="btn btn-ghost btn-sm" data-rtcopiar="${di}">Copiar lista</button><button class="btn btn-primary btn-sm" data-rtsalvar="${di}">Salvar rota</button></div></div>
       <div class="tablewrap"><table><thead><tr><th>#</th><th>Matrícula</th><th>Cliente</th><th>Onda</th><th>Bairro</th><th>Endereço</th><th class="num">Fat. 6 meses</th><th>Por que entrou</th><th></th></tr></thead><tbody>`+
-      d.paradas.map((a,i)=>`<tr><td><b>${i+1}</b></td><td><b>${esc(a.m)}</b>${a.retorno?` <span class="badge b-navy" title="${esc(a.impTxt||'')}">retorno</span>`:''}</td><td><div class="cli" title="${esc(a.cli)}">${esc(a.cli)}</div></td><td>${esc(a.onda)}</td><td>${esc(a.bairro)}</td><td class="mini col-wrap" style="min-width:230px;max-width:300px">${esc(a.end)}</td><td class="num">${brl(a.fat)}</td><td class="mini col-wrap" style="min-width:150px">${esc(a.motivo)}</td><td><button class="btn btn-ghost btn-sm" data-rttroca="${di}|${i}" title="Trocar por outra próxima">Trocar</button></td></tr>`).join('')+'</tbody></table></div></div>'; }).join('');
+      d.paradas.map((a,i)=>`<tr><td><b>${i+1}</b></td><td><b>${esc(a.m)}</b>${a.retorno?` <span class="badge b-navy" title="${esc(a.impTxt||'')}">retorno</span>`:''}${a.urgente?' <span class="badge b-urg">urgente</span>':''}</td><td><div class="cli" title="${esc(a.cli)}">${esc(a.cli)}</div></td><td>${esc(a.onda)}</td><td>${esc(a.bairro)}</td><td class="mini col-wrap" style="min-width:230px;max-width:300px">${esc(a.end)}</td><td class="num">${brl(a.fat)}</td><td class="mini col-wrap" style="min-width:150px">${esc(a.motivo)}</td><td><button class="btn btn-ghost btn-sm" data-rttroca="${di}|${i}" title="Trocar por outra próxima">Trocar</button></td></tr>`).join('')+'</tbody></table></div></div>'; }).join('');
   document.querySelectorAll('[data-rtdata]').forEach(i=>i.onchange=()=>{ RT_SUG[+i.dataset.rtdata].data=i.value; });
   document.querySelectorAll('[data-rttroca]').forEach(b=>b.onclick=()=>{ const [di,i]=b.dataset.rttroca.split('|').map(Number); trocarParada(di,i); });
   document.querySelectorAll('[data-rtcopiar]').forEach(b=>b.onclick=()=>{ const d=RT_SUG[+b.dataset.rtcopiar];
