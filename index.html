@@ -561,8 +561,8 @@
       <div class="upload-box" id="up-box">
         <input type="file" id="imp-file" accept=".xlsx,.xlsm,.xls">
         <div class="form-row">
-          <div class="field"><label>Segmento desta base</label>
-            <select id="imp-grupo"><option>Hospitais</option><option>Postos de Gasolina</option><option>Mercados</option><option>Shoppings</option><option>Públicos</option><option>Hotéis</option><option>Restaurantes</option><option>Outros</option></select></div>
+          <div class="field"><label>Segmento (só se a aba não indicar)</label>
+            <select id="imp-grupo"><option>Hospitais</option><option>Postos de Gasolina</option><option>Mercados</option><option>Shoppings</option><option>Públicos</option><option>Industrial</option><option>Entidades sem fins lucrativos</option><option>Hotéis</option><option>Restaurantes</option><option>Outros</option></select></div>
           <div class="field"><label>Onda (só se a planilha não indicar)</label><input id="imp-onda" placeholder="ex.: 2° Onda"></div>
           <button class="btn btn-primary" id="btn-imp">Ler e enviar para o Supabase</button>
         </div>
@@ -570,7 +570,7 @@
       <div class="progress" id="imp-prog"><div></div></div>
       <div class="log" id="imp-log"></div>
       <div class="callout amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        <div>A planilha <b>cria matrículas novas</b>. Para as que já estão na plataforma, ela atualiza <b>apenas percentuais, ciclo/data de leitura e faturamento</b> (célula vazia não apaga nada). Fases, data do comunicado, tarifa implementada, executivo e termo são tratados <b>somente na plataforma</b> e prevalecem sobre a planilha.</div></div>
+        <div>Suba a planilha <b>Projeto Tarifa Especial de Esgoto - Consolidado</b>: cada aba vira o seu segmento (GC - Industrial, GC - Público, Entidade Sem Fins Lucrativos, Mercados, Shoppings, Posto de Gasolina, Hospitais & Clínicas 1ª/2ª/3ª Onda, Restaurantes) e a onda vem do nome da aba ou da coluna Onda. A planilha <b>cria matrículas novas</b>. Para as que já estão na plataforma, atualiza <b>percentuais, ciclo/data de leitura, faturamento, data do comunicado, data da coleta e data de entrega do laudo</b> (célula vazia não apaga nada). Fases, tarifa implementada, executivo e termo são tratados <b>somente na plataforma</b>.</div></div>
     </div>
     <div class="card" style="margin-top:16px;">
       <h2>Coletas do Projeto TEE — planilha de alvos e coletas</h2>
@@ -694,8 +694,13 @@ const ORDEM=['implementada','fluxo','apta','sem_pct','liberacao','aguardando','c
 /* Link do botão "← Página principal" (plataforma Grandes Clientes). Troque pelo endereço da sua plataforma. */
 const PLATAFORMA_URL='../vencidos-gc/';
 /* Cards fixos de segmento: aparecem sempre, mesmo sem planilha importada */
-const SEGMENTOS=['Hospitais','Postos de Gasolina','Mercados','Shoppings','Públicos','Hotéis','Restaurantes'];
-const SEG_ALIAS={'postos':'Postos de Gasolina','posto':'Postos de Gasolina','postos de gasolina':'Postos de Gasolina','hospitais':'Hospitais','hospitais e clinicas':'Hospitais','hospital':'Hospitais','mercados':'Mercados','mercado':'Mercados','supermercados':'Mercados','shoppings':'Shoppings','shopping':'Shoppings','hoteis':'Hotéis','hotel':'Hotéis','restaurantes':'Restaurantes','restaurante':'Restaurantes','publico':'Públicos','publicos':'Públicos','gc publico':'Públicos','gc - publico':'Públicos'};
+const SEGMENTOS=['Hospitais','Postos de Gasolina','Mercados','Shoppings','Públicos','Industrial','Entidades sem fins lucrativos','Hotéis','Restaurantes'];
+const SEG_ALIAS={'postos':'Postos de Gasolina','posto':'Postos de Gasolina','postos de gasolina':'Postos de Gasolina','hospitais':'Hospitais','hospitais e clinicas':'Hospitais','hospital':'Hospitais','mercados':'Mercados','mercado':'Mercados','supermercados':'Mercados','shoppings':'Shoppings','shopping':'Shoppings','hoteis':'Hotéis','hotel':'Hotéis','restaurantes':'Restaurantes','restaurante':'Restaurantes','publico':'Públicos','publicos':'Públicos','gc publico':'Públicos','gc - publico':'Públicos','industrial':'Industrial','gc - industrial':'Industrial','entidade sem fins lucrativos':'Entidades sem fins lucrativos','entidades sem fins lucrativos':'Entidades sem fins lucrativos'};
+// segmento pela aba da planilha consolidada (Projeto Tarifa Especial de Esgoto - Consolidado)
+function grupoDaAba(aba){ const n=norm(aba);
+  if(/publico/.test(n)) return 'Públicos'; if(/industri/.test(n)) return 'Industrial'; if(/sem fins|entidade/.test(n)) return 'Entidades sem fins lucrativos';
+  if(/hospita|clinica/.test(n)) return 'Hospitais'; if(/posto/.test(n)) return 'Postos de Gasolina'; if(/mercado/.test(n)) return 'Mercados';
+  if(/shopping/.test(n)) return 'Shoppings'; if(/hote/.test(n)) return 'Hotéis'; if(/restaur/.test(n)) return 'Restaurantes'; return null; }
 const segDe=d=>{ const g=String(d.grupo??'').trim(); if(!g) return 'Sem segmento'; const k=g.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); return SEG_ALIAS[k]||g; };
 const brl=v=>v==null?'–':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const pct=v=>v==null?'–':(Number(v)*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
@@ -821,15 +826,19 @@ const ICO={
   'Hotéis':'<path d="M3 20V7M3 14h18v6M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>',
   'Restaurantes':'<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1-3 3.5-3 7h3"/>',
   'Públicos':'<path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10"/><path d="M2 10l10-6 10 6z"/>',
+  'Industrial':'<path d="M3 21V10l6 4V10l6 4V6h6v15z"/><path d="M7 17h2M12 17h2M17 17h2"/>',
+  'Entidades sem fins lucrativos':'<path d="M12 21s-7-4.4-9.3-9A5.2 5.2 0 0 1 12 6.3 5.2 5.2 0 0 1 21.3 12C19 16.6 12 21 12 21z"/>',
   outro:'<path d="M12 2.7s-6 6.3-6 11.3a6 6 0 0 0 12 0c0-5-6-11.3-6-11.3z"/>'
 };
 const COR={'Hospitais':['var(--rose)','var(--rose-soft)'],'Postos de Gasolina':['var(--amber)','var(--amber-soft)'],'Mercados':['var(--leaf)','var(--leaf-soft)'],
-  'Shoppings':['#6A45B8','#EFEAFA'],'Públicos':['var(--navy-3)','#E6ECF2'],'Hotéis':['var(--water)','var(--water-soft)'],'Restaurantes':['#B0457A','#F8E8F0']};
+  'Shoppings':['#6A45B8','#EFEAFA'],'Públicos':['var(--navy-3)','#E6ECF2'],'Hotéis':['var(--water)','var(--water-soft)'],'Restaurantes':['#B0457A','#F8E8F0'],'Industrial':['#4A5D73','#E8EDF2'],'Entidades sem fins lucrativos':['#2F7F86','#E3F2F3']};
 const DESC={'Hospitais':'Hospitais e clínicas: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
   'Postos de Gasolina':'Postos de combustível: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
   'Mercados':'Mercados e supermercados: comunicados, prazo de defesa, matrículas aptas e incremento previsto.',
   'Shoppings':'Shoppings: agenda com o cliente, percentual definido e matrículas liberadas para virar.',
-  'Públicos':'Grandes Clientes públicos (Público, Industrial e Sem Fins Lucrativos): comunicados, matrículas aptas e incremento previsto.',
+  'Públicos':'Grandes Clientes públicos (aba GC - Público): lista de virada, matrículas aptas e valor entrante.',
+  'Industrial':'GC - Industrial: comunicados, laudos, matrículas aptas e incremento previsto.',
+  'Entidades sem fins lucrativos':'Entidades sem fins lucrativos: comunicados, laudos, matrículas aptas e incremento previsto.',
   'Hotéis':'Hotéis: segmento previsto no projeto — os números aparecem quando a planilha for importada.',
   'Restaurantes':'Restaurantes: segmento previsto no projeto — os números aparecem quando a planilha for importada.'};
 const svg=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -1055,12 +1064,12 @@ async function setComunicado(mat,val){
 }
 /* ---------- HISTÓRICO DAS IMPORTAÇÕES ---------- */
 let ILOG=[], ILOG_OK=true;
-const CAMPO_NOME={faturamento:'Faturamento',pct_cobranca:'% de cobrança',negociacao:'% negociação',ciclo:'Ciclo',data_leitura:'Data de leitura',
+const CAMPO_NOME={dt_coleta:'Data da coleta',laudo_em:'Entrega do laudo',possibilidade:'Possibilidade de cobrança',fat_ae:'Faturamento A&E',faturamento:'Faturamento',pct_cobranca:'% de cobrança',negociacao:'% negociação',ciclo:'Ciclo',data_leitura:'Data de leitura',
   data_1a_notificacao:'Data do comunicado',prazo_comunicado:'Prazo do comunicado',pode_virar:'Pode virar (lista)',pct_virada:'% da lista de virada',valor_entrante:'Valor entrante'};
-const fmtV=(campo,v)=>{ if(v==null||v==='') return ''; if(/data|prazo/.test(campo)) return dBR(String(v).slice(0,10)); if(/pct|negociacao/.test(campo)) return (+v*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
-  if(/faturamento|valor/.test(campo)) return (+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); return String(v); };
+const fmtV=(campo,v)=>{ if(v==null||v==='') return ''; if(/data|prazo|^dt_|_em$/.test(campo)) return dBR(String(v).slice(0,10)); if(/pct|negociacao/.test(campo)) return (+v*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
+  if(/faturamento|valor|^fat_/.test(campo)) return (+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); return String(v); };
 const igual=(campo,a,b)=>{ if((a==null||a==='')&&(b==null||b==='')) return true; if(a==null||a===''||b==null||b==='') return false;
-  if(/data|prazo/.test(campo)) return String(a).slice(0,10)===String(b).slice(0,10); const na=+a, nb=+b; if(isFinite(na)&&isFinite(nb)) return Math.abs(na-nb)<0.005; return String(a).trim()===String(b).trim(); };
+  if(/data|prazo|^dt_|_em$/.test(campo)) return String(a).slice(0,10)===String(b).slice(0,10); const na=+a, nb=+b; if(isFinite(na)&&isFinite(nb)) return Math.abs(na-nb)<0.005; return String(a).trim()===String(b).trim(); };
 // compara o que vai ser gravado com o que está na plataforma e devolve as linhas do histórico
 function diffImport(origem,arquivo,rowsMat,rowsGest,novasMats){
   const hoje=hojeISO(), out=[], porMat={}; DADOS.forEach(d=>porMat[String(d.matricula)]=d);
@@ -1226,7 +1235,8 @@ function atrasoEtapa(d,desde,prazo,usaLeitura){
   return {dias, atrasada:porPrazo||porLeitura, porLeitura, la, excesso:porPrazo?dias-prazo:0};
 }
 /* ---------- LAUDO / COLETA ---------- */
-function coletaExec(m){ if(!COL) return null; const l=COL.coletas.filter(c=>c.m===String(m)&&c.res==='exec'&&c.data).map(c=>c.data).sort(); return l.length?l[l.length-1]:null; }
+function coletaExec(m){ const l=COL?COL.coletas.filter(c=>c.m===String(m)&&c.res==='exec'&&c.data).map(c=>c.data).sort():[]; if(l.length) return l[l.length-1];
+  const g=GEST[String(m)]; return g&&g.dt_coleta?String(g.dt_coleta).slice(0,10):null; }
 const LAUDO_PRAZO=30;
 /* ---------- MAPA DO FLUXO: prazo esperado de cada etapa (dias) — ajuste aqui ---------- */
 const MF_PRAZO={ 'A comunicar':5, 'Aguardando laudo':30, 'Aguardando prazo (30 dias)':30, 'Apta → solicitar DA':5,
@@ -1804,7 +1814,9 @@ $('btn-export').onclick=()=>{
 const norm=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
 function num(v){ if(v==null||v==='') return null; if(typeof v==='number') return isFinite(v)?v:null;
   const t=String(v).trim(); const n=t.includes(',')?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t); return isFinite(n)?n:null; }
-function dt(v){ if(v==null||v==='') return null; if(v instanceof Date) return new Date(v.getTime()+12*3600e3).toISOString().slice(0,10);
+function dt(v){ const r=dt0(v); return r&&r>='2015-01-01'&&r<='2099-12-31'?r:null; }   // 1899/1900 (célula zerada) = vazio
+function dt0(v){ if(v==null||v==='') return null; if(v instanceof Date) return new Date(v.getTime()+12*3600e3).toISOString().slice(0,10);
+  if(typeof v==='number'&&v>30000&&v<80000) return new Date(Math.round((v-25569)*864e5)+12*3600e3).toISOString().slice(0,10);
   const s=String(v).trim(); let m; if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/))) return `${m[3]}-${m[2]}-${m[1]}`;
   if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`; return null; }
 const sim=v=>norm(v)==='sim';
@@ -1830,20 +1842,25 @@ $('btn-imp').onclick=async()=>{
       const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:null,raw:true});
       if(!linhas.some(r=>Object.keys(r).some(k=>norm(k)==='matricula'))){ logImp(`Aba "${aba}": ignorada (sem coluna Matrícula)`); continue; }
       const temExec=linhas.some(r=>Object.keys(r).some(k=>['executivo','responsavel','analista'].includes(norm(k))));
-      const nAba=ondaNum(aba); let lidas=0;
+      const nAba=ondaNum(aba), gAba=grupoDaAba(aba)||$('imp-grupo').value; let lidas=0;
       for(const r of linhas){
         const mat=String(pick(r,'matricula')??'').trim().replace(/\.0+$/,''); if(!/^\d{6,}$/.test(mat)) continue;
         const nCol=ondaNum(pick(r,'onda')); const n=nCol??nAba;
         const onda=n?`${n}° Onda`:(ondaManual||'Sem onda');
         let fat=num(pick(r,'faturamento - a&e')); if(fat==null) fat=num(pick(r,'faturamento a & e')); if(fat==null) fat=num(pick(r,'faturamento'));
-        let pc=num(pick(r,'% de cobranca')); if(pc==null) pc=num(pick(r,'% maximo de cobranca'));
+        let pc=num(pick(r,'% de cobranca')); if(pc==null) pc=num(pick(r,'% maximo de cobranca')); if(pc==null) pc=num(pick(r,'%mvp','% mvp'));
+        if(fat==null) fat=num(pick(r,'faturamento - a & e','faturamento a&e'));
         const ng=num(pick(r,'negociacao')), ci=pick(r,'ciclo');
-        const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:$('imp-grupo').value,onda,
+        const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:gAba,onda,
           ciclo:ci==null?null:String(ci).trim(),faturamento:fat,pct_cobranca:pc,negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null,
-          data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao','data danotificacao','data do comunicado','data comunicado','data de envio do comunicado','data envio comunicado','data do envio do comunicado','data envio do comunicado','data do e-mail','data do email','data de envio do e-mail','data envio e-mail','data envio email')),
+          data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao','data danotificacao','data do comunicado','data comunicado','data de envio do comunicado','data envio comunicado','data do envio do comunicado','data envio do comunicado','data do e-mail','data do email','data de envio do e-mail','data envio e-mail','data envio email','data comunicacao','data da comunicacao')),
           notificacao_entregue:sim(pick(r,'notificacao entregue')),max_data_evidencias:dt(pick(r,'max data: envio de evidencias')),
           tarifa_implementada:sim(pick(r,'tarifa implementada'))||teeNaFatura(pick(r,'tipo de faturamento','faturamento'))};
         if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
+        // vão para tee_gestao: data da coleta, entrega do laudo, possibilidade e faturamento A&E (Público)
+        const pickD=(...ks)=>{ for(const k of Object.keys(r)) if(ks.includes(norm(k))){ const v=dt(r[k]); if(v&&v<=hojeISO()) return v; } return null; };   // primeira data válida (não futura) entre as colunas, na ordem pedida
+        reg._g={ dt_coleta:pickD('data coleta')||pickD('data de coleta')||pickD('data da coleta adr'), laudo_em:pickD('data entrega do laudo','data entrega de laudo','data entrega resultados','data entrega resultado','data entrega de resultado','data de entrega do laudo'),
+          possibilidade:(v=>v==null||String(v).trim()===''?null:String(v).trim())(pick(r,'possibilidade de cobranca')), fat_ae:num(pick(r,'faturamento a & e')) };
         // planilha só ACRESCENTA/ATUALIZA: célula vazia não apaga o que foi preenchido na plataforma
         Object.keys(reg).forEach(k=>{ if(k!=='matricula'&&(reg[k]==null||reg[k]===''||reg[k]===false)) delete reg[k]; });
         reg._n=n||0; lidas++;
@@ -1853,7 +1870,14 @@ $('btn-imp').onclick=async()=>{
       }
       logImp(`Aba "${aba}": ${lidas} linhas${nAba?` · ${nAba}° Onda`:''}`);
     }
-    mapa.forEach(r=>{ porOnda[r.onda]=(porOnda[r.onda]||0)+1; delete r._n; });
+    const gestPl=[], porSeg={};
+    mapa.forEach(r=>{ porOnda[r.onda]=(porOnda[r.onda]||0)+1; porSeg[r.grupo]=(porSeg[r.grupo]||0)+1; delete r._n;
+      const g={matricula:String(r.matricula)}; Object.entries(r._g||{}).forEach(([k,v])=>{ if(v!=null) g[k]=v; }); delete r._g;
+      if(r.pct_cobranca!=null&&g.laudo_em) g.laudo_pct=r.pct_cobranca;
+      const pv=GEST[g.matricula]&&GEST[g.matricula].pct_virada; if(g.fat_ae!=null&&pv!=null) g.valor_entrante=Math.round(g.fat_ae/2*pv*100)/100;   // Público: valor entrante com o % da lista de virada
+      if(Object.keys(g).length>1) gestPl.push(g); });
+    logImp('Matrículas por segmento: '+Object.entries(porSeg).map(([k,v])=>`${k} = ${v}`).join(' · '));
+    logImp(`Datas da planilha: ${gestPl.filter(g=>g.dt_coleta).length} com data da coleta · ${gestPl.filter(g=>g.laudo_em).length} com entrega do laudo · ${[...mapa.values()].filter(r=>r.data_1a_notificacao).length} com data do comunicado`);
     logImp('Matrículas por onda: '+Object.keys(porOnda).sort().map(k=>`${k} = ${porOnda[k]}`).join(' · '));
     // Regra: a planilha CRIA matrículas novas (com todos os dados). Para as que já existem na plataforma,
     // atualiza só percentuais, ciclo/data de leitura e faturamento — fases, comunicado, tarifa implementada,
@@ -1869,9 +1893,10 @@ $('btn-imp').onclick=async()=>{
     const comNovos=lote.filter(r=>r.data_1a_notificacao&&conhecidas.has(String(r.matricula))).filter(r=>{ const d=DADOS.find(x=>String(x.matricula)===String(r.matricula)); return d&&String(d.data_1a_notificacao||'').slice(0,10)!==r.data_1a_notificacao; });
     const novas=lote.map(r=>String(r.matricula)).filter(m=>!conhecidas.has(m)&&!(GEST[m]&&GEST[m].entrou_rota));
     logImp(`${lote.length} matrículas válidas. Enviando…`);
-    const logAC=diffImport('A Cobrar',f.name,lote,null,[...mapa.keys()].filter(m=>!conhecidas.has(String(m))));
+    const logAC=diffImport('Consolidado',f.name,lote,gestPl,[...mapa.keys()].filter(m=>!conhecidas.has(String(m))));
     // laudo: % apareceu pela 1ª vez para uma matrícula que já existia sem %
-    const laudos=lote.filter(r=>conhecidas.has(String(r.matricula))&&(r.pct_cobranca!=null||r.negociacao!=null)).filter(r=>{ const d=DADOS.find(x=>String(x.matricula)===String(r.matricula)); return d&&!pctInformado(d)&&!(GEST[String(r.matricula)]&&GEST[String(r.matricula)].laudo_em); })
+    const comDataLaudo=new Set(gestPl.filter(g=>g.laudo_em).map(g=>g.matricula));
+    const laudos=lote.filter(r=>conhecidas.has(String(r.matricula))&&!comDataLaudo.has(String(r.matricula))&&(r.pct_cobranca!=null||r.negociacao!=null)).filter(r=>{ const d=DADOS.find(x=>String(x.matricula)===String(r.matricula)); return d&&!pctInformado(d)&&!(GEST[String(r.matricula)]&&GEST[String(r.matricula)].laudo_em); })
       .map(r=>({matricula:String(r.matricula),laudo_em:hojeISO(),laudo_pct:r.pct_cobranca!=null?+r.pct_cobranca:+r.negociacao}));
     await upsertSeguro('tee_matriculas',lote,200,(f,t)=>{ $('imp-prog').firstElementChild.style.width=Math.round(f/t*100)+'%'; });
     logImp(`  enviadas ${lote.length}`);
@@ -1883,6 +1908,7 @@ $('btn-imp').onclick=async()=>{
       for(const [dta,ms] of Object.entries(porData)) await registrarFase(ms,'Comunicado',dta);
       logImp(`Comunicados pela planilha: ${comNovos.length} matrícula(s) com data de comunicado nova ou alterada.`); }
     if(novas.length && GEST_OK){ for(let i=0;i<novas.length;i+=500){ await sb.from('tee_gestao').upsert(novas.slice(i,i+500).map(m=>({matricula:m,entrou_rota:hojeISO(),origem:f.name})),{onConflict:'matricula'}); } logImp(`${novas.length} matrículas novas — entraram na rota em ${dBR(hojeISO())}.`); }
+    if(gestPl.length&&GEST_OK){ try{ await upsertSeguro('tee_gestao',gestPl,500); }catch(e){ logImp('Datas de coleta/laudo não gravadas: rode de novo o gestao_tee_painel.sql ('+(e.message||e)+')'); } }
     if(laudos.length&&GEST_OK){ try{ await upsertSeguro('tee_gestao',laudos,500); logImp(`Laudos: ${laudos.length} matrícula(s) receberam % hoje — laudo registrado em ${dBR(hojeISO())}.`); }catch(e){ logImp('Laudo não registrado: rode o supabase_laudo_tee.sql ('+e.message+')'); } }
     { const n=await gravarLog(logAC); const alt=logAC.filter(x=>x.tipo==='alteracao'); if(n) logImp(`Histórico: ${logAC.length-alt.length} matrículas novas e ${alt.length} campo(s) alterado(s) em ${new Set(alt.map(x=>x.matricula)).size} matrícula(s) — veja em "Histórico das importações".`); }
     logImp(`✔ Concluído${impl.length?` (${impl.length} matrículas novas já entram como implementadas)`:''}.`); toast('Importação concluída'); await carregar();
