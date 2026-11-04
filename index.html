@@ -376,6 +376,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 10px">
         <button class="btn btn-primary btn-sm" id="exp-lote" title="Planilha para abertura em lote das OSs (cadastro e faturamento), separada em Bloco 1 e Bloco 4">Exportar lote das aptas (abertura de OSs)</button>
+        <button class="btn btn-ghost btn-sm" id="exp-da" title="Relação das aptas (matrícula e nome do cliente) para solicitar o D.A. da Gerência">Exportar aptas para solicitar o DA</button>
         <span class="mini" id="exp-lote-info"></span>
       </div>
       <div class="tablewrap scroll"><table><thead id="exec-head"></thead><tbody id="exec-body"></tbody></table></div>
@@ -1875,7 +1876,7 @@ $('btn-imp').onclick=async()=>{
         let fat=num(pick(r,'faturamento - a&e')); if(fat==null) fat=num(pick(r,'faturamento a & e')); if(fat==null) fat=num(pick(r,'faturamento'));
         let pc=num(pick(r,'% de cobranca')); if(pc==null) pc=num(pick(r,'% maximo de cobranca')); if(pc==null) pc=num(pick(r,'%mvp','% mvp'));
         if(fat==null) fat=num(pick(r,'faturamento - a & e','faturamento a&e'));
-        const ng=num(pick(r,'negociacao')), ci=pick(r,'ciclo');
+        let ng=num(pick(r,'negociacao')); if(!(ng>0)) ng=num(pick(r,'percentual de cobranca')); if(!(ng>0)) ng=num(pick(r,'inclusao de cobranca')); const ci=pick(r,'ciclo');
         const reg={matricula:mat,cliente:String(pick(r,'nome','cliente')??'').trim()||null,grupo:gAba,onda,
           ciclo:ci==null?null:String(ci).trim(),faturamento:fat,pct_cobranca:pc,negociacao:(ng!=null&&ng>0&&ng<=10)?ng:null,
           data_leitura:dt(pick(r,'data leitura')),data_1a_notificacao:dt(pick(r,'data da 1a notificacao','data da notificacao','data danotificacao','data do comunicado','data comunicado','data de envio do comunicado','data envio comunicado','data do envio do comunicado','data envio do comunicado','data do e-mail','data do email','data de envio do e-mail','data envio e-mail','data envio email','data comunicacao','data da comunicacao')),
@@ -1953,7 +1954,10 @@ carregar();
 
 /* ---------- ZONA DE LIGAÇÃO + EXPORTAÇÃO DO LOTE (abertura de OSs) ---------- */
 const TEOR_CADASTRO='Solicito a inclusão da Tarifa Especial de Esgoto (TEE), tendo em vista que o lançamento ultrapassa os limites estabelecidos para esgoto doméstico.';
-const TEOR_FATURAMENTO='Solicito o ajuste do percentual de TEE para 30%, conforme alinhado com a gestão. (D.A. da Gerência e os laudos técnicos encontram-se devidamente anexados na matrícula)';
+// % da planilha: Negociação / Percentual de Cobrança / Inclusão de Cobrança; sem ela, o % do laudo limitado a 30%
+const pctLote=d=>{ const n=[d.negociacao,d.pct_aplicado].map(v=>v==null||v===''?null:+v).find(v=>v!=null&&isFinite(v)&&v>0); if(n!=null) return n; const r=pctReal(d); return r==null?null:Math.min(r,0.30); };
+const fmtPctLote=v=>(Math.round(v*10000)/100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
+const TEOR_FATURAMENTO=d=>{ const v=pctLote(d); return `Solicito o ajuste do percentual de TEE para ${v==null?'___%':fmtPctLote(v)}, conforme alinhado com a gestão. (D.A. da Gerência e os laudos técnicos encontram-se devidamente anexados na matrícula)`; };
 let ZONAS=null;
 async function carregarZonas(){
   const z={}; let off=0;
@@ -1985,19 +1989,29 @@ function lotePara(){ // selecionadas na tabela (se houver) ou todas as aptas
   return sel.length ? {lista:sel, origem:`${sel.length} matrícula(s) selecionada(s)`} : {lista:DADOS.filter(d=>d.etapa==='apta'), origem:'todas as aptas'};
 }
 function infoLote(){ const {lista,origem}=lotePara(), b1=lista.filter(d=>blocoDe(d.matricula)==='Bloco 1').length, b4=lista.filter(d=>blocoDe(d.matricula)==='Bloco 4').length;
-  if($('exp-lote-info')) $('exp-lote-info').textContent=`Exportar lote: ${origem} — ${lista.length} matrícula(s) · Bloco 1: ${b1} · Bloco 4: ${b4}. Gera as abas de Cadastro e de Faturamento (matrícula, zona e teor da OS).`; }
+  if($('exp-lote-info')) $('exp-lote-info').textContent=`Exportar lote: ${origem} — ${lista.length} matrícula(s) · Bloco 1: ${b1} · Bloco 4: ${b4}. Lote de OSs: abas de Cadastro e Faturamento (matrícula, zona e teor) · DA: matrícula e cliente.`; }
 $('exp-lote').onclick=async()=>{
   const {lista,origem}=lotePara(); if(!lista.length) return toast('Nenhuma matrícula apta para exportar.',true);
   let z; try{ z=ZONAS||await carregarZonas(); }catch(e){ return toast('Zonas não carregadas: rode de novo o gestao_tee_painel.sql e importe a planilha de Zona de Ligação ('+(e.message||e)+')',true); }
   const ord=lista.slice().sort((a,b)=>String(a.matricula).localeCompare(String(b.matricula)));
-  const linha=(d,teor)=>({ 'Matrícula':+d.matricula||d.matricula, 'Zona':z[String(d.matricula)]??'', 'Teor da OS':teor });
+  const linha=(d,teor)=>({ 'Matrícula':+d.matricula||d.matricula, 'Zona':z[String(d.matricula)]??'', 'Teor da OS':typeof teor==='function'?teor(d):teor });
   const wb=XLSX.utils.book_new(), add=(nome,rows)=>{ if(!rows.length) return; const ws=XLSX.utils.json_to_sheet(rows); ws['!cols']=[{wch:13},{wch:7},{wch:150}]; XLSX.utils.book_append_sheet(wb,ws,nome); };
   ['Bloco 1','Bloco 4','Outros'].forEach(b=>add(`Cadastro - ${b}`, ord.filter(d=>blocoDe(d.matricula)===b).map(d=>linha(d,TEOR_CADASTRO))));
   ['Bloco 1','Bloco 4','Outros'].forEach(b=>add(`Faturamento - ${b}`, ord.filter(d=>blocoDe(d.matricula)===b).map(d=>linha(d,TEOR_FATURAMENTO))));
-  const semZona=ord.filter(d=>z[String(d.matricula)]==null);
+  const semZona=ord.filter(d=>z[String(d.matricula)]==null), semPct=ord.filter(d=>pctLote(d)==null);
+  if(semPct.length) add('Sem %', semPct.map(d=>({ 'Matrícula':+d.matricula||d.matricula, 'Cliente':d.cliente||'', 'Segmento':segDe(d), 'Bloco':blocoDe(d.matricula) })));
   if(semZona.length) add('Sem zona', semZona.map(d=>({ 'Matrícula':+d.matricula||d.matricula, 'Cliente':d.cliente||'', 'Segmento':segDe(d), 'Bloco':blocoDe(d.matricula) })));
   XLSX.writeFile(wb,`TEE_lote_OS_aptas_${hojeISO()}.xlsx`);
-  toast(`Lote exportado (${origem}): ${ord.length} matrícula(s)`+(semZona.length?` · ${semZona.length} sem zona na planilha de Zona de Ligação`:''), !!semZona.length);
+  toast(`Lote exportado (${origem}): ${ord.length} matrícula(s)`+(semZona.length?` · ${semZona.length} sem zona na planilha de Zona de Ligação`:'')+(semPct.length?` · ${semPct.length} sem % (teor com ___%)`:''), !!(semZona.length||semPct.length));
+};
+
+$('exp-da').onclick=()=>{
+  const {lista,origem}=lotePara(); if(!lista.length) return toast('Nenhuma matrícula apta para exportar.',true);
+  const rows=lista.slice().sort((a,b)=>String(a.cliente||'').localeCompare(String(b.cliente||''),'pt-BR')||String(a.matricula).localeCompare(String(b.matricula)))
+    .map(d=>({ 'Matrícula':+d.matricula||d.matricula, 'Cliente':d.cliente||'' }));
+  const wb=XLSX.utils.book_new(), ws=XLSX.utils.json_to_sheet(rows); ws['!cols']=[{wch:13},{wch:60}];
+  XLSX.utils.book_append_sheet(wb,ws,'Aptas - solicitar DA'); XLSX.writeFile(wb,`TEE_aptas_solicitar_DA_${hojeISO()}.xlsx`);
+  toast(`Relação para o DA exportada (${origem}): ${rows.length} matrícula(s)`);
 };
 </script>
 </body>
