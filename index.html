@@ -374,6 +374,10 @@
         <select id="bulk-fase"><option value="">Definir fase…</option></select>
         <button class="btn btn-primary btn-sm" id="bulk-fase-ok">Aplicar fase</button>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 10px">
+        <button class="btn btn-primary btn-sm" id="exp-lote" title="Planilha para abertura em lote das OSs (cadastro e faturamento), separada em Bloco 1 e Bloco 4">Exportar lote das aptas (abertura de OSs)</button>
+        <span class="mini" id="exp-lote-info"></span>
+      </div>
       <div class="tablewrap scroll"><table><thead id="exec-head"></thead><tbody id="exec-body"></tbody></table></div>
     </div>
     <div class="card" style="margin-top:16px;">
@@ -606,6 +610,15 @@
         <div class="form-row"><button class="btn btn-primary" id="btn-imp-com">Importar rota / comunicados</button></div>
       </div>
       <div class="log" id="imp-com-log"></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h2>Zona de ligação</h2>
+      <p class="sub">Planilha <b>Zona de Ligação - Carteira GC</b> (NUM_LIGACAO e ZONA_LIGACAO). Usada no <b>Exportar lote das aptas</b> do Executor, que indica a zona de cada matrícula para a abertura das OSs. Cada importação atualiza as zonas.</p>
+      <div class="upload-box" id="up-box-zona">
+        <input type="file" id="imp-zona-file" accept=".xlsx,.xlsm,.xls,.csv">
+        <div class="form-row"><button class="btn btn-primary" id="btn-imp-zona">Importar zonas</button></div>
+      </div>
+      <div class="log" id="imp-zona-log"></div>
     </div>
     <div class="card" style="margin-top:16px;">
       <div class="form-row" style="margin-top:0;">
@@ -1011,7 +1024,7 @@ $('seg-busca').oninput=renderSeg;
 
 /* ---------- EXECUTOR ---------- */
 let EXEC_ROWS=[];
-function renderExec(){
+function renderExec(){ setTimeout(()=>{ if(typeof infoLote==='function') infoLote(); },0);
   const ap=DADOS.filter(d=>d.etapa==='apta'), pr=DADOS.filter(d=>d.prioridade);
   $('exec-sub').textContent=`${DADOS.length} matrículas em ${new Set(DADOS.map(segDe)).size} segmentos · prioridade = entra na leitura atual (próxima leitura em até ${JAN()} dias; a leitura é sempre no mesmo dia do mês — se já passou, conta a seguinte)`;
   $('exec-kpis').innerHTML=
@@ -1044,7 +1057,7 @@ function renderExec(){
   $('bulk-fase').innerHTML='<option value="">Definir fase…</option>'+FASES.map(x=>`<option>${x}</option>`).join('');
   bulkUI(); renderTermos();
 }
-function bulkUI(){ $('exec-bulk').classList.toggle('on',SEL.size>0); $('bulk-n').textContent=`${SEL.size} selecionada(s)`; }
+function bulkUI(){ $('exec-bulk').classList.toggle('on',SEL.size>0); $('bulk-n').textContent=`${SEL.size} selecionada(s)`; if(typeof infoLote==='function') infoLote(); }
 $('bulk-ok').onclick=async()=>{
   const nome=$('bulk-exec').value.trim(); if(!nome||!SEL.size) return toast('Selecione matrículas e informe o executivo.',true);
   const {error}=await sb.from('tee_matriculas').update({executivo:nome}).in('matricula',[...SEL]);
@@ -1937,6 +1950,55 @@ $('btn-imp').onclick=async()=>{
 
 carregar();
 
+
+/* ---------- ZONA DE LIGAÇÃO + EXPORTAÇÃO DO LOTE (abertura de OSs) ---------- */
+const TEOR_CADASTRO='Solicito a inclusão da Tarifa Especial de Esgoto (TEE), tendo em vista que o lançamento ultrapassa os limites estabelecidos para esgoto doméstico.';
+const TEOR_FATURAMENTO='Solicito o ajuste do percentual de TEE para 30%, conforme alinhado com a gestão. (D.A. da Gerência e os laudos técnicos encontram-se devidamente anexados na matrícula)';
+let ZONAS=null;
+async function carregarZonas(){
+  const z={}; let off=0;
+  while(true){ const {data,error}=await sb.from('tee_zonas').select('matricula,zona').range(off,off+999); if(error) throw error; data.forEach(r=>z[String(r.matricula)]=r.zona); if(data.length<1000) break; off+=1000; }
+  ZONAS=z; return z;
+}
+$('imp-zona-file').onchange=()=>$('up-box-zona').classList.toggle('has-file',!!$('imp-zona-file').files[0]);
+$('btn-imp-zona').onclick=async()=>{
+  const f=$('imp-zona-file').files[0], L=t=>{ const l=$('imp-zona-log'); l.textContent+=(l.textContent?'\n':'')+t; };
+  if(!f) return toast('Selecione a planilha de zonas.',true);
+  const btn=$('btn-imp-zona'); btn.disabled=true; $('imp-zona-log').textContent='';
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',sheetRows:200000});
+    const t=lerTabela(wb,cab=>cab.some(c=>c==='num_ligacao'||c.startsWith('matricula'))&&cab.some(c=>c.includes('zona')));
+    if(!t) throw new Error('Não encontrei as colunas NUM_LIGACAO (ou Matrícula) e ZONA_LIGACAO.');
+    const iM=idxCab(t.cab,c=>c==='num_ligacao',c=>c.startsWith('matricula')), iZ=idxCab(t.cab,c=>c==='zona_ligacao',c=>c.includes('zona'));
+    const u={}; t.linhas.forEach(l=>{ const m=String(l[iM]??'').trim().replace(/\.0+$/,''), z=num(l[iZ]); if(/^\d{6,}$/.test(m)&&z!=null) u[m]=Math.round(z); });
+    const rows=Object.entries(u).map(([matricula,zona])=>({matricula,zona}));
+    if(!rows.length) throw new Error('Nenhuma linha válida.');
+    L(`Aba "${t.aba}": ${rows.length} matrículas com zona.`);
+    for(let i=0;i<rows.length;i+=1000){ const {error}=await sb.from('tee_zonas').upsert(rows.slice(i,i+1000),{onConflict:'matricula'}); if(error) throw error; L(`  enviadas ${Math.min(i+1000,rows.length)}/${rows.length}`); }
+    ZONAS=null; L('✔ Zonas importadas.'); toast('Zonas importadas');
+  }catch(e){ L('✖ Erro: '+(e.message||e)+(/tee_zonas|schema cache/.test(e.message||'')?' — rode de novo o gestao_tee_painel.sql no Supabase.':'')); toast('Erro: '+(e.message||e),true); }
+  $('imp-zona-file').value=''; $('up-box-zona').classList.remove('has-file'); btn.disabled=false;
+};
+const blocoDe=m=>{ const c=String(m).trim()[0]; return c==='1'?'Bloco 1':c==='4'?'Bloco 4':'Outros'; };
+function lotePara(){ // selecionadas na tabela (se houver) ou todas as aptas
+  const sel=[...SEL].map(m=>DADOS.find(d=>String(d.matricula)===String(m))).filter(Boolean);
+  return sel.length ? {lista:sel, origem:`${sel.length} matrícula(s) selecionada(s)`} : {lista:DADOS.filter(d=>d.etapa==='apta'), origem:'todas as aptas'};
+}
+function infoLote(){ const {lista,origem}=lotePara(), b1=lista.filter(d=>blocoDe(d.matricula)==='Bloco 1').length, b4=lista.filter(d=>blocoDe(d.matricula)==='Bloco 4').length;
+  if($('exp-lote-info')) $('exp-lote-info').textContent=`Exportar lote: ${origem} — ${lista.length} matrícula(s) · Bloco 1: ${b1} · Bloco 4: ${b4}. Gera as abas de Cadastro e de Faturamento (matrícula, zona e teor da OS).`; }
+$('exp-lote').onclick=async()=>{
+  const {lista,origem}=lotePara(); if(!lista.length) return toast('Nenhuma matrícula apta para exportar.',true);
+  let z; try{ z=ZONAS||await carregarZonas(); }catch(e){ return toast('Zonas não carregadas: rode de novo o gestao_tee_painel.sql e importe a planilha de Zona de Ligação ('+(e.message||e)+')',true); }
+  const ord=lista.slice().sort((a,b)=>String(a.matricula).localeCompare(String(b.matricula)));
+  const linha=(d,teor)=>({ 'Matrícula':+d.matricula||d.matricula, 'Zona':z[String(d.matricula)]??'', 'Teor da OS':teor });
+  const wb=XLSX.utils.book_new(), add=(nome,rows)=>{ if(!rows.length) return; const ws=XLSX.utils.json_to_sheet(rows); ws['!cols']=[{wch:13},{wch:7},{wch:150}]; XLSX.utils.book_append_sheet(wb,ws,nome); };
+  ['Bloco 1','Bloco 4','Outros'].forEach(b=>add(`Cadastro - ${b}`, ord.filter(d=>blocoDe(d.matricula)===b).map(d=>linha(d,TEOR_CADASTRO))));
+  ['Bloco 1','Bloco 4','Outros'].forEach(b=>add(`Faturamento - ${b}`, ord.filter(d=>blocoDe(d.matricula)===b).map(d=>linha(d,TEOR_FATURAMENTO))));
+  const semZona=ord.filter(d=>z[String(d.matricula)]==null);
+  if(semZona.length) add('Sem zona', semZona.map(d=>({ 'Matrícula':+d.matricula||d.matricula, 'Cliente':d.cliente||'', 'Segmento':segDe(d), 'Bloco':blocoDe(d.matricula) })));
+  XLSX.writeFile(wb,`TEE_lote_OS_aptas_${hojeISO()}.xlsx`);
+  toast(`Lote exportado (${origem}): ${ord.length} matrícula(s)`+(semZona.length?` · ${semZona.length} sem zona na planilha de Zona de Ligação`:''), !!semZona.length);
+};
 </script>
 </body>
 </html>
