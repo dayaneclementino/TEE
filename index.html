@@ -761,7 +761,9 @@ function regraApta(d0){
     if(g.pct_virada!=null) d.pct_aplicado=+g.pct_virada;
     d.data_apta=null; d.mes_entrada=null;
   }
+  d.herdada=!!g.tarifa_herdada;
   if(FASES_FORA.includes(d.fase)) d.etapa='fora';
+  else if(d.herdada) d.etapa='implementada';   // "Herdado" na planilha: tarifa já implementada, nunca apta
   else if(d.fase==='Implementada'||d0.etapa==='implementada'||d0.tarifa_implementada===true) d.etapa='implementada';
   else if(laudoZero(d) && !FASES_FLUXO.includes(d.fase)){ d.etapa='sem_tee'; d.lib_txt='laudo 0% — não polui com efluente não doméstico'; }
   else if(publico && !FASES_FLUXO.includes(d.fase)){
@@ -929,7 +931,7 @@ function aptaTxt(d){
 }
 const etapaBadge=d=>d.etapa==='fluxo'
   ? `<span class="badge ${ETAPAS.fluxo.b}">${esc(d.fase)}</span>${d.fase_desde?`<div class="mini">há ${diasEntre(d.fase_desde,hojeISO())} d</div>`:''}`
-  : `<span class="badge ${ETAPAS[d.etapa].b}">${ETAPAS[d.etapa].l}</span>`;
+  : `<span class="badge ${ETAPAS[d.etapa].b}">${ETAPAS[d.etapa].l}</span>${d.herdada?' <span class="badge b-gray" title="TEE herdado da CEDAE — tarifa já implementada">herdada</span>':''}`;
 const rotaTxt=d=>{ const n=d.entrou_rota?diasEntre(d.entrou_rota,hojeISO()):null, alt=ultimaAlt(d.matricula);
   const altTxt=alt?`<div class="mini alt-tag" title="${esc(ILOG.filter(l=>l.matricula===String(d.matricula)&&l.tipo==='alteracao'&&l.data===alt.data).map(l=>l.campo+': '+l.valor_anterior+' → '+l.valor_novo).join('\n'))}">✎ alterada pela planilha em ${dBR(alt.data)}</div>`:'';
   return (d.entrou_rota?`<b>${dBR(d.entrou_rota)}</b>${n!=null&&n<=15?' <span class="badge b-water">nova</span>':''}<div class="mini">há ${n} d</div>`:'<span class="mini">–</span>')+altTxt; };
@@ -1869,7 +1871,9 @@ $('btn-imp').onclick=async()=>{
         if(temExec) reg.executivo=String(pick(r,'executivo','responsavel','analista')??'').trim()||null;
         // vão para tee_gestao: data da coleta, entrega do laudo, possibilidade e faturamento A&E (Público)
         const pickD=(...ks)=>{ for(const k of Object.keys(r)) if(ks.includes(norm(k))){ const v=dt(r[k]); if(v&&v<=hojeISO()) return v; } return null; };   // primeira data válida (não futura) entre as colunas, na ordem pedida
-        reg._g={ dt_coleta:pickD('data coleta')||pickD('data de coleta')||pickD('data da coleta adr'), laudo_em:pickD('data entrega do laudo','data entrega de laudo','data entrega resultados','data entrega resultado','data entrega de resultado','data de entrega do laudo'),
+        const herdado=Object.values(r).some(v=>typeof v==='string'&&/herdad/i.test(v));   // TEE herdado da CEDAE: tarifa já implementada
+        if(herdado) reg.tarifa_implementada=true;
+        reg._g={ ...(herdado?{tarifa_herdada:true}:{}), dt_coleta:pickD('data coleta')||pickD('data de coleta')||pickD('data da coleta adr'), laudo_em:pickD('data entrega do laudo','data entrega de laudo','data entrega resultados','data entrega resultado','data entrega de resultado','data de entrega do laudo'),
           possibilidade:(v=>v==null||String(v).trim()===''?null:String(v).trim())(pick(r,'possibilidade de cobranca')), fat_ae:num(pick(r,'faturamento a & e')) };
         // planilha só ACRESCENTA/ATUALIZA: célula vazia não apaga o que foi preenchido na plataforma
         Object.keys(reg).forEach(k=>{ if(k!=='matricula'&&(reg[k]==null||reg[k]===''||reg[k]===false)) delete reg[k]; });
@@ -1897,6 +1901,11 @@ $('btn-imp').onclick=async()=>{
     const PERMITIDOS=['matricula','faturamento','pct_cobranca','negociacao','ciclo','data_leitura','data_1a_notificacao','notificacao_entregue','max_data_evidencias'];
     const lote=[...mapa.values()].map(r=>{ if(!conhecidas.has(String(r.matricula))) return r; const o={}; PERMITIDOS.forEach(k=>{ if(r[k]!=null&&r[k]!=='') o[k]=r[k]; }); return o; }).filter(r=>Object.keys(r).length>1);
     lote.forEach(r=>{ if(r.tarifa_implementada&&!conhecidas.has(String(r.matricula))) impl.push(r.matricula); });
+    // "Herdado" na planilha: a tarifa já está implementada — vale também para matrículas que já estão na plataforma (nunca fica apta)
+    const herd=gestPl.filter(g=>g.tarifa_herdada).map(g=>g.matricula), herdExist=herd.filter(m=>conhecidas.has(m));
+    herdExist.forEach(m=>{ const d=DADOS.find(x=>String(x.matricula)===m); if(d&&!FASES_FORA.includes(d.fase)&&d.fase!=='Implementada'&&!impl.includes(m)) impl.push(m); });
+    lote.forEach(r=>{ if(herdExist.includes(String(r.matricula))) r.tarifa_implementada=true; });
+    if(herd.length) logImp(`Herdado (TEE herdado da CEDAE): ${herd.length} matrícula(s) — entram como tarifa implementada, não ficam aptas.`);
     const nNovas=[...mapa.keys()].filter(m=>!conhecidas.has(String(m))).length;
     logImp(`${nNovas} matrículas novas · ${[...mapa.keys()].length-nNovas} já existentes (atualizados só %, ciclo/leitura, faturamento e data do comunicado)`);
     // comunicados que chegaram (ou mudaram) pela planilha em matrículas existentes
